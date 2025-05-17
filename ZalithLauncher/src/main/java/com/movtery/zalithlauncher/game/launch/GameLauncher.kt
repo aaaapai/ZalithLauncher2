@@ -321,7 +321,7 @@ class GameLauncher(
             }
 
             envMap["POJAV_RENDERER"] = rendererId
-
+            envMap["TAG_RENDERER"] = rendererId
             if (RendererPluginManager.selectedRendererPlugin != null) return
 
             if (!rendererId.startsWith("opengles")) {
