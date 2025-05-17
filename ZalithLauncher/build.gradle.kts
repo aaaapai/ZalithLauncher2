@@ -59,6 +59,7 @@ android {
         applicationIdSuffix = ".v2"
         minSdk = 21
         targetSdk = 36
+        vectorDrawables.useSupportLibrary = true
         versionCode = launcherVersionCode
         versionName = launcherVersionName
         manifestPlaceholders["launcher_name"] = launcherAPPName
