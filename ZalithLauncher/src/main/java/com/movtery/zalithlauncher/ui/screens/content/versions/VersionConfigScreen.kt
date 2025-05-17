@@ -156,6 +156,12 @@ private fun VersionConfigs(
                 renderers.find { it.getUniqueIdentifier() == item.id }?.let { renderer ->
                     RendererSummaryLayout(renderer)
                 }
+            },
+            onValueChange = { item ->
+                if (config.renderer != item.id) {
+                    config.renderer = item.id
+                    config.saveOrShowError(context)
+                }
             }
         )
 
