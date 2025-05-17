@@ -43,7 +43,7 @@ configure<com.github.megatronking.stringfog.plugin.StringFogExtension> {
 
 android {
     namespace = zalithPackageName
-    compileSdk = 35
+    compileSdk = 36
 
     signingConfigs {
         create("releaseBuild") {
@@ -58,7 +58,7 @@ android {
         applicationId = zalithPackageName
         applicationIdSuffix = ".v2"
         minSdk = 21
-        targetSdk = 35
+        targetSdk = 36
         versionCode = launcherVersionCode
         versionName = launcherVersionName
         manifestPlaceholders["launcher_name"] = launcherAPPName
