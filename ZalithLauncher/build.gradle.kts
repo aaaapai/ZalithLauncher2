@@ -57,7 +57,7 @@ android {
     defaultConfig {
         applicationId = zalithPackageName
         applicationIdSuffix = ".v2"
-        minSdk = 21
+        minSdk = 26
         targetSdk = 36
         vectorDrawables.useSupportLibrary = true
         versionCode = launcherVersionCode
