@@ -57,7 +57,7 @@ android {
     defaultConfig {
         applicationId = zalithPackageName
         applicationIdSuffix = ".v2"
-        minSdk = 26
+        minSdk = 21
         targetSdk = 35
         versionCode = launcherVersionCode
         versionName = launcherVersionName
@@ -120,7 +120,7 @@ android {
         }
     }
 
-    ndkVersion = "25.2.9519653"
+    ndkVersion = "28.1.13356709"
 
     externalNativeBuild {
         ndkBuild {
@@ -136,11 +136,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
     buildFeatures {
         compose = true
