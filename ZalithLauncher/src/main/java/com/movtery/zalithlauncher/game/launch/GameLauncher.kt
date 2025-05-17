@@ -308,7 +308,7 @@ class GameLauncher(
 
             if (rendererId.startsWith("opengles3")) {
                 envMap["LIBGL_ES"] = "3"
-                envMap["LIBGL_ES"] = "libGLESv3.so"
+                envMap["LIBGL_GLES"] = "libGLESv3.so"
                 envMap["LIBGL_MIPMAP"] = "3"
                 envMap["LIBGL_NOERROR"] = "1"
                 envMap["LIBGL_NOINTOVLHACK"] = "1"
