@@ -31,4 +31,5 @@ jobs:
         uses: actions/upload-artifact@main
         with:
           name: app-debug-arm64
-          path: build/outputs/apk/release/*
+          path: |
+                **/*.apk
