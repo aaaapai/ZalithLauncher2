@@ -56,7 +56,7 @@ fun LaunchGameOperation(
             SimpleAlertDialog(
                 title = stringResource(R.string.generic_warning),
                 text = stringResource(R.string.renderer_version_unsupported_warning, renderer.getRendererName()),
-                confirmText = stringResource(R.string.renderer_version_unsupported_anyway),
+                confirmText = stringResource(R.string.generic_anyway),
                 onConfirm = {
                     updateOperation(LaunchGameOperation.RealLaunch)
                 },

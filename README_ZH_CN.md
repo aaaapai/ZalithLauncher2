@@ -52,16 +52,23 @@
 
 ## 🌐 语言与翻译支持
 
-Zalith Launcher 2 当前提供以下两种语言支持：
+### Zalith Launcher 2 当前提供以下两种语言支持：
 
 * **英语**（默认）
 * **简体中文**
 
-这两种语言是项目**官方维护并确保完整性**的语言。我们欢迎社区为其他语言贡献翻译，但请注意以下说明。
+这两种语言是项目**官方维护并确保完整性**的语言。
+
+### Zalith Launcher 2 社区提供的语言支持：
+
+我们欢迎社区为其他语言贡献翻译！
+
+* **土耳其语** - 作者：Star1xr
 
 ### 📌 为什么只保证英语与简体中文？
 
 * 项目是**面向全球用户**的，因此需要提供默认的英文界面；然而，由于开发者并非母语为英语的人士，主要依靠 AI 辅助翻译完成英文内容，可能存在轻微误差。
+   * 若对英文翻译有异议，请反馈翻译内容所在的行数，并给出您的意见~ [`values/strings.xml`](./ZalithLauncher/src/main/res/values/strings.xml)
 * 开发者 [@MovTery](https://github.com/MovTery) 是中国开发者，能够保证**简体中文**翻译的质量和完整性。
 * 出于人力限制，其他语言的完整性暂时无法保证，需依赖社区贡献。
 
@@ -70,14 +77,12 @@ Zalith Launcher 2 当前提供以下两种语言支持：
 如果您希望项目支持您的母语，欢迎通过 Pull Request 的形式提交翻译文件。请按照以下方式操作：
 
 1. **复制默认语言文件**
-   * 默认英文翻译文件位置：
-     [`strings.xml`](./ZalithLauncher/src/main/res/values/strings.xml)
+   * 由于英文内容由 AI 辅助完成翻译，所以请尽量参考描述最准确的简体中文：
+     [`values-zh-rCN/strings.xml`](./ZalithLauncher/src/main/res/values-zh-rCN/strings.xml)
 2. **创建您的语言资源目录**
    * 例如：繁体中文为 `values-zh-rTW`，法语为 `values-fr`，日语为 `values-ja` 等。
 3. **翻译内容**
    * 将 `strings.xml` 中的内容翻译为对应语言，并保留所有 `name` 属性不变。
-   * 推荐参考官方简体中文版本：
-     [`strings.xml`](./ZalithLauncher/src/main/res/values-zh-rCN/strings.xml)
 4. **提交 Pull Request**
    * 请在 PR 描述中说明所添加语言，并注明翻译方式（如“人工翻译”）。
 

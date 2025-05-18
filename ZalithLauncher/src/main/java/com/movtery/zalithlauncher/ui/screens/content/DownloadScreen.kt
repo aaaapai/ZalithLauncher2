@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -128,9 +129,10 @@ private fun TabMenu(
             if (item.division) {
                 HorizontalDivider(
                     modifier = Modifier
-                        .padding(vertical = 12.dp)
-                        .fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        .padding(horizontal = 8.dp, vertical = 12.dp)
+                        .fillMaxWidth()
+                        .alpha(0.5f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             NavigationDrawerItem(

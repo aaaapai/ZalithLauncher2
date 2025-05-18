@@ -242,7 +242,7 @@ fun SimpleMouseCapture(
     }
 }
 
-fun Modifier.mouseEventModifier(
+private fun Modifier.mouseEventModifier(
     requestPointerCapture: Boolean,
     inputChange: Array<out Any> = arrayOf(Unit),
     onMouseMove: (Offset) -> Unit,

@@ -312,7 +312,6 @@ private fun SupportConfigs(
                 config.saveOrShowError(context)
             },
             suffix = "ms",
-            enabled = enableTouchProxy,
             fineTuningControl = true
         )
     }

@@ -36,6 +36,8 @@
     <string name="generic_custom">Custom</string>
     <string name="generic_search">Search</string>
     <string name="generic_loading">Loading</string>
+    <string name="generic_anyway">Use Anyway</string>
+    <string name="generic_go_it">Got it</string>
     <!-- Launcher Version -->
     <string name="launcher_version_label_alpha">Alpha Version: %s (Demo Only)</string>
     <string name="launcher_version_label_beta">Beta Version: %s (Demo Only)</string>
@@ -155,7 +157,6 @@
     <string name="renderer_name_panfrost">Panfrost (Mali, up to 1.21.4)</string>
     <string name="renderer_version_support">MC Version Support:</string>
     <string name="renderer_version_unsupported_warning">The current renderer %s does not support this game version. Continuing to use it may cause rendering errors or crashes! Are you sure you want to proceed?</string>
-    <string name="renderer_version_unsupported_anyway">Use Anyway</string>
     <!-- Accounts -->
     <string name="account_no_account">No accounts available</string>
     <string name="account_login">Login</string>
@@ -176,7 +177,13 @@
     <string name="account_change_skin">Change Skin</string>
     <string name="account_change_skin_select_model_title">Select Skin Model</string>
     <string name="account_change_skin_select_model_message">Is this skin Steve (wide arms) or Alex (slim arms)?</string>
-    <string name="account_change_skin_select_model_alert">Starting from Minecraft 1.19.3, skin types and character models are more finely differentiated. Due to technical limitations, this feature currently only works reliably in versions 1.19.2 and below!</string>
+    <string name="account_change_skin_select_model_alert_hint1">The launcher will enable custom skins for offline accounts by automatically generating and loading a resource pack during the game launch process.</string>
+    <string name="account_change_skin_select_model_alert_hint2">However, please note that this method is not compatible with all versions of Minecraft.</string>
+    <string name="account_change_skin_select_model_alert_hint3">Starting from Minecraft 1.19.3, skin types and character models are more specifically distinguished.</string>
+    <string name="account_change_skin_select_model_alert_hint4">Due to current technical limitations, this feature is only guaranteed to work in versions 1.19.2 and earlier!</string>
+    <string name="account_change_skin_select_model_alert_hint5">Alternative solution:</string>
+    <string name="account_change_skin_select_model_alert_auth_server">Use auth server</string>
+    <string name="account_change_skin_select_model_alert_custom_skin_loader">Use the CustomSkinLoader mod</string>
     <string name="account_change_skin_model_steve">Steve Model</string>
     <string name="account_change_skin_model_alex">Alex Model</string>
     <string name="account_change_skin_reset_skin_message">Are you sure you want to reset the current account\'s skin?</string>
@@ -405,4 +412,5 @@
     <!--  Url  -->
     <string name="url_wiki_minecraft_game_release">https://minecraft.wiki/w/Java_Edition_%s</string>
     <string name="url_wiki_minecraft_game_snapshot">https://minecraft.wiki/w/Java_Edition_%s</string>
+    <string name="url_mod_custom_skin_loader">https://modrinth.com/mod/customskinloader</string>
 </resources>

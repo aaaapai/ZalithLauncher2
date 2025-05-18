@@ -36,6 +36,8 @@
     <string name="generic_custom">自定义</string>
     <string name="generic_search">搜索</string>
     <string name="generic_loading">加载中</string>
+    <string name="generic_anyway">坚持使用</string>
+    <string name="generic_go_it">我明白了</string>
     <!--  启动器版本  -->
     <string name="launcher_version_label_alpha">内测版本：%s，仅供演示</string>
     <string name="launcher_version_label_beta">公测版本：%s，仅供演示</string>
@@ -139,7 +141,7 @@
     <string name="download_install_error_jvm_crash">安装过程中遇到了异常，退出代码：%s</string>
     <string name="download_install_error_download_failed">一些文件下载失败，可能是网络问题导致的</string>
     <string name="download_install_success_title">安装成功</string>
-    <string name="download_install_success_message">你的游戏已顺利的经完成了安装！</string>
+    <string name="download_install_success_message">你的游戏已顺利的完成了安装！</string>
     <!--  启动游戏  -->
     <string name="game_launch_no_version">未选择游戏版本！</string>
     <string name="game_launch_no_account">未登录游戏账号！</string>
@@ -155,7 +157,6 @@
     <string name="renderer_name_panfrost">Panfrost (Mali)</string>
     <string name="renderer_version_support">MC 版本支持：</string>
     <string name="renderer_version_unsupported_warning">当前渲染器 %s 不支持该游戏版本，继续使用可能导致渲染错误或游戏崩溃！你确定要无视风险坚持访问吗？</string>
-    <string name="renderer_version_unsupported_anyway">坚持使用</string>
     <!--  账号  -->
     <string name="account_no_account">未找到可用账号</string>
     <string name="account_login">登录</string>
@@ -176,7 +177,13 @@
     <string name="account_change_skin">更换皮肤</string>
     <string name="account_change_skin_select_model_title">选择皮肤模型</string>
     <string name="account_change_skin_select_model_message">该皮肤是 Steve 模型（粗臂）还是 Alex 模型（细臂）？</string>
-    <string name="account_change_skin_select_model_alert">从 Minecraft 1.19.3 起，皮肤种类和角色模型有了更细致的区分。目前由于技术限制，该功能仅保证在 1.19.2 及以下版本中有效！</string>
+    <string name="account_change_skin_select_model_alert_hint1">启动器将在启动游戏的过程中，以自动生成资源包并加载的方式，实现离线账号自定义皮肤功能。</string>
+    <string name="account_change_skin_select_model_alert_hint2">但请注意，这么做并不适用于所有 Minecraft 版本。</string>
+    <string name="account_change_skin_select_model_alert_hint3">从 Minecraft 1.19.3 起，皮肤种类和角色模型有了更细致的区分。</string>
+    <string name="account_change_skin_select_model_alert_hint4">目前由于技术限制，该功能仅保证在 1.19.2 及以下版本中有效！</string>
+    <string name="account_change_skin_select_model_alert_hint5">代替方案：</string>
+    <string name="account_change_skin_select_model_alert_auth_server">使用认证服务器</string>
+    <string name="account_change_skin_select_model_alert_custom_skin_loader">使用 万用皮肤补丁 模组</string>
     <string name="account_change_skin_model_steve">Steve 模型</string>
     <string name="account_change_skin_model_alex">Alex 模型</string>
     <string name="account_change_skin_reset_skin_message">你确定要重置当前账号的皮肤吗？</string>
@@ -405,4 +412,6 @@
     <!--  Url  -->
     <string name="url_wiki_minecraft_game_release">https://zh.minecraft.wiki/w/Java%%E7%%89%%88%s?variant=zh-cn</string>
     <string name="url_wiki_minecraft_game_snapshot">https://zh.minecraft.wiki/w/%s?variant=zh-cn</string>
+    <!--  仅限中国，中国地区访问 Modrinth 可能会不方便，所以使用 mcmod 中文百科平台，其他语言请使用 Modrinth 或者 CurseForge  -->
+    <string name="url_mod_custom_skin_loader">https://www.mcmod.cn/class/883.html</string>
 </resources>

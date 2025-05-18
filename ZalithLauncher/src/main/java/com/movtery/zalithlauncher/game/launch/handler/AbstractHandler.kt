@@ -33,7 +33,6 @@ abstract class AbstractHandler(
     abstract fun onResume()
     abstract fun onGraphicOutput()
     abstract fun shouldIgnoreKeyEvent(event: KeyEvent): Boolean
-    abstract fun sendMouseRight(isPressed: Boolean)
 
     @Composable
     abstract fun getComposableLayout(): @Composable () -> Unit

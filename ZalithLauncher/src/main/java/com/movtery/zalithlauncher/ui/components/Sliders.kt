@@ -17,6 +17,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -51,6 +52,15 @@ fun SimpleTextSlider(
     fun changeValue(newValue: Float, finished: Boolean) {
         onValueChange(newValue)
         if (finished) onValueChangeFinished?.invoke()
+    }
+
+    LaunchedEffect(Unit) {
+        //检查值是否被刻意的修改为超出范围
+        if (value !in valueRange) {
+            val newValue = value.coerceIn(valueRange)
+            //调回范围内
+            changeValue(newValue, true)
+        }
     }
 
     Row(

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
@@ -116,7 +117,8 @@ fun <E> SimpleListLayout(
     getItemSummary: (@Composable (E) -> Unit)? = null,
     enabled: Boolean = true,
     autoCollapse: Boolean = true,
-    onValueChange: (E) -> Unit = {}
+    onValueChange: (E) -> Unit = {},
+    selectableAreaShape: Shape = RoundedCornerShape(22.0.dp)
 ) {
     require(items.isNotEmpty()) { "Items list cannot be empty" }
 
@@ -133,15 +135,17 @@ fun <E> SimpleListLayout(
         if (!enabled) expanded = false
     }
 
-    Row(modifier = modifier
-        .fillMaxWidth()
-        .alpha(alpha = if (enabled) 1f else 0.5f)
-        .padding(bottom = 4.dp)) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .alpha(alpha = if (enabled) 1f else 0.5f)
+            .padding(bottom = 4.dp)
+    ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(shape = MaterialTheme.shapes.extraLarge)
+                    .clip(shape = selectableAreaShape)
                     .clickable(enabled = enabled) { expanded = !expanded }
                     .padding(all = 8.dp)
             ) {
@@ -397,7 +401,8 @@ fun SwitchLayout(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     title: String,
-    summary: String? = null
+    summary: String? = null,
+    shape: Shape = RoundedCornerShape(22.0.dp)
 ) {
     fun change(value: Boolean) {
         onCheckedChange(value)
@@ -406,7 +411,7 @@ fun SwitchLayout(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(shape = MaterialTheme.shapes.extraLarge)
+            .clip(shape = shape)
             .clickable { change(!checked) }
             .padding(all = 8.dp)
             .padding(bottom = 4.dp)

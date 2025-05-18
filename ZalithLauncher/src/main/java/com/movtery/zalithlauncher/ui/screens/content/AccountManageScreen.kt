@@ -17,6 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Checkroom
+import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +65,7 @@ import com.movtery.zalithlauncher.path.UrlManager
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
@@ -107,6 +113,11 @@ private fun refreshOtherServer() {
 
 @Composable
 fun AccountManageScreen() {
+    var microsoftLoginOperation by remember { mutableStateOf<MicrosoftLoginOperation>(MicrosoftLoginOperation.None) }
+    var localLoginOperation by remember { mutableStateOf<LocalLoginOperation>(LocalLoginOperation.None) }
+    var otherLoginOperation by remember { mutableStateOf<OtherLoginOperation>(OtherLoginOperation.None) }
+    var serverOperation by remember { mutableStateOf<ServerOperation>(ServerOperation.None) }
+
     BaseScreen(
         screenTag = ACCOUNT_MANAGE_SCREEN_TAG,
         currentTag = MutableStates.mainScreenTag
@@ -119,42 +130,25 @@ fun AccountManageScreen() {
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(all = 12.dp)
-                    .weight(2.5f)
+                    .weight(2.5f),
+                updateMicrosoftOperation = { microsoftLoginOperation = it },
+                updateLocalLoginOperation = { localLoginOperation = it },
+                updateOtherLoginOperation = { otherLoginOperation = it },
+                updateServerOperation = { serverOperation = it }
             )
             AccountsLayout(
                 isVisible = isVisible,
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(top = 12.dp, end = 12.dp, bottom = 12.dp)
-                    .weight(7.5f)
+                    .weight(7.5f),
+                onAddAuthClicked = {
+                    //打开添加认证服务器的对话框
+                    serverOperation = ServerOperation.AddNew
+                }
             )
         }
     }
-}
-
-@Composable
-private fun ServerTypeTab(
-    isVisible: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val xOffset by swapAnimateDpAsState(
-        targetValue = (-40).dp,
-        swapIn = isVisible
-    )
-
-    LaunchedEffect(true) {
-        runCatching {
-            refreshOtherServer()
-        }.onFailure {
-            Log.e("ServerTypeTab", "Failed to refresh other server", it)
-        }
-    }
-
-    var microsoftLoginOperation by remember { mutableStateOf<MicrosoftLoginOperation>(MicrosoftLoginOperation.None) }
-    var localLoginOperation by remember { mutableStateOf<LocalLoginOperation>(LocalLoginOperation.None) }
-
-    var otherLoginOperation by remember { mutableStateOf<OtherLoginOperation>(OtherLoginOperation.None) }
-    var serverOperation by remember { mutableStateOf<ServerOperation>(ServerOperation.None) }
 
     //微软账号操作逻辑
     MicrosoftLoginOperation(
@@ -179,6 +173,29 @@ private fun ServerTypeTab(
         serverOperation = serverOperation,
         updateServerOperation = { serverOperation = it }
     )
+}
+
+@Composable
+private fun ServerTypeTab(
+    isVisible: Boolean,
+    modifier: Modifier = Modifier,
+    updateMicrosoftOperation: (MicrosoftLoginOperation) -> Unit,
+    updateLocalLoginOperation: (LocalLoginOperation) -> Unit,
+    updateOtherLoginOperation: (OtherLoginOperation) -> Unit,
+    updateServerOperation: (ServerOperation) -> Unit
+) {
+    val xOffset by swapAnimateDpAsState(
+        targetValue = (-40).dp,
+        swapIn = isVisible
+    )
+
+    LaunchedEffect(true) {
+        runCatching {
+            refreshOtherServer()
+        }.onFailure {
+            Log.e("ServerTypeTab", "Failed to refresh other server", it)
+        }
+    }
 
     Surface(
         modifier = modifier
@@ -205,22 +222,22 @@ private fun ServerTypeTab(
                     serverName = stringResource(R.string.account_type_microsoft),
                 ) {
                     if (!isMicrosoftLogging()) {
-                        microsoftLoginOperation = MicrosoftLoginOperation.Tip
+                        updateMicrosoftOperation(MicrosoftLoginOperation.Tip)
                     }
                 }
                 LoginItem(
                     modifier = Modifier.fillMaxWidth(),
                     serverName = stringResource(R.string.account_type_local)
                 ) {
-                    localLoginOperation = LocalLoginOperation.Edit
+                    updateLocalLoginOperation(LocalLoginOperation.Edit)
                 }
 
                 val servers by otherServerConfig.collectAsState()
                 servers.server.forEachIndexed { index, server ->
                     ServerItem(
                         server = server,
-                        onClick = { otherLoginOperation = OtherLoginOperation.OnLogin(server) },
-                        onDeleteClick = { serverOperation = ServerOperation.Delete(server.serverName, index) }
+                        onClick = { updateOtherLoginOperation(OtherLoginOperation.OnLogin(server)) },
+                        onDeleteClick = { updateServerOperation(ServerOperation.Delete(server.serverName, index)) }
                     )
                 }
             }
@@ -229,7 +246,7 @@ private fun ServerTypeTab(
                 modifier = Modifier
                     .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
                     .fillMaxWidth(),
-                onClick = { serverOperation = ServerOperation.AddNew }
+                onClick = { updateServerOperation(ServerOperation.AddNew) }
             ) {
                 Text(
                     text = stringResource(R.string.account_add_new_server_button)
@@ -478,7 +495,8 @@ private fun ServerTypeOperation(
 @Composable
 private fun AccountsLayout(
     isVisible: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddAuthClicked: () -> Unit = {}
 ) {
     val yOffset by swapAnimateDpAsState(
         targetValue = (-40).dp,
@@ -518,14 +536,15 @@ private fun AccountsLayout(
                     AccountSkinOperation(
                         account = account,
                         accountSkinOperation = accountSkinOperation,
-                        updateOperation = { accountSkinOperation = it }
+                        updateOperation = { accountSkinOperation = it },
+                        onAddAuthClicked = onAddAuthClicked
                     )
 
                     val skinPicker = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.OpenDocument()
                     ) { uri ->
                         uri?.let { result ->
-                            accountSkinOperation = AccountSkinOperation.SaveSkin(result)
+                            accountSkinOperation = AccountSkinOperation.SelectSkinModel(result)
                         }
                     }
 
@@ -571,7 +590,8 @@ private fun AccountsLayout(
 private fun AccountSkinOperation(
     account: Account,
     accountSkinOperation: AccountSkinOperation,
-    updateOperation: (AccountSkinOperation) -> Unit
+    updateOperation: (AccountSkinOperation) -> Unit,
+    onAddAuthClicked: () -> Unit = {}
 ) {
     val context = LocalContext.current
     when (accountSkinOperation) {
@@ -583,7 +603,9 @@ private fun AccountSkinOperation(
                     dispatcher = Dispatchers.IO,
                     task = {
                         context.copyLocalFile(accountSkinOperation.uri, skinFile)
-                        updateOperation(AccountSkinOperation.SelectSkinModel)
+                        saveAccount(account)
+                        //警告用户关于自定义皮肤的一些注意事项
+                        updateOperation(AccountSkinOperation.AlertModel)
                     },
                     onError = { th ->
                         FileUtils.deleteQuietly(skinFile)
@@ -605,17 +627,62 @@ private fun AccountSkinOperation(
                 },
                 onSelected = { type ->
                     account.skinModelType = type.name
-                    updateOperation(AccountSkinOperation.AlertModel)
+                    updateOperation(AccountSkinOperation.SaveSkin(accountSkinOperation.uri))
                 }
             )
         }
         is AccountSkinOperation.AlertModel -> {
-            SimpleAlertDialog(
-                title = stringResource(R.string.generic_warning),
-                text = stringResource(R.string.account_change_skin_select_model_alert),
-                onDismiss = {
-                    saveAccount(account)
-                    updateOperation(AccountSkinOperation.None)
+            AlertDialog(
+                onDismissRequest = {},
+                title = {
+                    Text(
+                        text = stringResource(R.string.generic_warning),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                text = {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        Text(text = stringResource(R.string.account_change_skin_select_model_alert_hint1))
+                        Text(
+                            text = stringResource(R.string.account_change_skin_select_model_alert_hint2),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(text = stringResource(R.string.account_change_skin_select_model_alert_hint3))
+                        Text(text = stringResource(R.string.account_change_skin_select_model_alert_hint4))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.account_change_skin_select_model_alert_hint5),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        IconTextButton(
+                            onClick = {
+                                onAddAuthClicked()
+                                updateOperation(AccountSkinOperation.None)
+                            },
+                            imageVector = Icons.Outlined.Dns,
+                            contentDescription = null,
+                            text = stringResource(R.string.account_change_skin_select_model_alert_auth_server)
+                        )
+                        IconTextButton(
+                            onClick = {
+                                NetWorkUtils.openLink(context, context.getString(R.string.url_mod_custom_skin_loader))
+                                updateOperation(AccountSkinOperation.None)
+                            },
+                            imageVector = Icons.Outlined.Checkroom,
+                            contentDescription = null,
+                            text = stringResource(R.string.account_change_skin_select_model_alert_custom_skin_loader)
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            updateOperation(AccountSkinOperation.None)
+                        }
+                    ) {
+                        Text(text = stringResource(R.string.generic_go_it))
+                    }
                 }
             )
         }
@@ -628,11 +695,19 @@ private fun AccountSkinOperation(
             )
         }
         is AccountSkinOperation.ResetSkin -> {
-            account.apply {
-                FileUtils.deleteQuietly(getSkinFile())
-                skinModelType = ""
-                saveAccount(this)
-            }
+            TaskSystem.submitTask(
+                Task.runTask(
+                    dispatcher = Dispatchers.IO,
+                    task = {
+                        account.apply {
+                            FileUtils.deleteQuietly(getSkinFile())
+                            skinModelType = ""
+                            saveAccount(this)
+                        }
+                    }
+                )
+            )
+            updateOperation(AccountSkinOperation.None)
         }
     }
 }

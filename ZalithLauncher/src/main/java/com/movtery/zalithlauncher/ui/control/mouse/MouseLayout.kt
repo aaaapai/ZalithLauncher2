@@ -31,7 +31,7 @@ import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.enums.MouseControlMode
 import com.movtery.zalithlauncher.setting.enums.toMouseControlMode
-import com.movtery.zalithlauncher.utils.device.isPhysicalMouseConnected
+import com.movtery.zalithlauncher.utils.device.PhysicalMouseChecker
 import com.movtery.zalithlauncher.utils.file.child
 import java.io.File
 
@@ -82,7 +82,13 @@ fun VirtualPointerLayout(
     val speedFactor = mouseSpeed / 100f
 
     var showMousePointer by remember {
-        mutableStateOf(!isPhysicalMouseConnected() || requestPointerCapture)
+        mutableStateOf(
+            if (PhysicalMouseChecker.physicalMouseConnected) { //物理鼠标已连接
+                requestPointerCapture //根据是否是抓取模式（虚拟鼠标控制模式）判断是否显示虚拟鼠标
+            } else {
+                true //物理鼠标未连接，默认显示虚拟鼠标
+            }
+        )
     }
 
     Box(
@@ -127,10 +133,8 @@ fun VirtualPointerLayout(
                 if (!showMousePointer) showMousePointer = true
                 pointerPosition =  if (controlMode == MouseControlMode.SLIDE) {
                     Offset(
-                        x = (pointerPosition.x + offset.x * speedFactor)
-                            .coerceIn(0f, screenWidth),
-                        y = (pointerPosition.y + offset.y * speedFactor)
-                            .coerceIn(0f, screenHeight)
+                        x = (pointerPosition.x + offset.x * speedFactor).coerceIn(0f, screenWidth),
+                        y = (pointerPosition.y + offset.y * speedFactor).coerceIn(0f, screenHeight)
                     )
                 } else {
                     //当前手指的绝对坐标
@@ -141,8 +145,8 @@ fun VirtualPointerLayout(
             onMouseMove = { offset ->
                 if (requestPointerCapture) {
                     pointerPosition = Offset(
-                        x = (pointerPosition.x + offset.x).coerceIn(0f, screenWidth),
-                        y = (pointerPosition.y + offset.y).coerceIn(0f, screenHeight)
+                        x = (pointerPosition.x + offset.x * speedFactor).coerceIn(0f, screenWidth),
+                        y = (pointerPosition.y + offset.y * speedFactor).coerceIn(0f, screenHeight)
                     )
                     onPointerMove(pointerPosition)
                 } else {

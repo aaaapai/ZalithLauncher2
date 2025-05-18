@@ -30,16 +30,16 @@ class Task private constructor(
         private set
 
     /**
-     * 更新进度
+     * 更新进度，自动处理 NaN、isInfinite 的这种错误情况
      * @param percentage 进度百分比，-1f代表进度不确定
      */
     fun updateProgress(percentage: Float) {
-        this.currentProgress = percentage.coerceIn(-1f, 1f)
+        this.currentProgress = (percentage.takeIf { it.isFinite() } ?: 0f).coerceIn(-1f, 1f)
     }
 
     /**
      * 更新进度、任务描述消息
-     * @param percentage 进度百分比，-1f代表进度不确定
+     * @param percentage 进度百分比，-1f代表进度不确定，自动处理 NaN、isInfinite 的这种错误情况
      * @param message 任务描述消息
      */
     fun updateProgress(percentage: Float, message: Int?) {
@@ -49,7 +49,7 @@ class Task private constructor(
 
     /**
      * 更新进度、任务描述消息
-     * @param percentage 进度百分比，-1f代表进度不确定
+     * @param percentage 进度百分比，-1f代表进度不确定，自动处理 NaN、isInfinite 的这种错误情况
      * @param message 任务描述消息
      * @param args 任务描述信息格式化内容
      */

@@ -129,17 +129,11 @@ open class BaseComponentActivity : FullScreenComponentActivity() {
         modifier: Modifier = Modifier
     ) {
         val versionName = BuildConfig.VERSION_NAME
-        when {
-            versionName.contains("alpha") -> stringResource(R.string.launcher_version_label_alpha, versionName)
-            versionName.contains("beta") -> stringResource(R.string.launcher_version_label_beta, versionName)
-            else -> null
-        }?.let { versionText ->
-            Text(
-                modifier = modifier.alpha(0.6f),
-                text = versionText,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        Text(
+            modifier = modifier.alpha(0.6f),
+            text = stringResource(R.string.launcher_version_label_alpha, versionName),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }

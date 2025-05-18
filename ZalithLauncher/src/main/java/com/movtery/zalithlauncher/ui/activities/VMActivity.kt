@@ -9,7 +9,6 @@ import android.graphics.SurfaceTexture
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.Surface
 import android.view.TextureView
@@ -47,6 +46,7 @@ import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.scaleFactor
 import com.movtery.zalithlauncher.ui.base.BaseComponentActivity
 import com.movtery.zalithlauncher.ui.theme.ZalithLauncherTheme
+import com.movtery.zalithlauncher.utils.device.PhysicalMouseChecker
 import com.movtery.zalithlauncher.utils.getDisplayFriendlyRes
 import com.movtery.zalithlauncher.utils.getParcelableSafely
 import kotlinx.coroutines.Dispatchers
@@ -76,6 +76,8 @@ class VMActivity : BaseComponentActivity(), SurfaceTextureListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val displayMetrics = getDisplayMetrics()
+        //初始化物理鼠标连接检查器
+        PhysicalMouseChecker.initChecker(this)
 
         val bundle = intent.extras ?: throw IllegalStateException("Unknown VM launch state!")
 
@@ -178,20 +180,6 @@ class VMActivity : BaseComponentActivity(), SurfaceTextureListener {
 
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        event.device?.let {
-            val source = event.source
-            if (source and InputDevice.SOURCE_MOUSE_RELATIVE == InputDevice.SOURCE_MOUSE_RELATIVE ||
-                source and InputDevice.SOURCE_MOUSE == InputDevice.SOURCE_MOUSE) {
-
-                if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-                    //由于安卓会将鼠标右键当成键盘返回键来处理（？），需要在这里进行拦截
-                    val isPressed = event.action == KeyEvent.ACTION_DOWN
-                    //然后发送真实的鼠标右键
-                    handler.sendMouseRight(isPressed)
-                    return false
-                }
-            }
-        }
         if (handler.shouldIgnoreKeyEvent(event)) {
             return super.dispatchKeyEvent(event)
         }
