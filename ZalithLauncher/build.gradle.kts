@@ -258,6 +258,7 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.maven.artifact)
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     //Safe
     implementation(libs.stringfog.xor)
     //Support

@@ -10,6 +10,7 @@ import com.movtery.zalithlauncher.game.path.getAssetsHome
 import com.movtery.zalithlauncher.game.path.getLibrariesHome
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.getGameManifest
+import com.movtery.zalithlauncher.game.version.installed.utils.isBiggerOrEqualVer
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.path.LibPath
@@ -52,10 +53,8 @@ class LaunchArgs(
                 first() to getOrElse(1) { "25565" }
             }
             version.getVersionInfo()?.minecraftVersion?.let { minecraftVersion ->
-                if (
-                    minecraftVersion.isBiggerOrEqualTo("23w14a") || //该快照才加入quickPlayMultiplayer参数
-                    minecraftVersion.isBiggerOrEqualTo("1.20")      //1.20+
-                ) {
+                //                                          1.20+       该快照才加入quickPlayMultiplayer参数
+                if (minecraftVersion.isBiggerOrEqualVer("1.20", "23w14a")) {
                     argsList.apply {
                         add("--quickPlayMultiplayer")
                         add("$ip:$port")

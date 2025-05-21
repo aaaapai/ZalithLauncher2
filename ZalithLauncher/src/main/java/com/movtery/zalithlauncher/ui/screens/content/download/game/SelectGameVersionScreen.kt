@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -59,6 +58,7 @@ import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ContentCheckBox
 import com.movtery.zalithlauncher.ui.components.LittleTextLabel
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
+import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.DOWNLOAD_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCREEN_TAG
@@ -298,37 +298,20 @@ private fun VersionList(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
+                SimpleTextInputField(
                     modifier = Modifier.weight(1f),
+                    value = versionFilter.id,
+                    onValueChange = { onVersionFilterChange(versionFilter.copy(id = it)) },
                     color = itemContainerColor,
                     contentColor = itemContentColor,
-                    shape = RoundedCornerShape(50f),
-                    shadowElevation = 1.dp
-                ) {
-                    BasicTextField(
-                        modifier = Modifier
-                            .height(32.dp)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        value = versionFilter.id,
-                        onValueChange = { onVersionFilterChange(versionFilter.copy(id = it)) },
-                        textStyle = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp),
-                        cursorBrush = SolidColor(LocalTextSelectionColors.current.handleColor),
-                        singleLine = true,
-                        decorationBox = { innerTextField ->
-                            Box(
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                if (versionFilter.id.isEmpty()) {
-                                    Text(
-                                        text = stringResource(R.string.generic_search),
-                                        style = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp)
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        }
-                    )
-                }
+                    singleLine = true,
+                    hint = {
+                        Text(
+                            text = stringResource(R.string.generic_search),
+                            style = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp)
+                        )
+                    }
+                )
 
                 Spacer(modifier = Modifier.width(12.dp))
 

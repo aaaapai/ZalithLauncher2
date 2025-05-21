@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.Public
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
@@ -21,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -34,6 +38,8 @@ import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.secondaryContainerDrawerItemColors
 import com.movtery.zalithlauncher.ui.screens.content.elements.CategoryIcon
+import com.movtery.zalithlauncher.ui.screens.content.versions.SAVES_MANAGER_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.versions.SavesManagerScreen
 import com.movtery.zalithlauncher.ui.screens.content.versions.VERSION_CONFIG_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.versions.VERSION_OVERVIEW_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.versions.VersionConfigScreen
@@ -75,7 +81,8 @@ fun VersionSettingsScreen() {
 
 private val settingItems = listOf(
     VersionSettingsItem(VERSION_OVERVIEW_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Dashboard, R.string.versions_settings_overview) }, R.string.versions_settings_overview),
-    VersionSettingsItem(VERSION_CONFIG_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Build, R.string.versions_settings_config) }, R.string.versions_settings_config)
+    VersionSettingsItem(VERSION_CONFIG_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Build, R.string.versions_settings_config) }, R.string.versions_settings_config),
+    VersionSettingsItem(SAVES_MANAGER_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Public, R.string.saves_manage) }, R.string.saves_manage, division = true)
 )
 
 @Composable
@@ -97,6 +104,15 @@ private fun TabMenu(
     ) {
         items(settingItems.size) { index ->
             val item = settingItems[index]
+            if (item.division) {
+                HorizontalDivider(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 12.dp)
+                        .fillMaxWidth()
+                        .alpha(0.5f),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
             NavigationDrawerItem(
                 icon = {
                     item.icon()
@@ -121,7 +137,8 @@ private fun TabMenu(
 private data class VersionSettingsItem(
     val screenTag: String,
     val icon: @Composable () -> Unit,
-    val textRes: Int
+    val textRes: Int,
+    val division: Boolean = false
 )
 
 @Composable
@@ -164,6 +181,11 @@ private fun NavigationUI(
             route = VERSION_CONFIG_SCREEN_TAG
         ) {
             VersionConfigScreen()
+        }
+        composable(
+            route = SAVES_MANAGER_SCREEN_TAG
+        ) {
+            SavesManagerScreen()
         }
     }
 }

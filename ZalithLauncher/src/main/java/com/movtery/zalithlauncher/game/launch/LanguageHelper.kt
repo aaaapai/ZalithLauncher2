@@ -1,18 +1,7 @@
 package com.movtery.zalithlauncher.game.launch
 
+import com.movtery.zalithlauncher.game.version.installed.utils.isLowerOrEqualVer
 import com.movtery.zalithlauncher.utils.getSystemLanguage
-import com.movtery.zalithlauncher.utils.string.isLowerOrEqualTo
-import java.util.regex.Pattern
-
-private val SNAPSHOT_REGEX: Pattern = Pattern.compile("^\\d+[a-zA-Z]\\d+[a-zA-Z]$")
-
-private fun isOlderVersionRelease(versionName: String): Boolean {
-    return versionName.isLowerOrEqualTo("1.10.2")
-}
-
-private fun isOlderVersionSnapshot(versionName: String): Boolean {
-    return versionName.isLowerOrEqualTo("16w32a")
-}
 
 private fun getOlderLanguage(lang: String): String {
     val underscoreIndex = lang.indexOf('_')
@@ -26,16 +15,10 @@ private fun getOlderLanguage(lang: String): String {
 
 private fun getLanguage(versionId: String): String {
     val lang = getSystemLanguage()
-    return when {
-        versionId.contains('.') -> {
-            if (isOlderVersionRelease(versionId)) getOlderLanguage(lang) // 1.10 -
-            else lang
-        }
-        SNAPSHOT_REGEX.matcher(versionId).matches() -> { // 快照版本 "24w09a" "16w20a"
-            if (isOlderVersionSnapshot(versionId)) getOlderLanguage(lang)
-            else lang
-        }
-        else -> lang
+    return if (versionId.isLowerOrEqualVer("1.10.2", "16w32a")) {
+        getOlderLanguage(lang) // 1.10 -
+    } else {
+        lang
     }
 }
 

@@ -223,7 +223,7 @@ fun TouchableButton(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun TooltipIconButton(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     tooltipTitle: String,
     tooltipMessage: String,
     content: @Composable () -> Unit
@@ -246,7 +246,7 @@ fun TooltipIconButton(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun TooltipIconButton(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     tooltip: @Composable (TooltipScope.() -> Unit),
     content: @Composable () -> Unit
 ) {

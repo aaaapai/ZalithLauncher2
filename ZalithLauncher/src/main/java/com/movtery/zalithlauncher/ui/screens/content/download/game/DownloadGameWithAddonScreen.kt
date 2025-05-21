@@ -3,7 +3,6 @@ package com.movtery.zalithlauncher.ui.screens.content.download.game
 import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,6 +60,7 @@ import com.movtery.zalithlauncher.game.download.game.GameDownloadInfo
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.DOWNLOAD_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCREEN_TAG
@@ -267,46 +266,28 @@ private fun ScreenHeader(
                     .padding(vertical = 8.dp)
                     .animateContentSize(animationSpec = getAnimateTween())
             ) {
-                Surface(
+                SimpleTextInputField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(all = 4.dp),
+                    value = nameValue,
+                    onValueChange = {
+                        nameValue = it
+                        if (!editedByUser) {
+                            //用户已经对版本名称进行了编辑
+                            editedByUser = true
+                        }
+                    },
                     color = itemContainerColor,
                     contentColor = itemContentColor,
-                    shape = RoundedCornerShape(50f),
-                    shadowElevation = 1.dp
-                ) {
-                    BasicTextField(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(32.dp)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        value = nameValue,
-                        onValueChange = {
-                            nameValue = it
-                            if (!editedByUser) {
-                                //用户已经对版本名称进行了编辑
-                                editedByUser = true
-                            }
-                        },
-                        textStyle = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp),
-                        cursorBrush = SolidColor(LocalTextSelectionColors.current.handleColor),
-                        singleLine = true,
-                        decorationBox = { innerTextField ->
-                            Box(
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                if (nameValue.isEmpty()) {
-                                    Text(
-                                        text = stringResource(R.string.download_game_version_name),
-                                        style = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp)
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        }
-                    )
-                }
+                    singleLine = true,
+                    hint = {
+                        Text(
+                            text = stringResource(R.string.download_game_version_name),
+                            style = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp)
+                        )
+                    }
+                )
 
                 if (isError) {
                     Text(

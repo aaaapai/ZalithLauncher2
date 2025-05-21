@@ -174,8 +174,17 @@
     <string name="account_change_skin">Skin Değiştir</string>
     <string name="account_change_skin_select_model_title">Model Seç</string>
     <string name="account_change_skin_select_model_message">Skin tipi Steve (geniş kol) mi Alex (ince kol) mu?</string>
+    <string name="account_change_skin_select_model_alert_hint1">Başlatıcı, çevrimdışı hesaplar için özel kaplamaları etkinleştirmek amacıyla oyun başlatma sürecinde otomatik olarak bir kaynak paketi oluşturup yükleyecektir.</string>
+    <string name="account_change_skin_select_model_alert_hint2">Ancak, bu yöntemin tüm Minecraft sürümleriyle uyumlu olmadığını lütfen unutmayın.</string>
+    <string name="account_change_skin_select_model_alert_hint3">Minecraft 1.19.3 sürümünden itibaren, kaplama türleri ve karakter modelleri daha ayrıntılı şekilde ayrıştırılmıştır.</string>
+    <string name="account_change_skin_select_model_alert_hint4">Bazı eknik limitlere göre, bazı Minecraft sürümleri özel skinleri desteklemiyor!</string>
+    <string name="account_change_skin_select_model_alert_hint5">Farklı çözüm yolu:</string>
+    <string name="account_change_skin_select_model_alert_auth_server">Kimlik doğrulama sunucusunu kullan</string>
+    <string name="account_change_skin_select_model_alert_custom_skin_loader">CustomSkinLoader modunu kullan</string>
     <string name="account_change_skin_model_steve">Steve Modeli</string>
     <string name="account_change_skin_model_alex">Alex Modeli</string>
+    <string name="account_change_skin_not_supported_alex">Şuanki Minecraft sürümün alex ile skinleri desteklemiyor. Eğer hesabın skinini alex ayarlarsan, oyun içinde steve olarak görünür!</string>
+    <string name="account_change_skin_compatibility_warning">Bazı teknik limitlemelere göre bu versiyonda özel skinler çalışmayabilir.</string>
     <string name="account_change_skin_reset_skin_message">Skin sıfırlansın mı?</string>
     <string name="account_supporting_username_invalid_title">Geçersiz Kullanıcı Adı</string>
     <string name="account_supporting_username_invalid_local_message_hint1">Geçerli kullanıcı adları harf, sayı ve alt çizgi içerir (3–16 karakter).</string>
