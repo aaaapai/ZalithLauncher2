@@ -306,8 +306,9 @@ class GameLauncher(
             val renderer = Renderers.getCurrentRenderer()
             val rendererId = renderer.getRendererId()
 
-            if (rendererId.startsWith("opengles2")) {
-                envMap["LIBGL_ES"] = "2"
+            if (rendererId.startsWith("opengles3")) {
+                envMap["LIBGL_ES"] = "3"
+                envMap["LIBGL_GLES"] = "libGLESv3.so"
                 envMap["LIBGL_MIPMAP"] = "3"
                 envMap["LIBGL_NOERROR"] = "1"
                 envMap["LIBGL_NOINTOVLHACK"] = "1"
@@ -321,7 +322,7 @@ class GameLauncher(
             }
 
             envMap["POJAV_RENDERER"] = rendererId
-
+            envMap["TAG_RENDERER"] = rendererId
             if (RendererPluginManager.selectedRendererPlugin != null) return
 
             if (!rendererId.startsWith("opengles")) {

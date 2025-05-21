@@ -17,6 +17,7 @@ import com.movtery.zalithlauncher.path.LibPath
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.string.isBiggerOrEqualTo
 import com.movtery.zalithlauncher.utils.string.isLowerTo
 import java.io.File
 
