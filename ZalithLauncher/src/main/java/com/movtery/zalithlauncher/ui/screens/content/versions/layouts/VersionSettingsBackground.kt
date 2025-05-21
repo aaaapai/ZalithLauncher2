@@ -1,10 +1,10 @@
 package com.movtery.zalithlauncher.ui.screens.content.versions.layouts
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -15,17 +15,17 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun VersionSettingsBackground(
     modifier: Modifier = Modifier,
+    paddingValues: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
     content: @Composable VersionSettingsLayoutScope.() -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column(
             modifier = Modifier
                 .clip(shape = MaterialTheme.shapes.large)
-                .padding(all = 8.dp)
+                .padding(paddingValues)
         ) {
             val scope = remember { VersionSettingsLayoutScope() }
 

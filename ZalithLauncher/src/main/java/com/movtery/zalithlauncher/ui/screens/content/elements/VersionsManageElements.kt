@@ -61,6 +61,7 @@ import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleCheckEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleTaskDialog
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.components.secondaryContainerDrawerItemColors
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.string.StringUtils
@@ -135,7 +136,7 @@ fun GamePathItemLayout(
             DropdownMenu(
                 expanded = menuExpanded,
                 shape = MaterialTheme.shapes.large,
-                shadowElevation = 4.dp,
+                shadowElevation = 3.dp,
                 onDismissRequest = { menuExpanded = false }
             ) {
                 DropdownMenuItem(
@@ -472,7 +473,7 @@ fun VersionItemLayout(
     version: Version,
     selected: Boolean,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    color: Color = itemLayoutColor(),
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onSelected: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
@@ -489,7 +490,7 @@ fun VersionItemLayout(
         color = color,
         contentColor = contentColor,
         shape = MaterialTheme.shapes.large,
-        shadowElevation = 2.dp,
+        shadowElevation = 1.dp,
         onClick = {
             if (selected) return@Surface
             onSelected()
@@ -598,7 +599,7 @@ fun VersionItemLayout(
                 DropdownMenu(
                     expanded = menuExpanded,
                     shape = MaterialTheme.shapes.large,
-                    shadowElevation = 4.dp,
+                    shadowElevation = 3.dp,
                     onDismissRequest = { menuExpanded = false }
                 ) {
                     DropdownMenuItem(

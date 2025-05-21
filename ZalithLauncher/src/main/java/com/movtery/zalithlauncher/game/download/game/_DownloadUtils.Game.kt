@@ -4,7 +4,6 @@ import android.util.Log
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.movtery.zalithlauncher.game.download.game.models.LibraryComponents
-import com.movtery.zalithlauncher.game.path.getGameHome
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
@@ -77,23 +76,25 @@ fun copyLibraries(
 
 /**
  * 复制jar、json文件到临时游戏目录，作为安装ModLoader的环境
- * @param targetVersion 目标游戏版本名
- * @param destinationGameFolder 要复制到的临时游戏目录
- * @param inheritVersion 要复制为的临时原版名称
+ * @param sourceGameFolder 源游戏目录
+ * @param sourceVersion 源游戏版本名
+ * @param destinationGameFolder 要复制到的游戏目录
+ * @param targetVersion 要复制为的版本名称
  * @param filesToCopy 指定要复制的文件的后缀名
  */
 fun copyVanillaFiles(
-    targetVersion: String,
+    sourceGameFolder: File,
+    sourceVersion: String,
     destinationGameFolder: File,
-    inheritVersion: String,
+    targetVersion: String,
     filesToCopy: List<String> = listOf(".json", ".jar")
 ) {
-    val sourceDir = File(getGameHome(), "versions/$targetVersion").ensureDirectory()
-    val destinationDir = File(destinationGameFolder, "versions/$inheritVersion").ensureDirectory()
+    val sourceDir = File(sourceGameFolder, "versions/$sourceVersion").ensureDirectory()
+    val destinationDir = File(destinationGameFolder, "versions/$targetVersion").ensureDirectory()
 
     for (extension in filesToCopy) {
-        val sourceFile = File(sourceDir, "$targetVersion$extension")
-        val destinationFile = File(destinationDir, "$inheritVersion$extension")
+        val sourceFile = File(sourceDir, "$sourceVersion$extension")
+        val destinationFile = File(destinationDir, "$targetVersion$extension")
 
         if (!destinationFile.exists() && sourceFile.exists()) {
             sourceFile.copyTo(destinationFile)

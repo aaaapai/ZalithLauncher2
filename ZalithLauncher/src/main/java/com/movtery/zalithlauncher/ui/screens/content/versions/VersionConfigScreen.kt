@@ -113,7 +113,7 @@ private fun VersionConfigs(
 
     VersionSettingsBackground(modifier = modifier) {
         Text(
-            modifier = Modifier.padding(horizontal = 8.dp).padding(top = 4.dp, bottom = 8.dp),
+            modifier = Modifier.padding(all = 8.dp),
             text = stringResource(R.string.versions_config_version_settings),
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelLarge
@@ -189,7 +189,7 @@ private fun GameConfigs(
 
     VersionSettingsBackground(modifier = modifier) {
         Text(
-            modifier = Modifier.padding(horizontal = 8.dp).padding(top = 4.dp, bottom = 8.dp),
+            modifier = Modifier.padding(all = 8.dp),
             text = stringResource(R.string.versions_config_game_settings),
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelLarge
@@ -251,6 +251,7 @@ private fun GameConfigs(
         )
 
         TextInputLayout(
+            modifier = Modifier.padding(bottom = 4.dp),
             currentValue = config.serverIp,
             title = stringResource(R.string.versions_config_auto_join_server_ip_title),
             summary = stringResource(R.string.versions_config_auto_join_server_ip_summary),
@@ -276,7 +277,7 @@ private fun SupportConfigs(
 
     VersionSettingsBackground(modifier = modifier) {
         Text(
-            modifier = Modifier.padding(horizontal = 8.dp).padding(top = 4.dp, bottom = 8.dp),
+            modifier = Modifier.padding(all = 8.dp),
             text = stringResource(R.string.versions_config_support_settings),
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.labelLarge

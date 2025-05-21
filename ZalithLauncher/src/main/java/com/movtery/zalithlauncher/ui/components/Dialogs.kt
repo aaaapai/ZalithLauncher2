@@ -176,7 +176,7 @@ fun SimpleEditDialog(
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             shape = MaterialTheme.shapes.extraLarge,
-            shadowElevation = 4.dp
+            shadowElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -322,7 +322,7 @@ fun <T> SimpleListDialog(
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             shape = MaterialTheme.shapes.extraLarge,
-            shadowElevation = 4.dp
+            shadowElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
@@ -389,7 +389,7 @@ fun SimpleTaskDialog(
         Dialog(onDismissRequest = {}) {
             Surface(
                 shape = MaterialTheme.shapes.extraLarge,
-                shadowElevation = 4.dp
+                shadowElevation = 6.dp
             ) {
                 Column(
                     modifier = Modifier

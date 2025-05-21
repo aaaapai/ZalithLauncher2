@@ -14,6 +14,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,6 +52,7 @@ import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
+import com.movtery.zalithlauncher.ui.components.TooltipIconButton
 import com.movtery.zalithlauncher.ui.control.mouse.MousePointer
 import com.movtery.zalithlauncher.ui.control.mouse.mousePointerFile
 import com.movtery.zalithlauncher.ui.screens.content.SETTINGS_SCREEN_TAG
@@ -93,9 +96,23 @@ fun ControlSettingsScreen() {
                     unit = AllSettings.physicalMouseMode,
                     title = stringResource(R.string.settings_control_mouse_physical_mouse_mode_title),
                     summary = stringResource(R.string.settings_control_mouse_physical_mouse_mode_summary),
-                ) {
-                    physicalMouseMode = it
-                }
+                    trailingIcon = {
+                        TooltipIconButton(
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                            tooltipTitle = stringResource(R.string.generic_warning),
+                            tooltipMessage = stringResource(R.string.settings_control_mouse_physical_mouse_warning)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = stringResource(R.string.generic_warning),
+                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                            )
+                        }
+                    },
+                    onCheckedChange = {
+                        physicalMouseMode = it
+                    }
+                )
 
                 MousePointerLayout(
                     mouseSize = mouseSize

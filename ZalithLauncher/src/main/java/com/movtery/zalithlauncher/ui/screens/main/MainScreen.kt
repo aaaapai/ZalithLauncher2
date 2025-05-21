@@ -11,7 +11,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,7 +34,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -75,8 +73,8 @@ import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
-import com.movtery.zalithlauncher.ui.components.DownShadow
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.ACCOUNT_MANAGE_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.AccountManageScreen
 import com.movtery.zalithlauncher.ui.screens.content.DOWNLOAD_SCREEN_TAG
@@ -145,14 +143,14 @@ fun MainScreen() {
         }
 
         TopBar(
-            navController = navController,
-            taskRunning = tasks.isEmpty(),
-            isTasksExpanded = isTaskMenuExpanded,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
-                .background(color = MaterialTheme.colorScheme.primaryContainer)
-                .zIndex(10f)
+                .zIndex(10f),
+            navController = navController,
+            taskRunning = tasks.isEmpty(),
+            isTasksExpanded = isTaskMenuExpanded,
+            color = MaterialTheme.colorScheme.surfaceContainer
         ) {
             changeTasksExpandedState()
         }
@@ -162,16 +160,11 @@ fun MainScreen() {
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            val backgroundColor = if (isSystemInDarkTheme()) {
-                MaterialTheme.colorScheme.surfaceContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
             NavigationUI(
                 navController = navController,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = backgroundColor)
+                    .background(color = MaterialTheme.colorScheme.surface)
             )
 
             TaskMenu(
@@ -184,14 +177,6 @@ fun MainScreen() {
             ) {
                 changeTasksExpandedState()
             }
-
-            //叠加的一层阴影效果
-            DownShadow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart),
-                height = 4.dp
-            )
         }
     }
 }
@@ -202,6 +187,7 @@ private fun TopBar(
     taskRunning: Boolean,
     isTasksExpanded: Boolean,
     modifier: Modifier = Modifier,
+    color: Color,
     changeExpandedState: () -> Unit = {}
 ) {
     var appTitle by rememberSaveable { mutableStateOf("ZalithLauncher") }
@@ -209,142 +195,141 @@ private fun TopBar(
 
     val inLauncherScreen = currentTag == null || currentTag == LAUNCHER_SCREEN_TAG
 
-    ConstraintLayout (
-        modifier = modifier
+    Surface(
+        modifier = modifier,
+        color = color,
+        shadowElevation = 3.dp
     ) {
-        val (backButton, title, tasksLayout, download, settings) = createRefs()
+        ConstraintLayout {
+            val (backButton, title, tasksLayout, download, settings) = createRefs()
 
-        val backButtonX by animateDpAsState(
-            targetValue = if (inLauncherScreen) -(60).dp else 0.dp,
-            animationSpec = getAnimateTween()
-        )
-        val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+            val backButtonX by animateDpAsState(
+                targetValue = if (inLauncherScreen) -(60).dp else 0.dp,
+                animationSpec = getAnimateTween()
+            )
+            val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-        IconButton(
-            modifier = Modifier
-                .offset { IntOffset(x = backButtonX.roundToPx(), y = 0) }
-                .constrainAs(backButton) {
-                    start.linkTo(parent.start, margin = 12.dp)
-                    top.linkTo(parent.top)
-                    bottom.linkTo(parent.bottom)
-                }
-                .fillMaxHeight(),
-            onClick = {
-                if (!inLauncherScreen) {
-                    //不在主屏幕时才允许返回
-                    backDispatcher?.onBackPressed() ?: run {
-                        navController.popBackStack()
+            IconButton(
+                modifier = Modifier
+                    .offset { IntOffset(x = backButtonX.roundToPx(), y = 0) }
+                    .constrainAs(backButton) {
+                        start.linkTo(parent.start, margin = 12.dp)
+                        top.linkTo(parent.top)
+                        bottom.linkTo(parent.bottom)
+                    }
+                    .fillMaxHeight(),
+                onClick = {
+                    if (!inLauncherScreen) {
+                        //不在主屏幕时才允许返回
+                        backDispatcher?.onBackPressed() ?: run {
+                            navController.popBackStack()
+                        }
                     }
                 }
-            }
-        ) {
-            Icon(
-                modifier = Modifier.size(24.dp),
-                imageVector = Icons.AutoMirrored.Filled.KeyboardBackspace,
-                contentDescription = stringResource(R.string.generic_back),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-        }
-
-        val appTitleX by animateDpAsState(
-            targetValue = if (inLauncherScreen) 0.dp else 48.dp,
-            animationSpec = getAnimateTween()
-        )
-
-        Text(
-            text = appTitle,
-            modifier = Modifier
-                .offset { IntOffset(x = appTitleX.roundToPx(), y = 0) }
-                .constrainAs(title) {
-                    centerVerticallyTo(parent)
-                    start.linkTo(parent.start, margin = 18.dp)
-                }
-                .clickable {
-                    appTitle = StringUtils.shiftString(appTitle, ShiftDirection.RIGHT, 1)
-                },
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-
-        val taskLayoutY by animateDpAsState(
-            targetValue = if (isTasksExpanded || taskRunning) (-50).dp else 0.dp,
-            animationSpec = getAnimateTween()
-        )
-
-        Row(
-            modifier = Modifier
-                .constrainAs(tasksLayout) {
-                    top.linkTo(parent.top)
-                    bottom.linkTo(parent.bottom)
-                    end.linkTo(download.start, margin = 8.dp)
-                }
-                .offset { IntOffset(x = 0, y = taskLayoutY.roundToPx()) }
-                .clip(shape = MaterialTheme.shapes.large)
-                .clickable { changeExpandedState() }
-                .padding(all = 8.dp)
-                .width(120.dp)
-        ) {
-            LinearProgressIndicator(modifier = Modifier.weight(1f).align(Alignment.CenterVertically))
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(
-                modifier = Modifier.size(22.dp),
-                imageVector = Icons.Filled.Task,
-                contentDescription = stringResource(R.string.main_task_menu),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
-
-        IconButton(
-            modifier = Modifier
-                .constrainAs(download) {
-                    centerVerticallyTo(parent)
-                    end.linkTo(settings.start, margin = 4.dp)
-                }
-                .fillMaxHeight(),
-            onClick = {
-                navController.navigateToDownload()
-            }
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Download,
-                contentDescription = stringResource(R.string.generic_download),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
-
-        IconButton(
-            modifier = Modifier
-                .constrainAs(settings) {
-                    centerVerticallyTo(parent)
-                    end.linkTo(parent.end, margin = 12.dp)
-                }
-                .fillMaxHeight(),
-            onClick = {
-                if (currentTag == LAUNCHER_SCREEN_TAG) {
-                    navController.navigateTo(SETTINGS_SCREEN_TAG)
-                } else {
-                    navController.popBackStack(LAUNCHER_SCREEN_TAG, inclusive = false)
-                }
-            }
-        ) {
-            Crossfade(
-                targetState = currentTag,
-                label = "SettingsIconCrossfade",
-                animationSpec = getAnimateTween()
-            ) { tag ->
-                val isLauncherScreen = tag == LAUNCHER_SCREEN_TAG
+            ) {
                 Icon(
-                    imageVector = if (isLauncherScreen) {
-                        Icons.Filled.Settings
-                    } else {
-                        Icons.Filled.Home
-                    },
-                    contentDescription = if (isLauncherScreen) {
-                        stringResource(R.string.generic_setting)
-                    } else {
-                        stringResource(R.string.generic_main_menu)
-                    },
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp),
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardBackspace,
+                    contentDescription = stringResource(R.string.generic_back)
                 )
+            }
+
+            val appTitleX by animateDpAsState(
+                targetValue = if (inLauncherScreen) 0.dp else 48.dp,
+                animationSpec = getAnimateTween()
+            )
+
+            Text(
+                text = appTitle,
+                modifier = Modifier
+                    .offset { IntOffset(x = appTitleX.roundToPx(), y = 0) }
+                    .constrainAs(title) {
+                        centerVerticallyTo(parent)
+                        start.linkTo(parent.start, margin = 18.dp)
+                    }
+                    .clickable {
+                        appTitle = StringUtils.shiftString(appTitle, ShiftDirection.RIGHT, 1)
+                    }
+            )
+
+            val taskLayoutY by animateDpAsState(
+                targetValue = if (isTasksExpanded || taskRunning) (-50).dp else 0.dp,
+                animationSpec = getAnimateTween()
+            )
+
+            Row(
+                modifier = Modifier
+                    .constrainAs(tasksLayout) {
+                        top.linkTo(parent.top)
+                        bottom.linkTo(parent.bottom)
+                        end.linkTo(download.start, margin = 8.dp)
+                    }
+                    .offset { IntOffset(x = 0, y = taskLayoutY.roundToPx()) }
+                    .clip(shape = MaterialTheme.shapes.large)
+                    .clickable { changeExpandedState() }
+                    .padding(all = 8.dp)
+                    .width(120.dp)
+            ) {
+                LinearProgressIndicator(modifier = Modifier.weight(1f).align(Alignment.CenterVertically))
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    modifier = Modifier.size(22.dp),
+                    imageVector = Icons.Filled.Task,
+                    contentDescription = stringResource(R.string.main_task_menu)
+                )
+            }
+
+            IconButton(
+                modifier = Modifier
+                    .constrainAs(download) {
+                        centerVerticallyTo(parent)
+                        end.linkTo(settings.start, margin = 4.dp)
+                    }
+                    .fillMaxHeight(),
+                onClick = {
+                    navController.navigateToDownload()
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Download,
+                    contentDescription = stringResource(R.string.generic_download)
+                )
+            }
+
+            IconButton(
+                modifier = Modifier
+                    .constrainAs(settings) {
+                        centerVerticallyTo(parent)
+                        end.linkTo(parent.end, margin = 12.dp)
+                    }
+                    .fillMaxHeight(),
+                onClick = {
+                    if (currentTag == LAUNCHER_SCREEN_TAG) {
+                        navController.navigateTo(SETTINGS_SCREEN_TAG)
+                    } else {
+                        navController.popBackStack(LAUNCHER_SCREEN_TAG, inclusive = false)
+                    }
+                }
+            ) {
+                Crossfade(
+                    targetState = currentTag,
+                    label = "SettingsIconCrossfade",
+                    animationSpec = getAnimateTween()
+                ) { tag ->
+                    val isLauncherScreen = tag == LAUNCHER_SCREEN_TAG
+                    Icon(
+                        imageVector = if (isLauncherScreen) {
+                            Icons.Filled.Settings
+                        } else {
+                            Icons.Filled.Home
+                        },
+                        contentDescription = if (isLauncherScreen) {
+                            stringResource(R.string.generic_setting)
+                        } else {
+                            stringResource(R.string.generic_main_menu)
+                        }
+                    )
+                }
             }
         }
     }
@@ -459,8 +444,7 @@ private fun TaskMenu(
             .alpha(surfaceAlpha)
             .padding(all = 4.dp)
             .width(240.dp),
-        shape = MaterialTheme.shapes.extraLarge,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column {
             Box(
@@ -524,7 +508,7 @@ fun TaskItem(
     taskMessageArgs: Array<out Any>?,
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    color: Color = itemLayoutColor(),
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onCancelClick: () -> Unit = {}
 ) {
@@ -533,7 +517,7 @@ fun TaskItem(
         shape = shape,
         color = color,
         contentColor = contentColor,
-        shadowElevation = 2.dp
+        shadowElevation = 1.dp
     ) {
         Row(
             modifier = Modifier.padding(all = 8.dp)

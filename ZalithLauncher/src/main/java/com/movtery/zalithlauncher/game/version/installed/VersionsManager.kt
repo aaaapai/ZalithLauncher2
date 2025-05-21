@@ -65,11 +65,6 @@ object VersionsManager {
         else folder.exists()
     }
 
-    /**
-     * 版本忽略标识文件，用于VersionsManager忽略该版本文件夹，避免识别它作为一个版本
-     */
-    fun ignoreFile(targetPath: File) = File(targetPath, ".zlIgnore")
-
     fun refresh() {
         currentJob?.cancel()
         currentJob = scope.launch {
@@ -79,12 +74,6 @@ object VersionsManager {
 
             val newVersions = mutableListOf<Version>()
             File(getVersionsHome()).listFiles()?.forEach { versionFile ->
-                val ignoreFile = ignoreFile(versionFile)
-                if (ignoreFile.exists()) {
-                    //忽略这个文件夹
-                    return@forEach
-                }
-
                 runCatching {
                     processVersionFile(versionFile)
                 }.getOrNull()?.let {

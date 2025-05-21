@@ -7,6 +7,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runInterruptible
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.io.FileNotFoundException
 
 class DownloadTask(
     val url: String,
@@ -14,6 +15,8 @@ class DownloadTask(
     private val bufferSize: Int = 32768,
     val targetFile: File,
     val sha1: String?,
+    /** 是否本身是可以被下载的，如果不可下载，则通过提供url尝试下载，如果失败则抛出 FileNotFoundException */
+    val isDownloadable: Boolean,
     private val onDownloadFailed: (DownloadTask) -> Unit = {},
     private val onFileDownloadedSize: (Long) -> Unit = {},
     private val onFileDownloaded: () -> Unit = {}
@@ -40,6 +43,7 @@ class DownloadTask(
         }.onFailure { e ->
             if (e is CancellationException) return@onFailure
             Log.e(DOWNLOADER_TAG, "Download failed: ${targetFile.absolutePath}, url: $url", e)
+            if (!isDownloadable && e is FileNotFoundException) throw e
             onDownloadFailed(this)
         }
     }

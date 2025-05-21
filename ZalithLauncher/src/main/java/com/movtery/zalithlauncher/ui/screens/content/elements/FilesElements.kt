@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.R
@@ -34,8 +33,7 @@ import java.util.Date
 @Composable
 fun BaseFileItem(
     file: File,
-    modifier: Modifier = Modifier,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimary
+    modifier: Modifier = Modifier
 ) {
     if (!file.exists()) throw IllegalArgumentException("File is not exists!")
 
@@ -45,29 +43,25 @@ fun BaseFileItem(
         Icon(
             modifier = Modifier.size(24.dp).align(Alignment.CenterVertically),
             imageVector = if (file.isDirectory) Icons.Outlined.Folder else Icons.Outlined.Description,
-            contentDescription = null,
-            tint = contentColor
+            contentDescription = null
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.align(Alignment.CenterVertically)) {
             Text(
                 text = file.name,
-                style = MaterialTheme.typography.labelMedium,
-                color = contentColor
+                style = MaterialTheme.typography.labelMedium
             )
             Row {
                 val date = Date(file.lastModified())
                 Text(
                     text = formatDate(date),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = contentColor
+                    style = MaterialTheme.typography.labelSmall
                 )
                 if (file.isFile) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = formatFileSize(FileUtils.sizeOf(file)),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = contentColor
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             }

@@ -132,7 +132,7 @@ private fun TabMenu(
                         .padding(horizontal = 8.dp, vertical = 12.dp)
                         .fillMaxWidth()
                         .alpha(0.5f),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             NavigationDrawerItem(

@@ -14,6 +14,8 @@ import com.movtery.zalithlauncher.game.account.otherserver.OtherLoginApi
 import com.movtery.zalithlauncher.game.account.otherserver.OtherLoginHelper
 import com.movtery.zalithlauncher.game.account.otherserver.models.Servers
 import com.movtery.zalithlauncher.game.account.otherserver.models.Servers.Server
+import com.movtery.zalithlauncher.game.skin.SkinModelType
+import com.movtery.zalithlauncher.game.skin.getLocalUUIDWithSkinModel
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.screens.content.WEB_VIEW_SCREEN_TAG
@@ -221,10 +223,11 @@ fun otherLogin(
  * 离线账号登陆
  */
 fun localLogin(userName: String) {
-    val account = Account().apply {
-        this.username = userName
-        this.accountType = AccountType.LOCAL.tag
-    }
+    val account = Account(
+        username = userName,
+        accountType = AccountType.LOCAL.tag,
+        profileId = getLocalUUIDWithSkinModel(userName, SkinModelType.NONE)
+    )
     saveAccount(account)
 }
 

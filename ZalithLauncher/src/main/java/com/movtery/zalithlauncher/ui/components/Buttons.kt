@@ -22,16 +22,24 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.TooltipScope
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +54,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @Composable
 fun ScalingActionButton(
@@ -207,6 +216,62 @@ fun TouchableButton(
             ) {
                 Text(text = text)
             }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun TooltipIconButton(
+    modifier: Modifier,
+    tooltipTitle: String,
+    tooltipMessage: String,
+    content: @Composable () -> Unit
+) {
+    TooltipIconButton(
+        modifier = modifier,
+        tooltip = {
+            RichTooltip(
+                modifier = Modifier.padding(all = 3.dp),
+                title = { Text(text = tooltipTitle) },
+                shadowElevation = 3.dp
+            ) {
+                Text(text = tooltipMessage)
+            }
+        },
+        content = content
+    )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun TooltipIconButton(
+    modifier: Modifier,
+    tooltip: @Composable (TooltipScope.() -> Unit),
+    content: @Composable () -> Unit
+) {
+    val tooltipState = rememberTooltipState(isPersistent = true)
+    val coroutineScope = rememberCoroutineScope()
+
+    TooltipBox(
+        modifier = modifier,
+        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+        tooltip = tooltip,
+        state = tooltipState,
+        enableUserInput = false
+    ) {
+        IconButton(
+            onClick = {
+                coroutineScope.launch {
+                    if (tooltipState.isVisible) {
+                        tooltipState.dismiss()
+                    } else {
+                        tooltipState.show()
+                    }
+                }
+            }
+        ) {
+            content()
         }
     }
 }

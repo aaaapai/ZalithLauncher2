@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -78,8 +76,7 @@ private fun EulaTextLayout(
                     y = yOffset.roundToPx()
                 )
             },
-        shape = MaterialTheme.shapes.extraLarge,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         LazyColumn (
             modifier = Modifier.fillMaxWidth(),
@@ -106,7 +103,7 @@ private fun ActionLayout(
         swapIn = isVisible
     )
 
-    Surface(
+    Card(
         modifier = modifier
             .offset {
                 IntOffset(
@@ -114,11 +111,12 @@ private fun ActionLayout(
                     y = 0
                 )
             },
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shadowElevation = 4.dp
+        shape = MaterialTheme.shapes.extraLarge
     ) {
-        Column(verticalArrangement = Arrangement.Bottom) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Bottom
+        ) {
             ScalingActionButton(
                 modifier = Modifier
                     .fillMaxWidth()

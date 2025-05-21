@@ -23,9 +23,7 @@ import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +58,8 @@ import com.movtery.zalithlauncher.game.account.otherserver.OtherLoginHelper
 import com.movtery.zalithlauncher.game.account.otherserver.ResponseException
 import com.movtery.zalithlauncher.game.account.otherserver.models.Servers
 import com.movtery.zalithlauncher.game.account.saveAccount
+import com.movtery.zalithlauncher.game.skin.SkinModelType
+import com.movtery.zalithlauncher.game.skin.getLocalUUIDWithSkinModel
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.path.UrlManager
 import com.movtery.zalithlauncher.state.MutableStates
@@ -125,7 +125,7 @@ fun AccountManageScreen() {
         Row(
             modifier = Modifier.fillMaxSize()
         ) {
-            ServerTypeTab(
+            ServerTypeMenu(
                 isVisible = isVisible,
                 modifier = Modifier
                     .fillMaxHeight()
@@ -176,7 +176,7 @@ fun AccountManageScreen() {
 }
 
 @Composable
-private fun ServerTypeTab(
+private fun ServerTypeMenu(
     isVisible: Boolean,
     modifier: Modifier = Modifier,
     updateMicrosoftOperation: (MicrosoftLoginOperation) -> Unit,
@@ -193,11 +193,11 @@ private fun ServerTypeTab(
         runCatching {
             refreshOtherServer()
         }.onFailure {
-            Log.e("ServerTypeTab", "Failed to refresh other server", it)
+            Log.w("ServerTypeTab", "Failed to refresh other server", it)
         }
     }
 
-    Surface(
+    Card(
         modifier = modifier
             .offset {
                 IntOffset(
@@ -206,9 +206,7 @@ private fun ServerTypeTab(
                 )
             }
             .fillMaxHeight(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shadowElevation = 4.dp
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column {
             Column(
@@ -513,8 +511,7 @@ private fun AccountsLayout(
                 y = yOffset.roundToPx()
             )
         },
-        shape = MaterialTheme.shapes.extraLarge,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         var accountOperation by remember { mutableStateOf<AccountOperation>(AccountOperation.None) }
         AccountOperation(
@@ -626,7 +623,8 @@ private fun AccountSkinOperation(
                     updateOperation(AccountSkinOperation.None)
                 },
                 onSelected = { type ->
-                    account.skinModelType = type.name
+                    account.skinModelType = type
+                    account.profileId = getLocalUUIDWithSkinModel(account.username, type)
                     updateOperation(AccountSkinOperation.SaveSkin(accountSkinOperation.uri))
                 }
             )
@@ -701,7 +699,8 @@ private fun AccountSkinOperation(
                     task = {
                         account.apply {
                             FileUtils.deleteQuietly(getSkinFile())
-                            skinModelType = ""
+                            skinModelType = SkinModelType.NONE
+                            profileId = getLocalUUIDWithSkinModel(username, skinModelType)
                             saveAccount(this)
                         }
                     }

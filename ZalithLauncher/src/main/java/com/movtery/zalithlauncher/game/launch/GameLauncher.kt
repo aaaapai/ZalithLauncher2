@@ -129,7 +129,7 @@ class GameLauncher(
         val launchArgs = LaunchArgs(
             account = account,
             gameDirPath = gameDirPath,
-            minecraftVersion = version,
+            version = version,
             gameManifest = gameManifest,
             runtime = runtime,
             launchClassPath = launchClassPath,

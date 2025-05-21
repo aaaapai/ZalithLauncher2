@@ -8,6 +8,7 @@ import com.movtery.zalithlauncher.game.versioninfo.MinecraftVersions
 import com.movtery.zalithlauncher.game.versioninfo.models.AssetIndexJson
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest.Version
+import com.movtery.zalithlauncher.utils.classes.Quadruple
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
 import java.io.File
@@ -86,11 +87,11 @@ class BaseMinecraftDownloader(
     /** 计划客户端jar下载 */
     fun loadClientJarDownload(
         gameManifest: GameManifest,
-        version: String,
+        clientName: String,
         mcFolder: File = versionsTarget,
         scheduleDownload: (url: String, hash: String?, targetFile: File, size: Long) -> Unit
     ) {
-        val clientFile = getVersionJarPath(version, mcFolder)
+        val clientFile = getVersionJarPath(clientName, mcFolder)
         gameManifest.downloads?.client?.let { client ->
             scheduleDownload(client.url, client.sha1, clientFile, client.size)
         }
@@ -119,7 +120,7 @@ class BaseMinecraftDownloader(
     fun loadLibraryDownloads(
         gameManifest: GameManifest,
         targetDir: File = librariesTarget,
-        scheduleDownload: (url: String, hash: String?, targetFile: File, size: Long) -> Unit
+        scheduleDownload: (url: String, hash: String?, targetFile: File, size: Long, isDownloadable: Boolean) -> Unit
     ) {
         gameManifest.libraries?.let { libraries ->
             processLibraries { libraries }
@@ -127,17 +128,23 @@ class BaseMinecraftDownloader(
                 if (library.name.startsWith("org.lwjgl")) return@forEach
 
                 val artifactPath: String = artifactToPath(library) ?: return@forEach
-                val (sha1, url, size) = library.downloads?.let { downloads ->
+                val (sha1, url, size, isDownloadable) = library.downloads?.let { downloads ->
                     downloads.artifact?.let { artifact ->
-                        Triple(artifact.sha1, artifact.url, artifact.size)
+                        Quadruple(artifact.sha1, artifact.url, artifact.size, true)
                     } ?: return@forEach
                 } ?: run {
-                    val u1 = library.url?.replace("http://", "https://") ?: "https://libraries.minecraft.net/"
+                    var isDownloadable = true
+                    val u1 = library.url?.replace("http://", "https://") ?: run {
+                        //对于没有提供下载链接的，可能是需要文件已经安装，而不是临时获取
+                        //不过尝试使用官方源下载，若下载失败则表明这个版本 文件有缺失的情况
+                        isDownloadable = false
+                        "https://libraries.minecraft.net/"
+                    }
                     val url = u1.let { "${it}$artifactPath" }
-                    Triple(library.sha1, url, library.size)
+                    Quadruple(library.sha1, url, library.size, isDownloadable)
                 }
 
-                scheduleDownload(url, sha1, File(targetDir, artifactPath), size)
+                scheduleDownload(url, sha1, File(targetDir, artifactPath), size, isDownloadable)
             }
         }
     }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -45,7 +46,8 @@ class SettingsLayoutScope {
         unit: BooleanSettingUnit,
         title: String,
         summary: String? = null,
-        onCheckedChange: (Boolean) -> Unit = {}
+        onCheckedChange: (Boolean) -> Unit = {},
+        trailingIcon: @Composable (() -> Unit)? = null
     ) {
         var checked by rememberSaveable { mutableStateOf(unit.getValue()) }
 
@@ -62,7 +64,8 @@ class SettingsLayoutScope {
             },
             modifier = modifier,
             title = title,
-            summary = summary
+            summary = summary,
+            trailingIcon = trailingIcon
         )
     }
 
@@ -165,6 +168,7 @@ class SettingsLayoutScope {
         getItemId: (E) -> String,
         getItemSummary: (@Composable (E) -> Unit)? = null,
         enabled: Boolean = true,
+        itemListPadding: PaddingValues = PaddingValues(bottom = 4.dp),
         onValueChange: (E) -> Unit = {}
     ) {
         SimpleListLayout(
@@ -178,6 +182,7 @@ class SettingsLayoutScope {
             getItemId = getItemId,
             getItemSummary = getItemSummary,
             enabled = enabled,
+            itemListPadding = itemListPadding,
             onValueChange = { item ->
                 unit.put(getItemId(item)).save()
                 onValueChange(item)

@@ -8,10 +8,8 @@ data class ColorTheme(
     val mistwave: Color,
     val glacier: Color,
     val verdantField: Color,
-    val ashveil: Color,
     val urbanAsh: Color,
-    val verdantDawn: Color,
-    val celestineVeil: Color
+    val verdantDawn: Color
 )
 
 enum class ColorThemeType {
@@ -21,9 +19,7 @@ enum class ColorThemeType {
     MISTWAVE,
     GLACIER,
     VERDANTFIELD,
-    ASHVEIL,
     URBAN_ASH,
     VERDANT_DAWN,
-    CELESTINE_VEIL,
     CUSTOM
 }

@@ -71,7 +71,7 @@ fun ColorPickerDialog(
         Surface(
             modifier = Modifier.fillMaxHeight(),
             shape = MaterialTheme.shapes.extraLarge,
-            shadowElevation = 4.dp
+            shadowElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier.padding(all = 16.dp),

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -224,7 +225,10 @@ private fun VersionInfoLayout(
     pickIcon: () -> Unit = {},
     resetIcon: () -> Unit = {}
 ) {
-    VersionSettingsBackground(modifier = modifier) {
+    VersionSettingsBackground(
+        modifier = modifier,
+        paddingValues = PaddingValues(all = 8.dp)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(all = 8.dp),
             horizontalArrangement = Arrangement.Center
@@ -266,7 +270,10 @@ private fun VersionManagementLayout(
     onRename: () -> Unit = {},
     onDelete: () -> Unit = {}
 ) {
-    VersionSettingsBackground(modifier = modifier) {
+    VersionSettingsBackground(
+        modifier = modifier,
+        paddingValues = PaddingValues(all = 8.dp)
+    ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
         ) {
@@ -314,7 +321,10 @@ private fun VersionQuickActions(
     modifier: Modifier = Modifier,
     accessFolder: (folderName: String) -> Unit = {}
 ) {
-    VersionSettingsBackground(modifier = modifier) {
+    VersionSettingsBackground(
+        modifier = modifier,
+        paddingValues = PaddingValues(all = 8.dp)
+    ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
         ) {

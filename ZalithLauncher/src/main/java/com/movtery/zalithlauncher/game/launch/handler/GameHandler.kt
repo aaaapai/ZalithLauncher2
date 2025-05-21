@@ -12,10 +12,9 @@ import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.account.isLocalAccount
 import com.movtery.zalithlauncher.game.input.EfficientAndroidLWJGLKeycode
 import com.movtery.zalithlauncher.game.input.LWJGLCharSender
+import com.movtery.zalithlauncher.game.keycodes.LwjglGlfwKeycode
 import com.movtery.zalithlauncher.game.launch.GameLauncher
 import com.movtery.zalithlauncher.game.launch.MCOptions
-import com.movtery.zalithlauncher.game.launch.MCOptions.getAsList
-import com.movtery.zalithlauncher.game.launch.MCOptions.set
 import com.movtery.zalithlauncher.game.launch.loadLanguage
 import com.movtery.zalithlauncher.game.skin.SkinModelType
 import com.movtery.zalithlauncher.game.version.installed.Version
@@ -25,11 +24,14 @@ import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.zipDirRecursive
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.commons.io.FileUtils
 import org.lwjgl.glfw.CallbackBridge
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.createTempDirectory
 
@@ -97,19 +99,22 @@ class GameHandler(
         }
     }
 
+    override fun sendMouseRight(isPressed: Boolean) {
+        CallbackBridge.sendMouseButton(LwjglGlfwKeycode.GLFW_MOUSE_BUTTON_RIGHT.toInt(), isPressed)
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     @Composable
     override fun getComposableLayout() = @Composable {
         GameScreen(isTouchProxyEnabled, getWindowSize)
     }
 
-    private fun localSkinResourcePack() {
+    private suspend fun localSkinResourcePack() {
         AccountsManager.getCurrentAccount()?.takeIf {
             it.isLocalAccount() &&
-            it.getSkinFile().exists() &&
-            it.skinModelType.isNotEmpty()
+            it.skinModelType != SkinModelType.NONE
         }?.let { account ->
-            val modelType = SkinModelType.entries.find { it.name == account.skinModelType } ?: return@let
+            val modelType = SkinModelType.entries.find { it == account.skinModelType } ?: return@let
 
             version.getVersionInfo()!!.getMcVersionCode().takeIf { it.main !in 0..5 }?.let { versionCode ->
                 val mainCode = versionCode.main
@@ -147,9 +152,9 @@ class GameHandler(
                     val name = if (mainCode >= 13 || mainCode < 6) "file/${pack.name}" else pack.name
                     val resourcePacks = "resourcePacks"
 
-                    set(
+                    MCOptions.set(
                         resourcePacks,
-                        getAsList(resourcePacks).toMutableList().apply {
+                        MCOptions.getAsList(resourcePacks).toMutableList().apply {
                             if (!contains(name)) {
                                 if (!contains("vanilla")) {
                                     //顶层必须是原版，否则mc会直接抛弃所有资源包..？
@@ -170,18 +175,18 @@ class GameHandler(
     /**
      * 尝试为离线账号打包一个皮肤资源包
      */
-    private fun tryPackSkinResourcePack(
+    private suspend fun tryPackSkinResourcePack(
         packFormat: Int,
         isOldType: Boolean,
         skinFile: File,
         modelType: SkinModelType
-    ): File? {
-        return runCatching {
+    ): File? = withContext(Dispatchers.IO) {
+        runCatching {
             val resourcePackFile = File(
                 File(version.getGameDir(), "resourcepacks").ensureDirectory(),
                 "ZLSkin-pack.zip"
             )
-            if (resourcePackFile.exists()) return resourcePackFile
+            if (resourcePackFile.exists() && !resourcePackFile.delete()) throw IOException("Cannot clear an existing skin pack!")
 
             val packMcMetaContent = """{"pack":{"pack_format":${packFormat},"description":"${InfoDistributor.LAUNCHER_NAME} Offline Skin Resource Pack"}}""".trimIndent()
 
@@ -196,6 +201,7 @@ class GameHandler(
                     val targetFileName = when (modelType) {
                         SkinModelType.ALEX -> "alex.png"
                         SkinModelType.STEVE -> "steve.png"
+                        SkinModelType.NONE -> error("It should not pass in SkinModelType.NONE.")
                     }
                     listOf(entityBaseDir.child(targetFileName))
                 } else {

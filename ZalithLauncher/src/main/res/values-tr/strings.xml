@@ -47,10 +47,8 @@
     <string name="theme_color_mistwave">Sis Dalgası</string>
     <string name="theme_color_glacier">Buzul</string>
     <string name="theme_color_verdant_field">Yeşil Alacakaranlık</string>
-    <string name="theme_color_ashveil">Kül Perdesi</string>
     <string name="theme_color_urban_ash">Şehir Külü</string>
     <string name="theme_color_verdant_dawn">Sessiz Orman Şafağı</string>
-    <string name="theme_color_celestine_veil">Göksel Örtü</string>
     <string name="theme_color_picker_title">Renk Seçici</string>
     <!-- Animations -->
     <string name="animate_type_bounce">Zıplat</string>

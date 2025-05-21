@@ -18,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +38,7 @@ import com.movtery.zalithlauncher.components.InstallableItem
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 
@@ -88,7 +88,7 @@ private fun ActionMenu(
         swapIn = isVisible
     )
 
-    Surface(
+    Card(
         modifier = modifier
             .offset {
                 IntOffset(
@@ -96,9 +96,7 @@ private fun ActionMenu(
                     y = 0
                 )
             },
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shadowElevation = 4.dp
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column {
             Column(
@@ -116,7 +114,6 @@ private fun ActionMenu(
                     } else {
                         stringResource(R.string.splash_screen_unpack_desc)
                     },
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -157,8 +154,7 @@ private fun UnpackTaskList(
                     y = yOffset.roundToPx()
                 )
             },
-        shape = MaterialTheme.shapes.extraLarge,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -183,9 +179,9 @@ private fun TaskItem(
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = itemLayoutColor(),
         contentColor = MaterialTheme.colorScheme.onSurface,
-        shadowElevation = 2.dp
+        shadowElevation = 1.dp
     ) {
         Row {
             Column(

@@ -3,7 +3,6 @@ package com.movtery.zalithlauncher.ui.screens.content.download.game
 import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,11 +18,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -42,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
@@ -57,7 +57,9 @@ import com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ContentCheckBox
+import com.movtery.zalithlauncher.ui.components.LittleTextLabel
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.DOWNLOAD_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCREEN_TAG
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
@@ -138,8 +140,7 @@ fun SelectGameVersionScreen(
                 .padding(all = 12.dp)
                 .fillMaxSize()
                 .offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
-            shape = MaterialTheme.shapes.extraLarge,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+            shape = MaterialTheme.shapes.extraLarge
         ) {
             when (val state = versionState) {
                 is VersionState.Loading -> {
@@ -169,6 +170,8 @@ fun SelectGameVersionScreen(
 
                 else -> {
                     VersionList(
+                        itemContainerColor = itemLayoutColor(),
+                        itemContentColor = MaterialTheme.colorScheme.onSurface,
                         versionFilter = versionFilter,
                         onVersionFilterChange = { versionFilter = it },
                         onRefreshClick = {
@@ -243,6 +246,8 @@ private fun List<VersionManifest.Version>.filterVersions(
 
 @Composable
 private fun VersionList(
+    itemContainerColor: Color,
+    itemContentColor: Color,
     versionFilter: VersionFilter,
     onVersionFilterChange: (VersionFilter) -> Unit,
     onRefreshClick: () -> Unit,
@@ -295,10 +300,10 @@ private fun VersionList(
             ) {
                 Surface(
                     modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = itemContainerColor,
+                    contentColor = itemContentColor,
                     shape = RoundedCornerShape(50f),
-                    shadowElevation = 2.dp
+                    shadowElevation = 1.dp
                 ) {
                     BasicTextField(
                         modifier = Modifier
@@ -307,6 +312,7 @@ private fun VersionList(
                         value = versionFilter.id,
                         onValueChange = { onVersionFilterChange(versionFilter.copy(id = it)) },
                         textStyle = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp),
+                        cursorBrush = SolidColor(LocalTextSelectionColors.current.handleColor),
                         singleLine = true,
                         decorationBox = { innerTextField ->
                             Box(
@@ -362,7 +368,9 @@ private fun VersionList(
                     },
                     onAccessWiki = { wikiUrl ->
                         NetWorkUtils.openLink(context, wikiUrl)
-                    }
+                    },
+                    color = itemContainerColor,
+                    contentColor = itemContentColor
                 )
             }
         }
@@ -375,8 +383,8 @@ private fun VersionItemLayout(
     version: VersionManifest.Version,
     onClick: () -> Unit = {},
     onAccessWiki: (String) -> Unit = {},
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    color: Color,
+    contentColor: Color,
 ) {
     val scale = remember { Animatable(initialValue = 0.95f) }
     LaunchedEffect(Unit) {
@@ -391,7 +399,7 @@ private fun VersionItemLayout(
         shape = MaterialTheme.shapes.large,
         color = color,
         contentColor = contentColor,
-        shadowElevation = 2.dp
+        shadowElevation = 1.dp
     ) {
         Row(
             modifier = Modifier
@@ -419,20 +427,9 @@ private fun VersionItemLayout(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = MaterialTheme.shapes.large
-                            )
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                            text = versionType,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
+                    LittleTextLabel(
+                        text = versionType
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(4.dp))

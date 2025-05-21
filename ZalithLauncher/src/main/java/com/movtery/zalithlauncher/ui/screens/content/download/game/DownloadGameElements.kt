@@ -50,6 +50,7 @@ import com.movtery.zalithlauncher.game.addons.modloader.fabriclike.FabricLikeVer
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.forge.ForgeVersion
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.neoforge.NeoForgeVersion
 import com.movtery.zalithlauncher.game.addons.modloader.optifine.OptiFineVersion
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 
 /** Addon 加载状态 */
@@ -142,7 +143,7 @@ fun <E> AddonListLayout(
     autoCollapse: Boolean = true,
     onValueChange: (E?) -> Unit = {},
     onReload: () -> Unit = {},
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    color: Color = itemLayoutColor(),
     contentColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     var selectedItem by remember { mutableStateOf<E?>(null) }
@@ -173,7 +174,7 @@ fun <E> AddonListLayout(
         shape = MaterialTheme.shapes.large,
         color = color,
         contentColor = contentColor,
-        shadowElevation = 2.dp
+        shadowElevation = 1.dp
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             AddonListHeader(

@@ -409,82 +409,6 @@ private val verdantFieldDark = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark.verdantField,
 )
 
-private val ashveilLight = lightColorScheme(
-    primary = primaryLight.ashveil,
-    onPrimary = onPrimaryLight.ashveil,
-    primaryContainer = primaryContainerLight.ashveil,
-    onPrimaryContainer = onPrimaryContainerLight.ashveil,
-    secondary = secondaryLight.ashveil,
-    onSecondary = onSecondaryLight.ashveil,
-    secondaryContainer = secondaryContainerLight.ashveil,
-    onSecondaryContainer = onSecondaryContainerLight.ashveil,
-    tertiary = tertiaryLight.ashveil,
-    onTertiary = onTertiaryLight.ashveil,
-    tertiaryContainer = tertiaryContainerLight.ashveil,
-    onTertiaryContainer = onTertiaryContainerLight.ashveil,
-    error = errorLight.ashveil,
-    onError = onErrorLight.ashveil,
-    errorContainer = errorContainerLight.ashveil,
-    onErrorContainer = onErrorContainerLight.ashveil,
-    background = backgroundLight.ashveil,
-    onBackground = onBackgroundLight.ashveil,
-    surface = surfaceLight.ashveil,
-    onSurface = onSurfaceLight.ashveil,
-    surfaceVariant = surfaceVariantLight.ashveil,
-    onSurfaceVariant = onSurfaceVariantLight.ashveil,
-    outline = outlineLight.ashveil,
-    outlineVariant = outlineVariantLight.ashveil,
-    scrim = scrimLight.ashveil,
-    inverseSurface = inverseSurfaceLight.ashveil,
-    inverseOnSurface = inverseOnSurfaceLight.ashveil,
-    inversePrimary = inversePrimaryLight.ashveil,
-    surfaceDim = surfaceDimLight.ashveil,
-    surfaceBright = surfaceBrightLight.ashveil,
-    surfaceContainerLowest = surfaceContainerLowestLight.ashveil,
-    surfaceContainerLow = surfaceContainerLowLight.ashveil,
-    surfaceContainer = surfaceContainerLight.ashveil,
-    surfaceContainerHigh = surfaceContainerHighLight.ashveil,
-    surfaceContainerHighest = surfaceContainerHighestLight.ashveil,
-)
-
-private val ashveilDark = darkColorScheme(
-    primary = primaryDark.ashveil,
-    onPrimary = onPrimaryDark.ashveil,
-    primaryContainer = primaryContainerDark.ashveil,
-    onPrimaryContainer = onPrimaryContainerDark.ashveil,
-    secondary = secondaryDark.ashveil,
-    onSecondary = onSecondaryDark.ashveil,
-    secondaryContainer = secondaryContainerDark.ashveil,
-    onSecondaryContainer = onSecondaryContainerDark.ashveil,
-    tertiary = tertiaryDark.ashveil,
-    onTertiary = onTertiaryDark.ashveil,
-    tertiaryContainer = tertiaryContainerDark.ashveil,
-    onTertiaryContainer = onTertiaryContainerDark.ashveil,
-    error = errorDark.ashveil,
-    onError = onErrorDark.ashveil,
-    errorContainer = errorContainerDark.ashveil,
-    onErrorContainer = onErrorContainerDark.ashveil,
-    background = backgroundDark.ashveil,
-    onBackground = onBackgroundDark.ashveil,
-    surface = surfaceDark.ashveil,
-    onSurface = onSurfaceDark.ashveil,
-    surfaceVariant = surfaceVariantDark.ashveil,
-    onSurfaceVariant = onSurfaceVariantDark.ashveil,
-    outline = outlineDark.ashveil,
-    outlineVariant = outlineVariantDark.ashveil,
-    scrim = scrimDark.ashveil,
-    inverseSurface = inverseSurfaceDark.ashveil,
-    inverseOnSurface = inverseOnSurfaceDark.ashveil,
-    inversePrimary = inversePrimaryDark.ashveil,
-    surfaceDim = surfaceDimDark.ashveil,
-    surfaceBright = surfaceBrightDark.ashveil,
-    surfaceContainerLowest = surfaceContainerLowestDark.ashveil,
-    surfaceContainerLow = surfaceContainerLowDark.ashveil,
-    surfaceContainer = surfaceContainerDark.ashveil,
-    surfaceContainerHigh = surfaceContainerHighDark.ashveil,
-    surfaceContainerHighest = surfaceContainerHighestDark.ashveil,
-)
-
 private val urbanAshLight = lightColorScheme(
     primary = primaryLight.urbanAsh,
     onPrimary = onPrimaryLight.urbanAsh,
@@ -635,82 +559,6 @@ private val verdantDawnDark = darkColorScheme(
     surfaceContainer = surfaceContainerDark.verdantDawn,
     surfaceContainerHigh = surfaceContainerHighDark.verdantDawn,
     surfaceContainerHighest = surfaceContainerHighestDark.verdantDawn,
-)
-
-private val celestineVeilLight = lightColorScheme(
-    primary = primaryLight.celestineVeil,
-    onPrimary = onPrimaryLight.celestineVeil,
-    primaryContainer = primaryContainerLight.celestineVeil,
-    onPrimaryContainer = onPrimaryContainerLight.celestineVeil,
-    secondary = secondaryLight.celestineVeil,
-    onSecondary = onSecondaryLight.celestineVeil,
-    secondaryContainer = secondaryContainerLight.celestineVeil,
-    onSecondaryContainer = onSecondaryContainerLight.celestineVeil,
-    tertiary = tertiaryLight.celestineVeil,
-    onTertiary = onTertiaryLight.celestineVeil,
-    tertiaryContainer = tertiaryContainerLight.celestineVeil,
-    onTertiaryContainer = onTertiaryContainerLight.celestineVeil,
-    error = errorLight.celestineVeil,
-    onError = onErrorLight.celestineVeil,
-    errorContainer = errorContainerLight.celestineVeil,
-    onErrorContainer = onErrorContainerLight.celestineVeil,
-    background = backgroundLight.celestineVeil,
-    onBackground = onBackgroundLight.celestineVeil,
-    surface = surfaceLight.celestineVeil,
-    onSurface = onSurfaceLight.celestineVeil,
-    surfaceVariant = surfaceVariantLight.celestineVeil,
-    onSurfaceVariant = onSurfaceVariantLight.celestineVeil,
-    outline = outlineLight.celestineVeil,
-    outlineVariant = outlineVariantLight.celestineVeil,
-    scrim = scrimLight.celestineVeil,
-    inverseSurface = inverseSurfaceLight.celestineVeil,
-    inverseOnSurface = inverseOnSurfaceLight.celestineVeil,
-    inversePrimary = inversePrimaryLight.celestineVeil,
-    surfaceDim = surfaceDimLight.celestineVeil,
-    surfaceBright = surfaceBrightLight.celestineVeil,
-    surfaceContainerLowest = surfaceContainerLowestLight.celestineVeil,
-    surfaceContainerLow = surfaceContainerLowLight.celestineVeil,
-    surfaceContainer = surfaceContainerLight.celestineVeil,
-    surfaceContainerHigh = surfaceContainerHighLight.celestineVeil,
-    surfaceContainerHighest = surfaceContainerHighestLight.celestineVeil,
-)
-
-private val celestineVeilDark = darkColorScheme(
-    primary = primaryDark.celestineVeil,
-    onPrimary = onPrimaryDark.celestineVeil,
-    primaryContainer = primaryContainerDark.celestineVeil,
-    onPrimaryContainer = onPrimaryContainerDark.celestineVeil,
-    secondary = secondaryDark.celestineVeil,
-    onSecondary = onSecondaryDark.celestineVeil,
-    secondaryContainer = secondaryContainerDark.celestineVeil,
-    onSecondaryContainer = onSecondaryContainerDark.celestineVeil,
-    tertiary = tertiaryDark.celestineVeil,
-    onTertiary = onTertiaryDark.celestineVeil,
-    tertiaryContainer = tertiaryContainerDark.celestineVeil,
-    onTertiaryContainer = onTertiaryContainerDark.celestineVeil,
-    error = errorDark.celestineVeil,
-    onError = onErrorDark.celestineVeil,
-    errorContainer = errorContainerDark.celestineVeil,
-    onErrorContainer = onErrorContainerDark.celestineVeil,
-    background = backgroundDark.celestineVeil,
-    onBackground = onBackgroundDark.celestineVeil,
-    surface = surfaceDark.celestineVeil,
-    onSurface = onSurfaceDark.celestineVeil,
-    surfaceVariant = surfaceVariantDark.celestineVeil,
-    onSurfaceVariant = onSurfaceVariantDark.celestineVeil,
-    outline = outlineDark.celestineVeil,
-    outlineVariant = outlineVariantDark.celestineVeil,
-    scrim = scrimDark.celestineVeil,
-    inverseSurface = inverseSurfaceDark.celestineVeil,
-    inverseOnSurface = inverseOnSurfaceDark.celestineVeil,
-    inversePrimary = inversePrimaryDark.celestineVeil,
-    surfaceDim = surfaceDimDark.celestineVeil,
-    surfaceBright = surfaceBrightDark.celestineVeil,
-    surfaceContainerLowest = surfaceContainerLowestDark.celestineVeil,
-    surfaceContainerLow = surfaceContainerLowDark.celestineVeil,
-    surfaceContainer = surfaceContainerDark.celestineVeil,
-    surfaceContainerHigh = surfaceContainerHighDark.celestineVeil,
-    surfaceContainerHighest = surfaceContainerHighestDark.celestineVeil,
 )
 
 @SuppressLint("RestrictedApi")
@@ -895,10 +743,8 @@ fun ZalithLauncherTheme(
                 ColorThemeType.MISTWAVE -> mistwaveDark
                 ColorThemeType.GLACIER -> glacierDark
                 ColorThemeType.VERDANTFIELD -> verdantFieldDark
-                ColorThemeType.ASHVEIL -> ashveilDark
                 ColorThemeType.URBAN_ASH -> urbanAshDark
                 ColorThemeType.VERDANT_DAWN -> verdantDawnDark
-                ColorThemeType.CELESTINE_VEIL -> celestineVeilDark
                 ColorThemeType.CUSTOM -> customDark(currentCustomColor)
                 else -> embermireDark
             }
@@ -908,10 +754,8 @@ fun ZalithLauncherTheme(
                 ColorThemeType.MISTWAVE -> mistwaveLight
                 ColorThemeType.GLACIER -> glacierLight
                 ColorThemeType.VERDANTFIELD -> verdantFieldLight
-                ColorThemeType.ASHVEIL -> ashveilLight
                 ColorThemeType.URBAN_ASH -> urbanAshLight
                 ColorThemeType.VERDANT_DAWN -> verdantDawnLight
-                ColorThemeType.CELESTINE_VEIL -> celestineVeilLight
                 ColorThemeType.CUSTOM -> customLight(currentCustomColor)
                 else -> embermireLight
             }

@@ -5,11 +5,7 @@ import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
 import com.movtery.zalithlauncher.game.addons.modloader.optifine.OptiFineVersion
 import com.movtery.zalithlauncher.game.addons.modloader.optifine.OptiFineVersions
-import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.apache.commons.io.FileUtils
 import java.io.File
 
 const val OPTIFINE_DOWNLOAD_ID = "Download.OptiFine"
@@ -29,9 +25,7 @@ fun targetTempOptiFineInstaller(tempGameDir: File, tempMinecraftDir: File, fileN
 }
 
 fun getOptiFineDownloadTask(
-    tempMinecraftDir: File,
     targetTempInstaller: File,
-    targetClientFolder: File,
     optifine: OptiFineVersion
 ): Task {
     return Task.runTask(
@@ -42,22 +36,6 @@ fun getOptiFineDownloadTask(
 
             task.updateProgress(-1f, R.string.download_game_install_base_download_file, ModLoader.OPTIFINE.displayName, optifine.realVersion)
             NetWorkUtils.downloadFileSuspend(optifineUrl, targetTempInstaller)
-
-            withContext(Dispatchers.IO) { //复制原版
-                val gameJson = File(targetClientFolder, "${targetClientFolder.name}.json")
-                val gameJar = File(targetClientFolder, "${targetClientFolder.name}.jar")
-
-                val tempVanillaDir = File(tempMinecraftDir, "versions/${optifine.inherit}").ensureDirectory()
-                val tempVanillaJson = File(tempVanillaDir, "${optifine.inherit}.json")
-                val tempVanillaJar = File(tempVanillaDir, "${optifine.inherit}.jar")
-
-                if (!tempVanillaJson.exists()) {
-                    FileUtils.copyFile(gameJson, tempVanillaJson)
-                }
-                if (!tempVanillaJar.exists()) {
-                    FileUtils.copyFile(gameJar, tempVanillaJar)
-                }
-            }
         }
     )
 }

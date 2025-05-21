@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withSave
 import com.movtery.zalithlauncher.bridge.ZLBridge
+import com.movtery.zalithlauncher.game.input.AWTInputEvent
 import com.movtery.zalithlauncher.game.launch.JvmLauncher
 import com.movtery.zalithlauncher.ui.screens.game.JVMScreen
 import com.movtery.zalithlauncher.utils.string.StringUtils
@@ -79,6 +80,10 @@ class JVMHandler(
 
     override fun shouldIgnoreKeyEvent(event: KeyEvent): Boolean {
         return true
+    }
+
+    override fun sendMouseRight(isPressed: Boolean) {
+        ZLBridge.sendMousePress(AWTInputEvent.BUTTON3_DOWN_MASK, isPressed)
     }
 
     @Composable

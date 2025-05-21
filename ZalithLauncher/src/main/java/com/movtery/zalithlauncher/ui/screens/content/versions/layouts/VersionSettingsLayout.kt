@@ -136,7 +136,7 @@ class VersionSettingsLayoutScope {
                     .width(240.dp)
                     .align(Alignment.CenterVertically),
                 shape = MaterialTheme.shapes.extraLarge,
-                shadowElevation = 2.dp
+                shadowElevation = 1.dp
             ) {
                 TabRow(
                     modifier = Modifier.fillMaxWidth(),

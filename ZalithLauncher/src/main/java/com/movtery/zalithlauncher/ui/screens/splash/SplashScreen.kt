@@ -5,7 +5,6 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,7 +30,6 @@ import com.movtery.zalithlauncher.components.InstallableItem
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.state.MutableStates
-import com.movtery.zalithlauncher.ui.components.DownShadow
 import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
@@ -49,9 +48,8 @@ fun SplashScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
-                .background(color = MaterialTheme.colorScheme.primaryContainer)
                 .zIndex(10f),
-            textColor = MaterialTheme.colorScheme.onPrimaryContainer
+            color = MaterialTheme.colorScheme.surfaceContainer
         )
 
         Box(
@@ -59,12 +57,6 @@ fun SplashScreen(
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            val backgroundColor = if (isSystemInDarkTheme()) {
-                MaterialTheme.colorScheme.surfaceContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
-
             NavigationUI(
                 eulaText = eulaText,
                 eulaDate = eulaDate,
@@ -73,14 +65,7 @@ fun SplashScreen(
                 unpackItems = unpackItems,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = backgroundColor)
-            )
-
-            DownShadow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart),
-                height = 4.dp
+                    .background(color = MaterialTheme.colorScheme.surface)
             )
         }
     }
@@ -89,17 +74,21 @@ fun SplashScreen(
 @Composable
 private fun TopBar(
     modifier: Modifier = Modifier,
-    textColor: Color
+    color: Color
 ) {
-    Row(
+    Surface(
         modifier = modifier,
-        horizontalArrangement = Arrangement.Center
+        color = color,
+        shadowElevation = 3.dp
     ) {
-        Text(
-            modifier = Modifier.align(Alignment.CenterVertically),
-            text = InfoDistributor.LAUNCHER_NAME,
-            color = textColor
-        )
+        Row(
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                text = InfoDistributor.LAUNCHER_NAME
+            )
+        }
     }
 }
 

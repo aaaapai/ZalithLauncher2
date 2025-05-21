@@ -57,6 +57,7 @@ import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.SETTINGS_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
@@ -311,7 +312,7 @@ private fun progressRuntimeUri(
 private fun JavaRuntimeItem(
     runtime: Runtime,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    color: Color = itemLayoutColor(),
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onClick: () -> Unit = {},
     onDeleteClick: () -> Unit
@@ -325,7 +326,7 @@ private fun JavaRuntimeItem(
         color = color,
         contentColor = contentColor,
         shape = MaterialTheme.shapes.large,
-        shadowElevation = 2.dp,
+        shadowElevation = 1.dp,
         onClick = onClick
     ) {
         Row {

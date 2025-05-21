@@ -1,7 +1,6 @@
 package com.movtery.zalithlauncher.ui.screens.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,19 +13,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.info.InfoDistributor
-import com.movtery.zalithlauncher.ui.components.DownShadow
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
 
 @Composable
@@ -44,7 +42,8 @@ fun ErrorScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
-                .zIndex(10f)
+                .zIndex(10f),
+            color = MaterialTheme.colorScheme.surfaceContainer
         )
 
         Box(
@@ -52,15 +51,10 @@ fun ErrorScreen(
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            val backgroundColor = if (isSystemInDarkTheme()) {
-                MaterialTheme.colorScheme.surfaceContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = backgroundColor)
+                    .background(color = MaterialTheme.colorScheme.surface)
             ) {
                 ErrorContent(
                     modifier = Modifier
@@ -80,24 +74,19 @@ fun ErrorScreen(
                     onExitClick = onExitClick
                 )
             }
-
-            DownShadow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart),
-                height = 4.dp
-            )
         }
     }
 }
 
 @Composable
 private fun TopBar(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    color: Color
 ) {
     Surface(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.primaryContainer,
+        color = color,
+        shadowElevation = 3.dp
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -119,8 +108,7 @@ private fun ErrorContent(
 ) {
     Card(
         modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column(
             modifier = Modifier
@@ -148,11 +136,9 @@ private fun ActionContext(
     onRestartClick: () -> Unit = {},
     onExitClick: () -> Unit = {}
 ) {
-    Surface(
+    Card(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shape = MaterialTheme.shapes.extraLarge,
-        shadowElevation = 4.dp
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxSize(),

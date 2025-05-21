@@ -16,13 +16,14 @@ import com.movtery.zalithlauncher.path.LibPath
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.string.isBiggerOrEqualTo
 import com.movtery.zalithlauncher.utils.string.isLowerTo
 import java.io.File
 
 class LaunchArgs(
     private val account: Account,
     private val gameDirPath: File,
-    private val minecraftVersion: Version,
+    private val version: Version,
     private val gameManifest: GameManifest,
     private val runtime: Runtime,
     private val launchClassPath: String,
@@ -46,21 +47,26 @@ class LaunchArgs(
         argsList.add(gameManifest.mainClass)
         argsList.addAll(getMinecraftClientArgs())
 
-        minecraftVersion.getServerIp()?.let { serverIp ->
+        version.getServerIp()?.let { serverIp ->
             val (ip, port) = serverIp.split(":").run {
                 first() to getOrElse(1) { "25565" }
             }
-            if (minecraftVersion.getVersionInfo()!!.minecraftVersion.isLowerTo("1.20")) {
-                argsList.apply {
-                    add("--server")
-                    add(ip)
-                    add("--port")
-                    add(port)
-                }
-            } else {
-                argsList.apply {
-                    add("--quickPlayMultiplayer")
-                    add("$ip:$port")
+            version.getVersionInfo()?.minecraftVersion?.let { minecraftVersion ->
+                if (
+                    minecraftVersion.isBiggerOrEqualTo("23w14a") || //该快照才加入quickPlayMultiplayer参数
+                    minecraftVersion.isBiggerOrEqualTo("1.20")      //1.20+
+                ) {
+                    argsList.apply {
+                        add("--quickPlayMultiplayer")
+                        add("$ip:$port")
+                    }
+                } else {
+                    argsList.apply {
+                        add("--server")
+                        add(ip)
+                        add("--port")
+                        add(port)
+                    }
                 }
             }
         }
@@ -88,7 +94,7 @@ class LaunchArgs(
 
         argsList.addAll(getCacioJavaArgs(runtime.javaVersion == 8))
 
-        val configFilePath = minecraftVersion.getVersionPath().child("log4j2.xml")
+        val configFilePath = version.getVersionPath().child("log4j2.xml")
         if (!configFilePath.exists()) {
             val is7 = (gameManifest.id ?: "0.0").isLowerTo("1.12")
             runCatching {
@@ -104,7 +110,7 @@ class LaunchArgs(
         }
         argsList.add("-Dlog4j.configurationFile=${configFilePath.absolutePath}")
 
-        val versionSpecificNativesDir = File(PathManager.DIR_CACHE, "natives/${minecraftVersion.getVersionName()}")
+        val versionSpecificNativesDir = File(PathManager.DIR_CACHE, "natives/${version.getVersionName()}")
         if (versionSpecificNativesDir.exists()) {
             val dirPath = versionSpecificNativesDir.absolutePath
             argsList.add("-Djava.library.path=$dirPath:${PathManager.DIR_NATIVE_LIB}")
@@ -115,7 +121,7 @@ class LaunchArgs(
     }
 
     private fun getMinecraftJVMArgs(): Array<String> {
-        val gameManifest1 = getGameManifest(minecraftVersion, true)
+        val gameManifest1 = getGameManifest(version, true)
 
 //        // Parse Forge 1.17+ additional JVM Arguments
 //        if (versionInfo.inheritsFrom == null || versionInfo.arguments == null || versionInfo.arguments.jvm == null) {
@@ -131,7 +137,7 @@ class LaunchArgs(
         val minecraftArgs: MutableList<String> = java.util.ArrayList()
         gameManifest1.arguments?.let {
             fun String.addIgnoreListIfHas(): String {
-                if (startsWith("-DignoreList=")) return "$this,${minecraftVersion.getVersionName()}.jar"
+                if (startsWith("-DignoreList=")) return "$this,${version.getVersionName()}.jar"
                 return this
             }
             it.jvm?.forEach { arg ->
@@ -156,7 +162,7 @@ class LaunchArgs(
         verArgMap["game_directory"] = gameDirPath.absolutePath
         verArgMap["user_properties"] = "{}"
         verArgMap["user_type"] = "msa"
-        verArgMap["version_name"] = minecraftVersion.getVersionInfo()!!.minecraftVersion
+        verArgMap["version_name"] = version.getVersionInfo()!!.minecraftVersion
 
         setLauncherInfo(verArgMap)
 
@@ -177,7 +183,7 @@ class LaunchArgs(
     private fun setLauncherInfo(verArgMap: MutableMap<String, String>) {
         verArgMap["launcher_name"] = InfoDistributor.LAUNCHER_NAME
         verArgMap["launcher_version"] = BuildConfig.VERSION_NAME
-        verArgMap["version_type"] = minecraftVersion.getCustomInfo()
+        verArgMap["version_type"] = version.getCustomInfo()
             .takeIf { it.isNotEmpty() && it.isNotBlank() }
             ?: gameManifest.type
     }

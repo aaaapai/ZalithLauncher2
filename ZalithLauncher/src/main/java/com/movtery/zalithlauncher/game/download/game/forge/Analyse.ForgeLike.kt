@@ -39,22 +39,25 @@ fun getForgeLikeAnalyseTask(
     targetTempInstaller: File,
     forgeLikeVersion: ForgeLikeVersion,
     tempMinecraftFolder: File,
-    targetVersion: String,
-    inherit: String,
+    sourceInherit: String,
+    processedInherit: String,
     loaderVersion: String
 ): Task {
     return Task.runTask(
         id = FORGE_LIKE_ANALYSE_ID,
         dispatcher = Dispatchers.Default,
         task = { task ->
-            withContext(Dispatchers.IO) {
-                //准备安装环境
-                //复制原版文件
-                copyVanillaFiles(
-                    targetVersion = targetVersion,
-                    destinationGameFolder = tempMinecraftFolder,
-                    inheritVersion = inherit
-                )
+            if (sourceInherit != processedInherit) {
+                withContext(Dispatchers.IO) {
+                    //准备安装环境
+                    //复制原版文件
+                    copyVanillaFiles(
+                        sourceGameFolder = tempMinecraftFolder,
+                        sourceVersion = sourceInherit,
+                        destinationGameFolder = tempMinecraftFolder,
+                        targetVersion = processedInherit
+                    )
+                }
             }
 
             analyseNewForge(
@@ -63,7 +66,7 @@ fun getForgeLikeAnalyseTask(
                 forgeLikeVersion = forgeLikeVersion,
                 installer = targetTempInstaller,
                 tempMinecraftFolder = tempMinecraftFolder,
-                inherit = inherit,
+                inherit = processedInherit,
                 loaderVersion = loaderVersion
             )
         }
@@ -94,7 +97,7 @@ private suspend fun analyseNewForge(
             val versionString = zip.readText("version.json")
 
             val installProfile = installProfileString.parseToJson()
-            installProfile["libraries"]?.let { libraries ->
+            installProfile["libraries"]?.takeIf { it.isJsonArray }?.let { libraries ->
                 val libraryList: List<GameManifest.Library> =
                     GSON.fromJson(libraries, object : TypeToken<List<GameManifest.Library>>() {}.type) ?: return@let
 
@@ -107,7 +110,7 @@ private suspend fun analyseNewForge(
                 }
             }
 
-            installProfile["path"]?.let { path ->
+            installProfile["path"]?.takeIf { it.isJsonPrimitive }?.let { path ->
                 val libraryPath = getLibraryPath(path.asString, tempMinecraftFolder.absolutePath)
                 zip.getEntry("maven/$libraryPath")?.let { entry ->
                     val dest = File(tempMinecraftFolder, "libraries/$libraryPath")

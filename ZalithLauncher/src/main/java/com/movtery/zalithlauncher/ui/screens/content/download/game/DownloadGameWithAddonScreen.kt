@@ -17,11 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -60,6 +62,7 @@ import com.movtery.zalithlauncher.game.download.game.GameDownloadInfo
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.DOWNLOAD_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.elements.isFilenameInvalid
@@ -137,13 +140,17 @@ fun DownloadGameWithAddonScreen(
                 .padding(all = 12.dp)
                 .fillMaxSize()
                 .offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
-            shape = MaterialTheme.shapes.extraLarge,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+            shape = MaterialTheme.shapes.extraLarge
         ) {
+            val itemContainerColor = itemLayoutColor()
+            val itemContentColor = MaterialTheme.colorScheme.onSurface
+
             ScreenHeader(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp),
+                itemContainerColor = itemContainerColor,
+                itemContentColor = itemContentColor,
                 gameVersion = gameVersion,
                 currentAddon = currentAddon,
                 onInstall = { customVersionName ->
@@ -214,6 +221,8 @@ fun DownloadGameWithAddonScreen(
 @Composable
 private fun ScreenHeader(
     modifier: Modifier = Modifier,
+    itemContainerColor: Color,
+    itemContentColor: Color,
     gameVersion: String,
     currentAddon: CurrentAddon,
     onInstall: (String) -> Unit = {}
@@ -262,10 +271,10 @@ private fun ScreenHeader(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(all = 4.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = itemContainerColor,
+                    contentColor = itemContentColor,
                     shape = RoundedCornerShape(50f),
-                    shadowElevation = 2.dp
+                    shadowElevation = 1.dp
                 ) {
                     BasicTextField(
                         modifier = Modifier
@@ -281,6 +290,7 @@ private fun ScreenHeader(
                             }
                         },
                         textStyle = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp),
+                        cursorBrush = SolidColor(LocalTextSelectionColors.current.handleColor),
                         singleLine = true,
                         decorationBox = { innerTextField ->
                             Box(

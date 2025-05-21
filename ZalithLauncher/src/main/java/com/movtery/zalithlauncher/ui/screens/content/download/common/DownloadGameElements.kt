@@ -56,7 +56,7 @@ fun GameInstallingDialog(
     Dialog(onDismissRequest = {}) {
         Surface(
             shape = MaterialTheme.shapes.extraLarge,
-            shadowElevation = 4.dp
+            shadowElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),

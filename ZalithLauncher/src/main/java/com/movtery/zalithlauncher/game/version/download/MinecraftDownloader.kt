@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.atomic.AtomicLong
@@ -49,19 +50,25 @@ class MinecraftDownloader(
             DownloadMode.VERIFY_AND_REPAIR -> verify
         }
 
-    fun getDownloadTask(): Task {
+    /**
+     * 自定义 client 目录 ->client<-/versions/..
+     */
+    fun getDownloadTask(
+        clientName: String = this.customName,
+        clientVersionsDir: File = downloader.versionsTarget
+    ): Task {
         return Task.runTask(
             id = DOWNLOADER_TAG,
             dispatcher = Dispatchers.Default,
             task = { task ->
                 task.updateProgress(-1f, getTaskMessage(R.string.minecraft_download_stat_download_task, R.string.minecraft_download_stat_verify_task))
                 if (mode == DownloadMode.DOWNLOAD) {
-                    progressNewDownloadTasks()
+                    progressNewDownloadTasks(clientName, clientVersionsDir)
                 } else {
                     val jsonFile = downloader.getVersionJsonPath(customName).takeIf { it.canRead() } ?: throw IOException("Version $customName JSON file is unreadable.")
                     val jsonText = jsonFile.readText()
                     val gameManifest = jsonText.parseTo(GameManifest::class.java)
-                    progressDownloadTasks(gameManifest, customName)
+                    progressDownloadTasks(gameManifest, clientName)
                 }
 
                 if (allDownloadTasks.isNotEmpty()) {
@@ -83,6 +90,7 @@ class MinecraftDownloader(
                 Log.e(DOWNLOADER_TAG, "Failed to download Minecraft!", e)
                 val message = when(e) {
                     is InterruptedException, is InterruptedIOException, is CancellationException -> return@runTask
+                    is FileNotFoundException -> context.getString(R.string.minecraft_download_failed_notfound)
                     is DownloadFailedException -> {
                         val failedUrls = downloadFailedTasks.map { it.url }
                         "${ context.getString(R.string.minecraft_download_failed_retried) }\r\n${ failedUrls.joinToString("\r\n") } }"
@@ -142,15 +150,22 @@ class MinecraftDownloader(
     /**
      * 仅将 Jar、Json 文件安装到自定义版本目录中
      */
-    private suspend fun progressNewDownloadTasks() {
+    private suspend fun progressNewDownloadTasks(
+        clientName: String,
+        clientVersionsDir: File
+    ) {
         val gameManifest = downloader.findVersion(this.version)?.let {
-            downloader.createVersionJson(it, this.customName)
+            downloader.createVersionJson(it, clientName, clientVersionsDir)
         } ?: throw IllegalArgumentException("Version not found: $version")
 
-        commonScheduleDownloads(gameManifest, this.customName)
+        commonScheduleDownloads(gameManifest, clientName, clientVersionsDir)
     }
 
-    private suspend fun progressDownloadTasks(gameManifest: GameManifest, version: String) {
+    private suspend fun progressDownloadTasks(
+        gameManifest: GameManifest,
+        clientName: String,
+        clientVersionsDir: File = downloader.versionsTarget
+    ) {
         if (gameManifest.inheritsFrom != null) { //优先尝试解析原版
             val selectedVersion = downloader.findVersion(gameManifest.inheritsFrom)
             selectedVersion?.let {
@@ -160,27 +175,31 @@ class MinecraftDownloader(
             }
         }
 
-        commonScheduleDownloads(gameManifest, version)
+        commonScheduleDownloads(gameManifest, clientName, clientVersionsDir)
     }
 
-    private suspend fun commonScheduleDownloads(gameManifest: GameManifest, version: String) {
+    private suspend fun commonScheduleDownloads(
+        gameManifest: GameManifest,
+        clientName: String,
+        clientVersionsDir: File
+    ) {
         val assetsIndex = downloader.createAssetIndex(downloader.assetIndexTarget, gameManifest)
 
-        downloader.loadClientJarDownload(gameManifest, version) { url, hash, targetFile, size ->
+        downloader.loadClientJarDownload(gameManifest, clientName, clientVersionsDir) { url, hash, targetFile, size ->
             scheduleDownload(url, hash, targetFile, size)
         }
         downloader.loadAssetsDownload(assetsIndex) { url, hash, targetFile, size ->
             scheduleDownload(url, hash, targetFile, size)
         }
-        downloader.loadLibraryDownloads(gameManifest) { url, hash, targetFile, size ->
-            scheduleDownload(url, hash, targetFile, size)
+        downloader.loadLibraryDownloads(gameManifest) { url, hash, targetFile, size, isDownloadable ->
+            scheduleDownload(url, hash, targetFile, size, isDownloadable)
         }
     }
 
     /**
      * 提交计划下载
      */
-    private fun scheduleDownload(url: String, sha1: String?, targetFile: File, size: Long) {
+    private fun scheduleDownload(url: String, sha1: String?, targetFile: File, size: Long, isDownloadable: Boolean = true) {
         totalFileCount.incrementAndGet()
         totalFileSize.addAndGet(size)
         allDownloadTasks.add(
@@ -189,6 +208,7 @@ class MinecraftDownloader(
                 verifyIntegrity = verifyIntegrity,
                 targetFile = targetFile,
                 sha1 = sha1,
+                isDownloadable = isDownloadable,
                 onDownloadFailed = { task ->
                     downloadFailedTasks.add(task)
                 },

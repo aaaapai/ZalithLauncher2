@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
@@ -36,6 +36,7 @@ import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.elements.BaseFileItem
 import com.movtery.zalithlauncher.ui.screens.content.elements.CreateNewDirDialog
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
@@ -68,7 +69,8 @@ fun FileSelectorScreen(
                 currentPath = currentPath.absolutePath,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(all = 12.dp)
+                    .padding(all = 12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainer
             )
 
             var createDir by remember { mutableStateOf(false) }
@@ -113,7 +115,8 @@ fun FileSelectorScreen(
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(7.5f)
-                        .padding(start = 12.dp)
+                        .padding(start = 12.dp),
+                    itemColor = itemLayoutColor()
                 )
             }
         }
@@ -124,7 +127,8 @@ fun FileSelectorScreen(
 private fun TopPathLayout(
     isVisible: Boolean,
     currentPath: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    color: Color
 ) {
     val surfaceYOffset by swapAnimateDpAsState(
         targetValue = (-40).dp,
@@ -140,8 +144,7 @@ private fun TopPathLayout(
                 )
             },
         shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shadowElevation = 4.dp
+        color = color
     ) {
         Row(
             modifier = Modifier.padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
@@ -168,7 +171,7 @@ private fun LeftActionMenu(
         swapIn = isVisible
     )
 
-    Surface(
+    Card(
         modifier = modifier
             .offset {
                 IntOffset(
@@ -176,12 +179,12 @@ private fun LeftActionMenu(
                     y = 0
                 )
             },
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shadowElevation = 4.dp
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column(
-            modifier = Modifier.padding(all = 8.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.Bottom
         ) {
             ScalingActionButton(
@@ -213,7 +216,8 @@ private fun FilesLayout(
     currentPath: File,
     updatePath: (File) -> Unit,
     selectFile: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    itemColor: Color
 ) {
     val surfaceXOffset by swapAnimateDpAsState(
         targetValue = 40.dp,
@@ -228,8 +232,7 @@ private fun FilesLayout(
                     y = 0
                 )
             },
-        shape = MaterialTheme.shapes.extraLarge,
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             currentPath.listFiles()?.toList()?.filter {
@@ -254,7 +257,8 @@ private fun FilesLayout(
                                 if (!selectFile && file.isDirectory) {
                                     updatePath(file)
                                 }
-                            }
+                            },
+                            color = itemColor
                         )
                     }
                 }
@@ -272,7 +276,8 @@ private fun FilesLayout(
 private fun FileItem(
     modifier: Modifier = Modifier,
     file: File,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    color: Color
 ) {
     val scale = remember { Animatable(initialValue = 0.95f) }
     LaunchedEffect(Unit) {
@@ -280,14 +285,13 @@ private fun FileItem(
     }
     Surface(
         modifier = modifier.graphicsLayer(scaleY = scale.value, scaleX = scale.value),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = color,
         shape = MaterialTheme.shapes.large,
         shadowElevation = 2.dp,
         onClick = onClick
     ) {
         BaseFileItem(
             file = file,
-            contentColor = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))
         )
     }

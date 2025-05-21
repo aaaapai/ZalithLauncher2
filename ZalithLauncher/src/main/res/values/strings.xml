@@ -48,10 +48,8 @@
     <string name="theme_color_mistwave">Mistwave</string>
     <string name="theme_color_glacier">Glacier</string>
     <string name="theme_color_verdant_field">Verdant Twilight</string>
-    <string name="theme_color_ashveil">Ashveil</string>
     <string name="theme_color_urban_ash">Urban Ash</string>
     <string name="theme_color_verdant_dawn">Silent Forest Dawn</string>
-    <string name="theme_color_celestine_veil">Celestine Veil</string>
     <string name="theme_color_picker_title">Color Picker</string>
     <!-- Animations -->
     <string name="animate_type_bounce">Bounce</string>
@@ -187,6 +185,8 @@
     <string name="account_change_skin_model_steve">Steve Model</string>
     <string name="account_change_skin_model_alex">Alex Model</string>
     <string name="account_change_skin_reset_skin_message">Are you sure you want to reset the current account\'s skin?</string>
+    <string name="account_change_skin_not_supported_alex">The current Minecraft version does not support skins using the Alex model. If you set the skin of this account to the Alex model, it will appear as the Steve model in-game!</string>
+    <string name="account_change_skin_compatibility_warning">Due to technical limitations, custom skins may not work in this Minecraft version.</string>
     <string name="account_supporting_username_invalid_title">Invalid Username</string>
     <string name="account_supporting_username_invalid_local_message_hint1">Valid usernames only support letters (case-insensitive), numbers, and underscores, with length between 3 and 16 characters.</string>
     <string name="account_supporting_username_invalid_local_message_hint2">Otherwise, the game may not run properly.</string>
@@ -328,6 +328,7 @@
     <string name="minecraft_download_progress_retry_verifying_files">Retrying verifications \n(%d/%d, %s/%s)</string>
     <string name="minecraft_download_failed">Download failed</string>
     <string name="minecraft_download_failed_retried">Retries exhausted. Some files failed to download.</string>
+    <string name="minecraft_download_failed_notfound">Some dependency files could not be downloaded. If the issue persists after multiple attempts, the game may be missing required library files. It is recommended to reinstall the game.</string>
     <!-- Settings -->
     <string name="settings_element_selected">Selected: %s</string>
     <string name="settings_label_ignore_if_blank">Leave blank to ignore</string>
@@ -377,6 +378,7 @@
     <string name="settings_game_log_buffer_flush_interval_summary">Set how often the log buffer refreshes. Refreshing too frequently or too infrequently may affect performance</string>
     <string name="settings_control_mouse_physical_mouse_mode_title">Physical Mouse</string>
     <string name="settings_control_mouse_physical_mouse_mode_summary">When a physical mouse is connected, disable the virtual mouse pointer and use the system mouse pointer for control</string>
+    <string name="settings_control_mouse_physical_mouse_warning">If your device interprets physical mouse right-click as "Back" or middle-click as "Home", you can go to System Settings > Developer Options and enable "Disable Permission Monitoring", this will likely resolve the issue.</string>
     <string name="settings_control_mouse_size_title">Virtual Mouse Size</string>
     <string name="settings_control_mouse_speed_title">Virtual Mouse Sensitivity</string>
     <string name="settings_control_mouse_control_mode_title">Control Mode</string>

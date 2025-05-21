@@ -17,6 +17,7 @@ val launcherName = project.findProperty("launcher_name") as? String ?: error("Th
 val launcherVersionCode = (project.findProperty("launcher_version_code") as? String)?.toIntOrNull() ?: error("The \"launcher_version_code\" property is not set as an integer in gradle.properties.")
 val launcherVersionName = project.findProperty("launcher_version_name") as? String ?: error("The \"launcher_version_name\" property is not set in gradle.properties.")
 
+val defaultOAuthClientID = project.findProperty("oauth_client_id") as? String
 val defaultCryptoKey = project.findProperty("default_crypto_key") as? String ?: error("The \"default_crypto_key\" property is not set in gradle.properties.")
 val defaultStorePassword = project.findProperty("default_store_password") as? String ?: error("The \"default_store_password\" property is not set in gradle.properties.")
 val defaultKeyPassword = project.findProperty("default_key_password") as? String ?: error("The \"default_key_password\" property is not set in gradle.properties.")
@@ -200,7 +201,7 @@ tasks.register("generateInfoDistributor") {
 
         val importList = listOf("com.movtery.zalithlauncher.utils.CryptoManager")
         val constantList = listOf(
-            "\"${getKeyFromLocal("OAUTH_CLIENT_ID", ".oauth_client_id.txt")}\"".toStatement(variable = "OAUTH_CLIENT_ID"),
+            "\"${getKeyFromLocal("OAUTH_CLIENT_ID", ".oauth_client_id.txt", defaultOAuthClientID)}\"".toStatement(variable = "OAUTH_CLIENT_ID"),
             "\"${getKeyFromLocal("CRYPTO_KEY", ".crypto_key.txt", defaultCryptoKey)}\"".toStatement(variable = "CRYPTO_KEY"),
             "\"$launcherAPPName\"".toStatement(variable = "LAUNCHER_NAME"),
             "\"$launcherName\"".toStatement(variable = "LAUNCHER_IDENTIFIER")

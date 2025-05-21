@@ -71,6 +71,11 @@ class GameInstaller(
     private var targetClientDir: File? = null
 
     /**
+     * 目标游戏目录
+     */
+    private val targetGameFolder: File = File(getGameHome())
+
+    /**
      * 安装 Minecraft 游戏
      * @param onInstalled 游戏已完成安装
      * @param onError 游戏安装失败
@@ -85,18 +90,14 @@ class GameInstaller(
         }
 
         //目标版本目录
-        targetClientDir = VersionsManager.getVersionPath(info.customVersionName).createDirAndLog()
+        targetClientDir = VersionsManager.getVersionPath(info.customVersionName)
         val targetVersionJson = File(targetClientDir!!, "${info.customVersionName}.json")
 //        val targetVersionJar = File(targetClientDir!!, "${info.customVersionName}.jar")
-        val ignoreFile = VersionsManager.ignoreFile(targetClientDir!!)
 
         //目标版本已经安装的情况
         if (targetVersionJson.exists()) {
             Log.d(TAG, "The game has already been installed!")
             return
-        } else {
-            //创建忽略当前目录的标记
-            ignoreFile.createNewFile()
         }
 
         scope.launch(Dispatchers.IO) {
@@ -106,6 +107,9 @@ class GameInstaller(
             val tempGameDir = PathManager.DIR_CACHE_GAME_DOWNLOADER
             val tempMinecraftDir = File(tempGameDir, ".minecraft")
             val tempGameVersionsDir = File(tempMinecraftDir, "versions")
+            val tempClientDir by lazy {
+                File(tempGameVersionsDir, info.gameVersion).createDirAndLog()
+            }
 
             //ModLoader临时目录
             val optifineDir = info.optifine?.let { File(tempGameVersionsDir, it.version) }?.createDirAndLog()
@@ -123,7 +127,7 @@ class GameInstaller(
             tasks.add(
                 GameInstallTask(
                     context.getString(R.string.download_game_install_vanilla, info.gameVersion),
-                    createMinecraftDownloadTask()
+                    createMinecraftDownloadTask(info.gameVersion, tempGameVersionsDir)
                 )
             )
 
@@ -138,9 +142,7 @@ class GameInstaller(
                         GameInstallTask(
                             context.getString(R.string.download_game_install_base_download_file, ModLoader.OPTIFINE.displayName, info.optifine.displayName),
                             getOptiFineDownloadTask(
-                                tempMinecraftDir = tempMinecraftDir,
                                 targetTempInstaller = targetInstaller,
-                                targetClientFolder = targetClientDir!!,
                                 optifine = optifineVersion
                             )
                         )
@@ -211,16 +213,16 @@ class GameInstaller(
                 )
             }
 
-            //检查是否仅仅只是下载了原版
-            //如果还有非原版以外的任务，则需要进行处理安装（合并版本Json、迁移文件等）
-            if (optifineDir != null || forgeDir != null || neoforgeDir != null || fabricDir != null || quiltDir != null || tempModsDir.listFiles()?.isNotEmpty() == true) {
-                tasks.add(
-                    GameInstallTask(
-                        context.getString(R.string.download_game_install_game_files_progress),
+            tasks.add(
+                GameInstallTask(
+                    context.getString(R.string.download_game_install_game_files_progress),
+                    //如果有非原版以外的任务，则需要进行处理安装（合并版本Json、迁移文件等）
+                    if (optifineDir != null || forgeDir != null || neoforgeDir != null || fabricDir != null || quiltDir != null || tempModsDir.listFiles()?.isNotEmpty() == true) {
                         createGameInstalledTask(
                             tempMinecraftDir = tempMinecraftDir,
-                            targetMinecraftDir = File(getGameHome()),
+                            targetMinecraftDir = targetGameFolder,
                             targetClientDir = targetClientDir!!,
+                            tempClientDir = tempClientDir,
                             tempModsDir = tempModsDir,
                             optiFineFolder = optifineDir,
                             forgeFolder = forgeDir,
@@ -228,17 +230,20 @@ class GameInstaller(
                             fabricFolder = fabricDir,
                             quiltFolder = quiltDir
                         )
-                    )
+                    } else {
+                        //仅仅下载了原版，只复制版本client文件
+                        createVanillaFilesCopyTask(
+                            tempMinecraftDir = tempMinecraftDir
+                        )
+                    }
                 )
-            }
+            )
 
             _tasksFlow.update { tasks }
 
             //开始安装
             startInstall(
                 onInstalled = {
-                    //清除忽略标记
-                    ignoreFile.delete()
                     _tasksFlow.update { emptyList() }
                     onInstalled()
                     targetClientDir = null
@@ -326,7 +331,10 @@ class GameInstaller(
     /**
      * 获取下载原版 Task
      */
-    private fun createMinecraftDownloadTask(): Task {
+    private fun createMinecraftDownloadTask(
+        tempClientName: String,
+        tempVersionsDir: File
+    ): Task {
         val mcDownloader = MinecraftDownloader(
             context = context,
             version = info.gameVersion,
@@ -335,7 +343,7 @@ class GameInstaller(
             downloader = downloader
         )
 
-        return mcDownloader.getDownloadTask()
+        return mcDownloader.getDownloadTask(tempClientName, tempVersionsDir)
     }
 
     /**
@@ -379,8 +387,8 @@ class GameInstaller(
                         targetTempInstaller = tempInstaller,
                         forgeLikeVersion = forgeLikeVersion,
                         tempMinecraftFolder = tempMinecraftDir,
-                        targetVersion = info.customVersionName,
-                        inherit = processedInherit,
+                        sourceInherit = info.gameVersion,
+                        processedInherit = processedInherit,
                         loaderVersion = processedLoaderVersion
                     )
                 )
@@ -450,10 +458,14 @@ class GameInstaller(
         }
     )
 
+    /**
+     * 游戏带附加内容安装完成，合并版本Json、迁移游戏文件
+     */
     private fun createGameInstalledTask(
         tempMinecraftDir: File,
         targetMinecraftDir: File,
         targetClientDir: File,
+        tempClientDir: File,
         tempModsDir: File,
         optiFineFolder: File? = null,
         forgeFolder: File? = null,
@@ -469,7 +481,7 @@ class GameInstaller(
             mergeGameJson(
                 info = info,
                 outputFolder = targetClientDir,
-                clientFolder = targetClientDir,
+                clientFolder = tempClientDir,
                 optiFineFolder = optiFineFolder,
                 forgeFolder = forgeFolder,
                 neoForgeFolder = neoForgeFolder,
@@ -486,6 +498,14 @@ class GameInstaller(
                 }
             )
 
+            //复制客户端文件
+            copyVanillaFiles(
+                sourceGameFolder = tempMinecraftDir,
+                sourceVersion = info.gameVersion,
+                destinationGameFolder = targetGameFolder,
+                targetVersion = info.customVersionName
+            )
+
             //复制Mods
             tempModsDir.listFiles()?.let {
                 val targetModsDir = File(targetClientDir, "mods")
@@ -500,6 +520,26 @@ class GameInstaller(
             clearTempGameDir()
         }
     )
+
+    /**
+     * 仅原本客户端文件复制任务 json、jar
+     */
+    private fun createVanillaFilesCopyTask(
+        tempMinecraftDir: File
+    ): Task {
+        return Task.runTask(
+            id = "VanillaFilesCopy",
+            task = {
+                //复制客户端文件
+                copyVanillaFiles(
+                    sourceGameFolder = tempMinecraftDir,
+                    sourceVersion = info.gameVersion,
+                    destinationGameFolder = targetGameFolder,
+                    targetVersion = info.customVersionName
+                )
+            }
+        )
+    }
 
     private fun File.createDirAndLog(): File {
         this.mkdirs()

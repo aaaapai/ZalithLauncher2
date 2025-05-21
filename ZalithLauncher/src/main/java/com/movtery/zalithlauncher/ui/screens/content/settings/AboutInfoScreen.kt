@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.SETTINGS_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
@@ -146,7 +147,7 @@ fun AboutInfoScreen() {
 private fun LibraryInfoItem(
     info: LibraryInfo,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    color: Color = itemLayoutColor(),
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Surface(
@@ -154,7 +155,7 @@ private fun LibraryInfoItem(
         color = color,
         contentColor = contentColor,
         shape = MaterialTheme.shapes.large,
-        shadowElevation = 2.dp,
+        shadowElevation = 1.dp,
         onClick = {}
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {

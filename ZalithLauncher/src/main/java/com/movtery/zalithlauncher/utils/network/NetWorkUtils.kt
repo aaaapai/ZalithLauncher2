@@ -19,6 +19,7 @@ import okhttp3.Call
 import org.apache.commons.io.FileUtils
 import java.io.BufferedOutputStream
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -69,6 +70,7 @@ class NetWorkUtils {
             try {
                 conn.connect()
                 if (conn.responseCode !in 200..299) {
+                    if (conn.responseCode == 404) throw FileNotFoundException("HTTP ${conn.responseCode} - ${conn.responseMessage}")
                     throw IOException("HTTP ${conn.responseCode} - ${conn.responseMessage}")
                 }
 
@@ -93,11 +95,13 @@ class NetWorkUtils {
                 }
             } catch (e: Exception) {
                 FileUtils.deleteQuietly(outputFile)
-                if (e is CancellationException || e is InterruptedIOException) {
-                    Log.d("NetWorkUtils.downloadFileWithHttp", "download task cancelled. url: $url")
-                    return //取消了，不需要抛出异常
-                } else {
-                    throw IOException("Download failed: $url", e)
+                when (e) {
+                    is CancellationException, is InterruptedIOException -> {
+                        Log.d("NetWorkUtils.downloadFileWithHttp", "download task cancelled. url: $url")
+                        return //取消了，不需要抛出异常
+                    }
+                    is FileNotFoundException -> throw e //目标不存在
+                    else -> throw IOException("Download failed: $url", e)
                 }
             }
         }
