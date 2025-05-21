@@ -95,6 +95,7 @@ object RendererPluginManager {
                         val value = stringList[1]
                         when (key) {
                             "POJAV_RENDERER" -> rendererId = value
+                            "TAG_RENDERER" -> rendererId = value
                             "DLOPEN" -> {
                                 value.split(",").forEach { lib ->
                                     dlopenList.add(lib)
