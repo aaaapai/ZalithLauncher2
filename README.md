@@ -4,6 +4,7 @@
 [![Sponsor](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors)](https://afdian.com/a/MovTery)
 
 [简体中文](README_ZH_CN.md)  
+[繁體中文](README_ZH_TW.md)
 
 **Zalith Launcher 2** is a newly designed launcher for **Android devices** tailored for [Minecraft: Java Edition](https://www.minecraft.net/). The project uses [PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/tree/v3_openjdk/app_pojavlauncher/src/main/jni) as its core launching engine and features a modern UI built with **Jetpack Compose** and **Material Design 3**.
 We are currently building our official website [zalithlauncher.cn](https://zalithlauncher.cn)  
@@ -59,6 +60,7 @@ These two languages are **officially maintained by the project and guaranteed fo
 We welcome the community to contribute translations for other languages!
 
 * **Turkish** - by Star1xr
+* **Traditional Chinese** - by HongyiHank
 
 ### 📌 Why Only English and Simplified Chinese?
 

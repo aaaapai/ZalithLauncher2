@@ -1,5 +1,6 @@
 package com.movtery.zalithlauncher.ui.screens.content.versions
 
+import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -17,11 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.outlined.CopyAll
@@ -40,6 +43,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,11 +68,16 @@ import coil3.compose.AsyncImage
 import coil3.gif.GifDecoder
 import coil3.request.ImageRequest
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.game.account.AccountsManager
+import com.movtery.zalithlauncher.game.launch.LaunchGame
+import com.movtery.zalithlauncher.game.version.installed.Version
+import com.movtery.zalithlauncher.game.version.installed.VersionInfo
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ContentCheckBox
+import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
@@ -110,7 +119,9 @@ fun SavesManagerScreen() {
             ObjectStates.backToLauncherScreen()
             return@BaseScreen
         }
-        val minecraftVersion = version.getVersionInfo()!!.minecraftVersion
+        val versionInfo = version.getVersionInfo()!!
+        val minecraftVersion = versionInfo.minecraftVersion
+        val quickPlay = versionInfo.quickPlay
         val savesDir = File(version.getGameDir(), "saves")
 
         //触发刷新
@@ -119,7 +130,11 @@ fun SavesManagerScreen() {
         var savesFilter by remember { mutableStateOf(SavesFilter(onlyShowCompatible = false, saveName = "")) }
 
         var allSaves by remember { mutableStateOf<List<SaveData>>(emptyList()) }
-        var filteredSaves by remember { mutableStateOf<List<SaveData>>(emptyList()) }
+        val filteredSaves by remember(allSaves, savesFilter) {
+            derivedStateOf {
+                allSaves.takeIf { it.isNotEmpty() }?.filterSaves(minecraftVersion, savesFilter)
+            }
+        }
 
         var savesState by remember { mutableStateOf<SavesState>(SavesState.Loading) }
 
@@ -144,6 +159,7 @@ fun SavesManagerScreen() {
 
                     var savesOperation by remember { mutableStateOf<SavesOperation>(SavesOperation.None) }
                     SaveOperation(
+                        version = version,
                         savesOperation = savesOperation,
                         savesDir = savesDir,
                         updateOperation = { savesOperation = it },
@@ -185,6 +201,7 @@ fun SavesManagerScreen() {
                                 .fillMaxWidth()
                                 .weight(1f),
                             savesList = filteredSaves,
+                            quickPlay = quickPlay,
                             minecraftVersion = minecraftVersion,
                             itemColor = itemColor,
                             itemContentColor = itemContentColor,
@@ -209,12 +226,10 @@ fun SavesManagerScreen() {
                     try {
                         dirs.forEach { dir ->
                             ensureActive()
-
-                            val levelDatFile = File(dir, "level.dat").takeIf { it.exists() && it.isFile } ?: return@forEach
                             //解析存档 level.dat，读取必要数据
                             val data = parseLevelDatFile(
                                 saveFile = dir,
-                                levelDatFile = levelDatFile
+                                levelDatFile = File(dir, "level.dat")
                             )
                             tempList.add(data)
                         }
@@ -223,20 +238,9 @@ fun SavesManagerScreen() {
                     }
                 }
                 allSaves = tempList.sortedBy { it.saveFile.name }
-                filteredSaves = withContext(Dispatchers.Default) {
-                    allSaves.filterSaves(minecraftVersion, savesFilter)
-                }
             }
 
             savesState = SavesState.None
-        }
-
-        LaunchedEffect(savesFilter) {
-            if (allSaves.isNotEmpty()) {
-                filteredSaves = withContext(Dispatchers.Default) {
-                    allSaves.filterSaves(minecraftVersion, savesFilter)
-                }
-            }
         }
     }
 }
@@ -311,27 +315,41 @@ private fun SavesActionsHeader(
 @Composable
 private fun SavesList(
     modifier: Modifier = Modifier,
-    savesList: List<SaveData>,
+    savesList: List<SaveData>?,
+    quickPlay: VersionInfo.QuickPlay,
     minecraftVersion: String,
     itemColor: Color,
     itemContentColor: Color,
     updateOperation: (SavesOperation) -> Unit
 ) {
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(all = 12.dp)
-    ) {
-        items(savesList.size) { index ->
-            val saveData = savesList[index]
-            SaveItemLayout(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = if (index != savesList.size - 1) 12.dp else 0.dp),
-                saveData = saveData,
-                minecraftVersion = minecraftVersion,
-                updateOperation = updateOperation,
-                itemColor = itemColor,
-                itemContentColor = itemContentColor
+    savesList?.let { list ->
+        //如果列表是空的，则是由搜索导致的
+        if (list.isNotEmpty()) {
+            LazyColumn(
+                modifier = modifier,
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                items(list) { saveData ->
+                    SaveItemLayout(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        saveData = saveData,
+                        quickPlay = quickPlay,
+                        minecraftVersion = minecraftVersion,
+                        updateOperation = updateOperation,
+                        itemColor = itemColor,
+                        itemContentColor = itemContentColor
+                    )
+                }
+            }
+        }
+    } ?: run {
+        //如果为null，则代表本身就没有存档可以展示
+        Box(modifier = Modifier.fillMaxSize()) {
+            ScalingLabel(
+                modifier = Modifier.align(Alignment.Center),
+                text = stringResource(R.string.saves_manage_no_saves)
             )
         }
     }
@@ -346,6 +364,7 @@ private fun SavesList(
 private fun SaveItemLayout(
     modifier: Modifier = Modifier,
     saveData: SaveData,
+    quickPlay: VersionInfo.QuickPlay,
     minecraftVersion: String,
     onClick: () -> Unit = {},
     updateOperation: (SavesOperation) -> Unit = {},
@@ -474,8 +493,13 @@ private fun SaveItemLayout(
 
                 //更多存档操作
                 SaveOperationMenu(
+                    saveValid = saveData.isValid,
                     buttonSize = 38.dp,
                     iconSize = 26.dp,
+                    canQuickPlay = quickPlay.isQuickPlaySingleplayer,
+                    onQuickPlayClick = {
+                        updateOperation(SavesOperation.QuickPlay(saveData))
+                    },
                     onRenameClick = {
                         updateOperation(SavesOperation.RenameSave(saveData))
                     },
@@ -617,8 +641,11 @@ private fun SaveInfoTooltip(
 
 @Composable
 private fun SaveOperationMenu(
+    saveValid: Boolean,
     buttonSize: Dp,
     iconSize: Dp = buttonSize,
+    canQuickPlay: Boolean,
+    onQuickPlayClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
     onBackupClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
@@ -644,6 +671,30 @@ private fun SaveOperationMenu(
             onDismissRequest = { menuExpanded = false }
         ) {
             DropdownMenuItem(
+                enabled = saveValid && canQuickPlay,
+                text = {
+                    Text(
+                        text = if (canQuickPlay) {
+                            stringResource(R.string.saves_manage_quick_play)
+                        } else {
+                            stringResource(R.string.saves_manage_quick_play_disabled)
+                        }
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        modifier = Modifier.size(20.dp),
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = stringResource(R.string.saves_manage_quick_play)
+                    )
+                },
+                onClick = {
+                    onQuickPlayClick()
+                    menuExpanded = false
+                }
+            )
+            DropdownMenuItem(
+                enabled = saveValid,
                 text = { Text(text = stringResource(R.string.generic_rename)) },
                 leadingIcon = {
                     Icon(
@@ -658,6 +709,7 @@ private fun SaveOperationMenu(
                 }
             )
             DropdownMenuItem(
+                enabled = saveValid,
                 text = { Text(text = stringResource(R.string.saves_manage_backup)) },
                 leadingIcon = {
                     Icon(
@@ -691,6 +743,7 @@ private fun SaveOperationMenu(
 
 @Composable
 private fun SaveOperation(
+    version: Version,
     savesOperation: SavesOperation,
     savesDir: File,
     updateOperation: (SavesOperation) -> Unit,
@@ -698,8 +751,21 @@ private fun SaveOperation(
     backupSave: (SaveData, String) -> Unit,
     deleteSave: (SaveData) -> Unit
 ) {
+    val context = LocalContext.current
+
     when (savesOperation) {
         is SavesOperation.None -> {}
+        is SavesOperation.QuickPlay -> {
+            val saveData = savesOperation.saveData
+            AccountsManager.getCurrentAccount() ?: run {
+                Toast.makeText(context, R.string.game_launch_no_account, Toast.LENGTH_SHORT).show()
+                updateOperation(SavesOperation.None)
+                return
+            }
+            version.quickPlaySingle = saveData.saveFile.name
+            LaunchGame.launchGame(context, version)
+            updateOperation(SavesOperation.None)
+        }
         is SavesOperation.RenameSave -> {
             val saveData = savesOperation.saveData
             SaveNameInputDialog(

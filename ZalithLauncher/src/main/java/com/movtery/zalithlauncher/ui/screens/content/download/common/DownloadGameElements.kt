@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Download
@@ -76,15 +77,13 @@ fun GameInstallingDialog(
                 LazyColumn(
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
-                    val size = tasks.size
-                    items(size) { index ->
-                        val task = tasks[index]
+                    items(tasks) { task ->
                         InstallingTaskItem(
                             title = task.title,
                             task = task.task,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = if (index == size - 1) 0.dp else 12.dp)
+                                .padding(vertical = 6.dp)
                         )
                     }
                 }

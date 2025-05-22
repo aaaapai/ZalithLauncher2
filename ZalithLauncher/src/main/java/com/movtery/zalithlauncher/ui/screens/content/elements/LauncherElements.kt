@@ -225,7 +225,12 @@ fun LaunchGameOperation(
             updateOperation(LaunchGameOperation.RealLaunch)
         }
         is LaunchGameOperation.RealLaunch -> {
-            LaunchGame.launchGame(context)
+            val version = VersionsManager.currentVersion ?: run {
+                updateOperation(LaunchGameOperation.None)
+                return
+            }
+            version.quickPlaySingle = null //清除快速启动
+            LaunchGame.launchGame(context, version)
             updateOperation(LaunchGameOperation.None)
         }
     }

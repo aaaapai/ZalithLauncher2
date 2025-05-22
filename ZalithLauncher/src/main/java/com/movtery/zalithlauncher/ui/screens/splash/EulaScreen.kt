@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.ui.screens.splash
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -9,7 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -78,11 +80,10 @@ private fun EulaTextLayout(
             },
         shape = MaterialTheme.shapes.extraLarge
     ) {
-        LazyColumn (
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(all = 16.dp)
+        Column(
+            modifier = Modifier.verticalScroll(rememberScrollState())
         ) {
-            items(1) {
+            Box(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = eulaText,
                     style = MaterialTheme.typography.bodyMedium

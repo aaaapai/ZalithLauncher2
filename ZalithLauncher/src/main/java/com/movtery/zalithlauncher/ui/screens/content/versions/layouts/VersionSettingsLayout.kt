@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.ui.screens.content.versions.layouts
 
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,13 +10,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,10 +30,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.version.installed.SettingState
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.ui.components.SimpleIntSliderLayout
@@ -84,41 +89,27 @@ class VersionSettingsLayoutScope {
     }
 
     @Composable
-    fun StatefulSwitchLayoutFollowGlobal(
+    fun StatefulDropdownMenuFollowGlobal(
         modifier: Modifier = Modifier,
         currentValue: SettingState,
         onValueChange: (SettingState) -> Unit,
+        iconSize: Dp = 20.dp,
+        shape: Shape = RoundedCornerShape(22.0.dp),
         title: String,
         summary: String? = null
     ) {
         var value by remember { mutableStateOf(currentValue) }
 
-        SwitchLayoutFollowGlobal(
-            modifier = modifier,
-            value = value,
-            onValueChange = {
-                value = it
-                onValueChange(it)
-            },
-            title = title,
-            summary = summary
-        )
-    }
+        var expanded by remember { mutableStateOf(false) }
 
-    @Composable
-    fun SwitchLayoutFollowGlobal(
-        modifier: Modifier = Modifier,
-        value: SettingState,
-        onValueChange: (SettingState) -> Unit = {},
-        title: String,
-        summary: String? = null
-    ) {
         Row(
             modifier = modifier
                 .fillMaxWidth()
-                .clip(shape = MaterialTheme.shapes.extraLarge)
+                .clip(shape = shape)
+                .clickable { expanded = !expanded }
                 .padding(all = 8.dp)
-                .padding(bottom = 4.dp)
+                .padding(bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -128,49 +119,53 @@ class VersionSettingsLayoutScope {
                 TitleAndSummary(title, summary)
             }
 
-            val allItems = SettingState.entries
-            var selectedTab by remember { mutableIntStateOf(allItems.indexOf(value)) }
-
-            Surface(
-                modifier = Modifier
-                    .width(240.dp)
-                    .align(Alignment.CenterVertically),
-                shape = MaterialTheme.shapes.extraLarge,
-                shadowElevation = 1.dp
+            Row(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                TabRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    selectedTabIndex = selectedTab,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    indicator = @Composable { tabPositions ->
-                        if (selectedTab < tabPositions.size) {
-                            TabRowDefaults.PrimaryIndicator(
-                                Modifier.tabIndicatorOffset(tabPositions[selectedTab])
-                            )
-                        }
-                    },
-                    divider = { /* 禁用底部横线 */ },
-                    tabs = {
-                        repeat(allItems.size) { index ->
-                            val state = allItems[index]
-                            Tab(
-                                selected = value == state,
-                                onClick = {
-                                    selectedTab = index
-                                    onValueChange(state)
-                                }
-                            ) {
-                                Text(
-                                    modifier = Modifier.padding(all = 12.dp),
-                                    text = stringResource(state.textRes),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    }
+                Text(
+                    text = stringResource(value.textRes),
+                    style = MaterialTheme.typography.labelMedium
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            Row(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    modifier = Modifier.size(34.dp),
+                    onClick = { expanded = !expanded }
+                ) {
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(R.string.generic_setting)
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    shape = MaterialTheme.shapes.large,
+                    shadowElevation = 3.dp,
+                ) {
+                    val allEntries = SettingState.entries
+                    repeat(allEntries.size) { index ->
+                        val state = allEntries[index]
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = stringResource(state.textRes))
+                            },
+                            onClick = {
+                                value = state
+                                onValueChange(value)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
             }
         }
     }

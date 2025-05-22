@@ -23,6 +23,8 @@ sealed interface SavesState {
 
 sealed interface SavesOperation {
     data object None : SavesOperation
+    /** 快速启动 */
+    data class QuickPlay(val saveData: SaveData) : SavesOperation
     /** 重命名存档输入对话框 */
     data class RenameSave(val saveData: SaveData) : SavesOperation
     /** 备份存档输入对话框 */
@@ -124,6 +126,8 @@ enum class Difficulty(val levelCode: Int, val nameRes: Int) {
  */
 suspend fun parseLevelDatFile(saveFile: File, levelDatFile: File): SaveData = withContext(Dispatchers.IO) {
     runCatching {
+        if (!levelDatFile.exists()) error("The ${levelDatFile.absolutePath} file does not exist!")
+
         val compound: CompoundTag = NBTUtil.read(levelDatFile, true).tag as? CompoundTag
             ?: error("Failed to read the level.dat file as a CompoundTag.")
         val data: CompoundTag = compound.asCompoundTag("Data")
@@ -162,7 +166,9 @@ suspend fun parseLevelDatFile(saveFile: File, levelDatFile: File): SaveData = wi
             levelName = levelName,
             levelMCVersion = levelMCVersion,
             gameMode = gameMode,
-            difficulty = difficulty,
+            //关于极限模式：极限模式开启后，难度会被锁定为困难（尽管 level.dat 文件内并不会这样存储）
+            //https://zh.minecraft.wiki/w/%E6%9E%81%E9%99%90%E6%A8%A1%E5%BC%8F#%E5%88%9B%E5%BB%BA%E6%96%B0%E7%9A%84%E4%B8%96%E7%95%8C
+            difficulty = if (hardcoreMode) Difficulty.HARD else difficulty,
             difficultyLocked = difficultyLocked,
             hardcoreMode = hardcoreMode,
             allowCommands = allowCommands,

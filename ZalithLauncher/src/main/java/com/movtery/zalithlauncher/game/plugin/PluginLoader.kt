@@ -19,11 +19,19 @@ object PluginLoader {
     private const val PACKAGE_FLAGS =
         PackageManager.GET_META_DATA or PackageManager.GET_SHARED_LIBRARY_FILES
 
+    /**
+     * 所有已加载的应用插件
+     */
+    var allPlugins: List<ApkPlugin> = emptyList()
+        private set
+
     @JvmStatic
     @SuppressLint("QueryPermissionsNeeded")
     fun loadAllPlugins(context: Context, force: Boolean = false) {
         if (isInitialized && !force) return
         isInitialized = true
+
+        val apkPluginList: MutableList<ApkPlugin> = mutableListOf()
 
         DriverPluginManager.initDriver(context, force)
         if (force) RendererPluginManager.clearPlugin()
@@ -33,12 +41,12 @@ object PluginLoader {
                 Intent("android.intent.action.MAIN"),
                 PACKAGE_FLAGS
             )
-        queryIntentActivities.forEach {
-            val applicationInfo = it.activityInfo.applicationInfo
-            DriverPluginManager.parsePlugin(context, applicationInfo)
-            RendererPluginManager.parseApkPlugin(context, applicationInfo)
-            FFmpegPluginManager.parsePlugin(applicationInfo)
+        queryIntentActivities.forEach { resolve ->
+            val applicationInfo = resolve.activityInfo.applicationInfo
+            DriverPluginManager.parsePlugin(context, applicationInfo) { apkPluginList.add(it) }
+            RendererPluginManager.parseApkPlugin(context, applicationInfo) { apkPluginList.add(it) }
         }
+        FFmpegPluginManager.loadPlugin(context) { apkPluginList.add(it) }
 
         if (RendererPluginManager.isAvailable()) {
             val failedToLoadList: MutableList<RendererPlugin> = mutableListOf()
@@ -70,5 +78,8 @@ object PluginLoader {
             }
             if (failedToLoadList.isNotEmpty()) RendererPluginManager.removeRenderer(failedToLoadList)
         }
+
+        //全部已加载的插件
+        allPlugins = apkPluginList.sortedBy { it.appName }
     }
 }

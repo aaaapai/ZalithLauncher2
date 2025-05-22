@@ -39,6 +39,7 @@ import com.movtery.zalithlauncher.ui.components.SimpleIntSliderLayout
 import com.movtery.zalithlauncher.ui.components.SimpleListLayout
 import com.movtery.zalithlauncher.ui.components.TextInputLayout
 import com.movtery.zalithlauncher.ui.screens.content.VERSION_SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.settings.DriverSummaryLayout
 import com.movtery.zalithlauncher.ui.screens.content.settings.RendererSummaryLayout
 import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionSettingsBackground
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
@@ -119,7 +120,7 @@ private fun VersionConfigs(
             style = MaterialTheme.typography.labelLarge
         )
 
-        StatefulSwitchLayoutFollowGlobal(
+        StatefulDropdownMenuFollowGlobal(
             currentValue = config.isolationType,
             onValueChange = { type ->
                 if (config.isolationType != type) {
@@ -131,7 +132,7 @@ private fun VersionConfigs(
             summary = stringResource(R.string.versions_config_isolation_summary)
         )
 
-        StatefulSwitchLayoutFollowGlobal(
+        StatefulDropdownMenuFollowGlobal(
             currentValue = config.skipGameIntegrityCheck,
             onValueChange = { type ->
                 if (config.skipGameIntegrityCheck != type) {
@@ -165,11 +166,20 @@ private fun VersionConfigs(
             }
         )
 
-        SimpleIDListLayout(
-            items = getIDList(DriverPluginManager.getDriverList()) { IDItem(it.id, it.name) },
+        val drivers = DriverPluginManager.getDriverList()
+        val driversIdList = getIDList(drivers) { IDItem(it.id, it.name) }
+        SimpleListLayout(
+            items = driversIdList,
             currentId = config.driver,
             defaultId = "",
             title = stringResource(R.string.versions_config_vulkan_driver),
+            getItemText = { it.title },
+            getItemId = { it.id },
+            getItemSummary = { item ->
+                drivers.find { it.id == item.id }?.let { driver ->
+                    DriverSummaryLayout(driver)
+                }
+            },
             onValueChange = { item ->
                 if (config.driver != item.id) {
                     config.driver = item.id

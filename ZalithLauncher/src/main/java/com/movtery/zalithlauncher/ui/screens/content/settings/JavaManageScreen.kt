@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -163,15 +164,15 @@ fun JavaManageScreen() {
 
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(all = 12.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                items(runtimes.size) { index ->
+                items(runtimes) { runtime ->
                     JavaRuntimeItem(
-                        runtime = runtimes[index],
+                        runtime = runtime,
                         modifier = Modifier
-                            .padding(bottom = if (index == runtimes.size - 1) 0.dp else 12.dp),
+                            .padding(vertical = 6.dp),
                         onDeleteClick = {
-                            runtimeOperation = RuntimeOperation.PreDelete(runtimes[index])
+                            runtimeOperation = RuntimeOperation.PreDelete(runtime)
                         }
                     )
                 }

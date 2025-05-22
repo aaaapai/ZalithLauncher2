@@ -107,8 +107,11 @@ object VersionsManager {
             //通过判断是否存在版本的.json文件，来确定其是否为一个版本
             val jsonFile = File(versionFile, "${versionFile.name}.json")
             val versionInfo = if (jsonFile.exists() && jsonFile.isFile) {
-                isVersion = true
-                VersionInfoUtils.parseJson(jsonFile)
+                VersionInfoUtils.parseJson(jsonFile)?.also {
+                    //如果解析失败了，可能不是标准版本
+                    //保险起见，只有解析成功了的版本，才会被判定为有效版本
+                    isVersion = true
+                }
             } else {
                 null
             }

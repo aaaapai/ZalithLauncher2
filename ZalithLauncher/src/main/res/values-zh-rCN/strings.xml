@@ -60,7 +60,7 @@
     <string name="crash_launcher_message">应用程序意外崩溃了，以下错误信息将帮助开发者改进程序</string>
     <string name="crash_exit_message">JVM 以代码 %d 退出。</string>
     <string name="crash_singnal_message">JVM 因致命信号 %d 而中止。</string>
-    <string name="crash_exit_note">具体原因请查看日志文件。如果你无法自己解决这个问题，请将日志文件发送给具有相关技术能力的人，他们可以帮助你排查并修复问题。请不要截图当前画面，截图可能无法提供足够的信息来解决问题。</string>
+    <string name="crash_exit_note">具体原因请查看日志文件。如果您无法自己解决这个问题，请将日志文件发送给具有相关技术能力的人，他们可以帮助您排查并修复问题。请不要截图当前画面，截图可能无法提供足够的信息来解决问题。</string>
     <string name="crash_restart">重启应用</string>
     <string name="crash_exit">退出应用</string>
     <!--  错误  -->
@@ -83,7 +83,7 @@
     <string name="notification_title">检查通知权限</string>
     <string name="notification_request">申请权限</string>
     <string name="notification_ignore">无视</string>
-    <string name="notification_data_jvm_service_message">为了让安装顺利进行，启动器需要在后台运行安装器。我们会尝试启动一个前台服务来确保稳定性，不过这需要开启通知权限。能帮我们开启通知权限吗？这样可以避免安装中断哦！</string>
+    <string name="notification_data_jvm_service_message">为了让安装顺利进行，启动器需要在前台运行安装器。我们会尝试启动一个前台服务来确保稳定性，不过这需要开启通知权限。能帮我们开启通知权限吗？这样可以避免安装中断哦！</string>
     <string name="notification_data_jvm_service_name">前台安装服务</string>
     <string name="notification_data_jvm_service_running">正在前台服务安装游戏中</string>
     <!--  解压  -->
@@ -134,12 +134,12 @@
     <string name="download_game_install_game_files_progress">安装游戏文件</string>
     <string name="download_install">安装</string>
     <string name="download_install_error_title">安装失败</string>
-    <string name="download_install_error_message">你的游戏在安装过程中出现了异常：</string>
+    <string name="download_install_error_message">您的游戏在安装过程中出现了异常：</string>
     <string name="download_install_error_cant_fetch_optifine_download_url">无法获取 OptiFine 主文件的下载链接</string>
     <string name="download_install_error_jvm_crash">安装过程中遇到了异常，退出代码：%s</string>
     <string name="download_install_error_download_failed">一些文件下载失败，可能是网络问题导致的</string>
     <string name="download_install_success_title">安装成功</string>
-    <string name="download_install_success_message">你的游戏已顺利的完成了安装！</string>
+    <string name="download_install_success_message">您的游戏已顺利的完成了安装！</string>
     <!--  启动游戏  -->
     <string name="game_launch_no_version">未选择游戏版本！</string>
     <string name="game_launch_no_account">未登录游戏账号！</string>
@@ -149,12 +149,12 @@
     <string name="game_button_log_output">日志输出</string>
     <string name="game_button_mouse_left">鼠标左键</string>
     <string name="game_button_mouse_right">鼠标右键</string>
-    <string name="game_dialog_force_close_message">你确定要强制关闭，并返回主界面吗？</string>
+    <string name="game_dialog_force_close_message">您确定要强制关闭，并返回主界面吗？</string>
     <!--  渲染器  -->
     <string name="renderer_name_freedreno">Freedreno (Adreno)</string>
     <string name="renderer_name_panfrost">Panfrost (Mali)</string>
     <string name="renderer_version_support">MC 版本支持：</string>
-    <string name="renderer_version_unsupported_warning">当前渲染器 %s 不支持该游戏版本，继续使用可能导致渲染错误或游戏崩溃！你确定要无视风险坚持访问吗？</string>
+    <string name="renderer_version_unsupported_warning">当前渲染器 %s 不支持该游戏版本，继续使用可能导致渲染错误或游戏崩溃！您确定要无视风险坚持访问吗？</string>
     <!--  账号  -->
     <string name="account_no_account">未找到可用账号</string>
     <string name="account_login">登录</string>
@@ -184,15 +184,15 @@
     <string name="account_change_skin_select_model_alert_custom_skin_loader">使用 万用皮肤补丁 模组</string>
     <string name="account_change_skin_model_steve">Steve 模型</string>
     <string name="account_change_skin_model_alex">Alex 模型</string>
-    <string name="account_change_skin_reset_skin_message">你确定要重置当前账号的皮肤吗？</string>
-    <string name="account_change_skin_not_supported_alex">当前 Minecraft 版本不支持使用 Alex 模型的皮肤，如果你给当前账号的皮肤设置为 Alex 模型，游戏内将只会显示 Steve 的皮肤！</string>
+    <string name="account_change_skin_reset_skin_message">您确定要重置当前账号的皮肤吗？</string>
+    <string name="account_change_skin_not_supported_alex">当前 Minecraft 版本不支持使用 Alex 模型的皮肤，如果您给当前账号的皮肤设置为 Alex 模型，游戏内将只会显示 Steve 的皮肤！</string>
     <string name="account_change_skin_compatibility_warning">因技术限制，在当前 Minecraft  版本使用自定义皮肤可能会不生效</string>
     <string name="account_supporting_username_invalid_title">该用户名无效</string>
     <string name="account_supporting_username_invalid_local_message_hint1">正常的用户名称仅支持英文字母（大小写均可）、数字以及下划线作为用户名，长度不允许少于 3 字符，超过 16 字符</string>
     <string name="account_supporting_username_invalid_local_message_hint2">否则可能将导致游戏无法正常运行</string>
     <string name="account_supporting_username_invalid_local_message_hint3">正确的用户名举例：Name、Name_、Name123</string>
     <string name="account_supporting_username_invalid_local_message_hint4">错误的用户名举例：Name@、N ame、name_name_name_name</string>
-    <string name="account_supporting_username_invalid_local_message_hint5">但如果你使用了相关模组或者插件能够解除这一机制，那么你可以继续使用这个名字，否则请重新命名！</string>
+    <string name="account_supporting_username_invalid_local_message_hint5">但如果您使用了相关模组或者插件能够解除这一机制，那么您可以继续使用这个名字，否则请重新命名！</string>
     <string name="account_supporting_username_invalid_still_use">仍旧使用</string>
     <string name="account_supporting_username_invalid_short">该用户名过短</string>
     <string name="account_supporting_username_invalid_long">该用户名过长</string>
@@ -201,19 +201,19 @@
     <string name="account_supporting_email_invalid_empty">未填写邮箱或用户名</string>
     <string name="account_supporting_password_invalid_empty">未填写填写密码</string>
     <string name="account_supporting_microsoft_tip_title">添加微软账号</string>
-    <string name="account_supporting_microsoft_tip_link_text">你可能需要的快捷方式：</string>
+    <string name="account_supporting_microsoft_tip_link_text">您可能需要的快捷方式：</string>
     <string name="account_supporting_microsoft_tip_link_purchase">购买 Minecraft</string>
     <string name="account_supporting_microsoft_tip_link_make_gameid">创建档案 / 编辑档案名称</string>
     <string name="account_supporting_microsoft_tip_hint_t1">请按照以下步骤添加账户：</string>
     <string name="account_supporting_microsoft_tip_hint_t2">1. 点击“登录”按钮，启动器将尝试获取验证代码；\n</string>
     <string name="account_supporting_microsoft_tip_hint_t3">2. 在弹出的网页中输入 %s 提供的代码，并点击“允许访问”；\n</string>
     <string name="account_supporting_microsoft_tip_hint_t4">3. 根据网页提示完成登录流程；\n</string>
-    <string name="account_supporting_microsoft_tip_hint_t5">4. 当网页询问“是否允许此应用访问你的信息？”时，请点击“接受”；\n</string>
+    <string name="account_supporting_microsoft_tip_hint_t5">4. 当网页询问“是否允许此应用访问您的信息？”时，请点击“接受”；\n</string>
     <string name="account_supporting_microsoft_tip_hint_t6">5. 当网页显示“大功告成”时，账户将自动添加，请稍候片刻。</string>
     <string name="account_supporting_microsoft_tip_hint_t7">如果网页提示“出现错误”或账户添加失败，请按照上述步骤重新尝试。\n</string>
     <string name="account_supporting_microsoft_tip_hint_t8">提示：若当前网络状况不佳，可能会导致网页加载缓慢或无法打开。请尝试使用网络代理后重试。</string>
     <string name="account_delete_title">删除账号</string>
-    <string name="account_delete_message">你确定要将账号 %s 从启动器内删除吗？</string>
+    <string name="account_delete_message">您确定要将账号 %s 从启动器内删除吗？</string>
     <string name="account_microsoft_fetch_device_code">获取设备码</string>
     <string name="account_microsoft_coped_device_code">已获取并自动复制设备码：%s，稍后请在网页中完成验证！</string>
     <string name="account_microsoft_get_token">轮询中，尝试获取令牌；设备码：%s</string>
@@ -231,10 +231,10 @@
     <string name="account_other_login_adding_failure">添加认证服务器时遇到问题！</string>
     <string name="account_other_login_register">没有账号？点我注册一个！</string>
     <string name="account_other_login_delete_server_title">删除认证服务器</string>
-    <string name="account_other_login_delete_server_message">你确定要删除认证服务器 %s 吗？</string>
+    <string name="account_other_login_delete_server_message">您确定要删除认证服务器 %s 吗？</string>
     <string name="account_other_login_select_role">选择角色进行登录</string>
     <string name="account_other_login_select_role_logging">登录角色 %s 中</string>
-    <string name="account_other_login_role_not_found">未找到与当前账号相匹配的角色，请在你使用的服务器上检查这个角色是否存在！</string>
+    <string name="account_other_login_role_not_found">未找到与当前账号相匹配的角色，请在您使用的服务器上检查这个角色是否存在！</string>
     <!--  文件管理  -->
     <string name="files_back_to_parent">返回上一级</string>
     <string name="files_create_dir">创建目录</string>
@@ -245,7 +245,7 @@
     <!--  Jre  -->
     <string name="multirt_runtime_corrupt">Java 运行环境损坏</string>
     <string name="multirt_runtime_incompatible_arch">不兼容的架构：%s</string>
-    <string name="multirt_runtime_delete_message">你确定要删除 Java 环境 %s 吗？此操作不可逆！</string>
+    <string name="multirt_runtime_delete_message">您确定要删除 Java 环境 %s 吗？此操作不可逆！</string>
     <string name="multirt_runtime_deleting">删除 Java 环境：%s</string>
     <string name="multirt_runtime_delete_failed">删除 Java 环境失败！</string>
     <string name="multirt_runtime_import_failed">导入 Java 环境失败！</string>
@@ -255,7 +255,7 @@
     <string name="multirt_runtime_version_name">版本：%s</string>
     <string name="multirt_runtime_version_code">版本号：%s</string>
     <string name="multirt_runtime_version_arch">架构：%s</string>
-    <string name="multirt_no_java_8">未找到 Java 8，要使用这个功能，你必须安装 Java 8</string>
+    <string name="multirt_no_java_8">未找到 Java 8，要使用这个功能，您必须安装 Java 8</string>
     <string name="multirt_no_compatible_multirt">找不到任何兼容的 Java 运行环境，需要使用 Java %d 或更新版本</string>
     <string name="execute_jar_title">执行 Jar 文件</string>
     <string name="execute_jar_incompatible_runtime">该 Jar 文件与 Java %d 不兼容</string>
@@ -264,9 +264,9 @@
     <string name="versions_manage_game_path_add_new">添加游戏目录</string>
     <string name="versions_manage_game_path_edit_title">为该游戏目录命名</string>
     <string name="versions_manage_game_path_delete_title">删除游戏目录</string>
-    <string name="versions_manage_game_path_delete_message">你确定要删除这个游戏目录吗？该操作并不会删除对应目录内的文件，仅仅只是将其与启动器解除绑定</string>
+    <string name="versions_manage_game_path_delete_message">您确定要删除这个游戏目录吗？该操作并不会删除对应目录内的文件，仅仅只是将其与启动器解除绑定</string>
     <string name="versions_manage_game_path_exists_title">游戏目录已存在</string>
-    <string name="versions_manage_game_path_exists_message">当前选择的游戏目录与现有的目录冲突，你不能同时管理两个游戏目录！</string>
+    <string name="versions_manage_game_path_exists_message">当前选择的游戏目录与现有的目录冲突，您不能同时管理两个游戏目录！</string>
     <string name="versions_manage_game_path_error_title">操作游戏目录时遇到问题</string>
     <string name="versions_manage_no_versions">没有安装版本</string>
     <string name="versions_manage_install_exists">此名称的版本已经存在！</string>
@@ -279,10 +279,10 @@
     <string name="versions_manage_copy_version_all">复制所有文件</string>
     <string name="versions_manage_delete_version">删除版本</string>
     <string name="versions_manage_delete_version_tip_hint1">删除版本时会一并删除“./versions/%s”目录内的所有文件，包括该版本的游戏存档、资源包、模组等重要资源。</string>
-    <string name="versions_manage_delete_version_tip_hint2">如果你开启了版本隔离，相关文件仅存放于该目录，那么删除该版本时相关文件会被清除；</string>
+    <string name="versions_manage_delete_version_tip_hint2">如果您开启了版本隔离，相关文件仅存放于该目录，那么删除该版本时相关文件会被清除；</string>
     <string name="versions_manage_delete_version_tip_hint3">如果未开启版本隔离，游戏文件则存放于根目录，删除该版本不会清理所有相关文件。</string>
     <string name="versions_manage_delete_version_tip_hint4">请务必在操作前备份重要数据，谨慎删除！</string>
-    <string name="versions_manage_delete_version_tip_invalid">当前版本缺少版本 JSON 文件，所以被判定为无效的版本，因此你不能选择这个版本！点击确认，删除这个错误的版本。</string>
+    <string name="versions_manage_delete_version_tip_invalid">当前版本缺少版本 JSON 文件，或者不是有效格式，所以被判定为无效的版本，因此您不能选择这个版本！点击确认，删除这个错误的版本。</string>
     <string name="versions_manage_task_error">操作版本时出现问题</string>
     <string name="versions_manage_install_new">安装新游戏</string>
     <string name="versions_manage_settings">版本设置</string>
@@ -292,7 +292,7 @@
     <string name="versions_settings_config">版本配置</string>
     <string name="versions_overview_custom_version_icon">自定义图标</string>
     <string name="versions_overview_reset_version_icon">重置图标</string>
-    <string name="versions_overview_reset_version_icon_message">你确定要重置当前版本的图标吗？</string>
+    <string name="versions_overview_reset_version_icon_message">您确定要重置当前版本的图标吗？</string>
     <string name="versions_overview_edit_version_summary">编辑描述</string>
     <string name="versions_overview_edit_version_summary_label">留空则使用启动器默认描述</string>
     <string name="versions_overview_version_folder">版本文件夹</string>
@@ -341,7 +341,10 @@
     <string name="saves_manage_exists">该名称的存档已经存在</string>
     <string name="saves_manage_save_name">存档名称</string>
     <string name="saves_manage_backup">备份存档</string>
-    <string name="saves_manage_delete_warning">你确定要删除存档 %s 吗？该操作不可撤销！</string>
+    <string name="saves_manage_delete_warning">您确定要删除存档 %s 吗？该操作不可撤销！</string>
+    <string name="saves_manage_quick_play">快速启动</string>
+    <string name="saves_manage_quick_play_disabled">快速启动（仅限 1.20+）</string>
+    <string name="saves_manage_no_saves">当前版本还没有存档</string>
     <!--  游戏  -->
     <string name="minecraft_download_stat_download_task">统计下载任务</string>
     <string name="minecraft_download_stat_verify_task">统计验证任务</string>
@@ -376,7 +379,7 @@
     <string name="settings_renderer_shader_dump_summary">将游戏运行时转换后的着色器代码输出到日志文件，便于调试或分析图形渲染过程</string>
     <string name="settings_renderer_vulkan_driver_system_title">使用系统 Vulkan 驱动</string>
     <string name="settings_renderer_vulkan_driver_system_summary">启用后，启动器将强制使用系统自带的 Vulkan 驱动（适用于 Adreno GPU），而不使用默认的 Turnip 驱动。本设置仅影响使用 Vulkan 渲染的 Zink 后端及相关模组</string>
-    <string name="settings_renderer_zink_driver_adreno">启动器检测到你的设备为 Adreno GPU，开启这个选项可能会导致 Zink 渲染器无法正常工作，你确定要打开这个选项吗？</string>
+    <string name="settings_renderer_zink_driver_adreno">启动器检测到您的设备为 Adreno GPU，开启这个选项可能会导致 Zink 渲染器无法正常工作，您确定要打开这个选项吗？</string>
     <string name="settings_renderer_vsync_in_zink_title">启用 Zink 垂直同步</string>
     <string name="settings_renderer_vsync_in_zink_summary">通过系统接口为 Zink 渲染器启用垂直同步</string>
     <string name="settings_renderer_force_big_core_title">强制在高性能核心运行</string>
@@ -386,7 +389,7 @@
     <string name="settings_game_skip_game_integrity_check_title">不检查游戏完整性</string>
     <string name="settings_game_skip_game_integrity_check_summary">启动游戏时，若已存在的游戏文件与实际不匹配，是否进行重新下载</string>
     <string name="settings_game_version_custom_info_title">自定义版本信息</string>
-    <string name="settings_game_version_custom_info_summary">自定义信息会显示在游戏主菜单左下角和 F3 调试界面左上角。部分特殊版本或使用外置账号登录时可能不生效。你也可以添加 [zl_version] 字段，启动器会自动替换为当前版本号</string>
+    <string name="settings_game_version_custom_info_summary">自定义信息会显示在游戏主菜单左下角和 F3 调试界面左上角。部分特殊版本或使用外置账号登录时可能不生效。您也可以添加 [zl_version] 字段，启动器会自动替换为当前版本号</string>
     <string name="settings_game_auto_pick_java_runtime_title">自动选择 Java 环境</string>
     <string name="settings_game_auto_pick_java_runtime_summary">在需要使用 Java 时，启动器将自动选择合适的环境。若无法判断，将使用默认 Java 环境</string>
     <string name="settings_game_java_runtime_title">游戏 Java 环境</string>
@@ -401,7 +404,7 @@
     <string name="settings_game_log_buffer_flush_interval_summary">设置日志缓冲区多长时间刷新一次。刷新太频繁或太久不刷新都可能影响性能</string>
     <string name="settings_control_mouse_physical_mouse_mode_title">实体鼠标控制</string>
     <string name="settings_control_mouse_physical_mouse_mode_summary">连接实体鼠标时，是否禁用虚拟鼠标指针，直接使用系统鼠标指针进行操控</string>
-    <string name="settings_control_mouse_physical_mouse_warning">若你的设备把实体鼠标右键识别为“返回”，或中键识别为“回到桌面”，可进入系统设置 > 开发者选项，开启“禁用权限监控”，大概率能解决</string>
+    <string name="settings_control_mouse_physical_mouse_warning">若您的设备把实体鼠标右键识别为“返回”，或中键识别为“回到桌面”，可进入系统设置 > 开发者选项，开启“禁用权限监控”，大概率能解决</string>
     <string name="settings_control_mouse_size_title">虚拟鼠标大小</string>
     <string name="settings_control_mouse_speed_title">虚拟鼠标灵敏度</string>
     <string name="settings_control_mouse_control_mode_title">虚拟鼠标控制模式</string>
@@ -410,7 +413,7 @@
     <string name="settings_control_mouse_control_mode_click">点击控制</string>
     <string name="settings_control_mouse_pointer_title">虚拟鼠标指针</string>
     <string name="settings_control_mouse_pointer_summary">自定义虚拟鼠标指针的图片以匹配个人需求</string>
-    <string name="settings_control_mouse_pointer_reset_message">你确定要重置虚拟鼠标指针的图片吗？</string>
+    <string name="settings_control_mouse_pointer_reset_message">您确定要重置虚拟鼠标指针的图片吗？</string>
     <string name="settings_control_mouse_long_press_delay_title">虚拟鼠标长按触发的延迟</string>
     <string name="settings_control_mouse_long_press_delay_summary">设置屏幕长按识别的延迟时间（实体鼠标长按不受此设置影响，包括禁用实体鼠标控制时）</string>
     <string name="settings_control_gesture_control_title">手势控制</string>
@@ -429,8 +432,9 @@
     <string name="settings_launcher_animate_speed_title">动画倍速</string>
     <string name="settings_launcher_animate_speed_summary">调整启动器的动画播放时长的倍速</string>
     <string name="settings_launcher_swap_animate_type_title">页面切换动画</string>
-    <string name="settings_launcher_swap_animate_type_summary">根据你的需求，选择最适合自己的页面切换动画</string>
+    <string name="settings_launcher_swap_animate_type_summary">根据您的需求，选择最适合自己的页面切换动画</string>
     <!--  关于  -->
+    <string name="about_plugin_title">已加载的插件</string>
     <string name="about_library_title">额外引入的依赖项目</string>
     <!--  权限  -->
     <string name="permissions_external_storage">%s 需要管理设备所有文件的权限，否则该功能将无法正常使用</string>

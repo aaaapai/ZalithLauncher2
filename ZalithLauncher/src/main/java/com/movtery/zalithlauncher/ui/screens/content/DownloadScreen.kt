@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Image
@@ -124,8 +125,7 @@ private fun TabMenu(
             .padding(start = 12.dp),
         contentPadding = PaddingValues(vertical = 12.dp)
     ) {
-        items(downloadsList.size) { index ->
-            val item = downloadsList[index]
+        items(downloadsList) { item ->
             if (item.division) {
                 HorizontalDivider(
                     modifier = Modifier

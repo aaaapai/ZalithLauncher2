@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Clear
@@ -210,8 +211,7 @@ fun <E> AddonListLayout(
                                 .padding(vertical = 4.dp),
                             contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
-                            items(items.size) { index ->
-                                val item = items[index]
+                            items(items) { item ->
                                 AddonListItem(
                                     modifier = Modifier
                                         .fillMaxWidth()

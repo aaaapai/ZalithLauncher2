@@ -10,14 +10,13 @@ import com.movtery.zalithlauncher.game.path.getAssetsHome
 import com.movtery.zalithlauncher.game.path.getLibrariesHome
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.getGameManifest
-import com.movtery.zalithlauncher.game.version.installed.utils.isBiggerOrEqualVer
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.path.LibPath
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.string.StringUtils
-import com.movtery.zalithlauncher.utils.string.isBiggerOrEqualTo
+import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.toUnicodeEscaped
 import com.movtery.zalithlauncher.utils.string.isLowerTo
 import java.io.File
 
@@ -48,23 +47,36 @@ class LaunchArgs(
         argsList.add(gameManifest.mainClass)
         argsList.addAll(getMinecraftClientArgs())
 
-        version.getServerIp()?.let { serverIp ->
-            val (ip, port) = serverIp.split(":").run {
-                first() to getOrElse(1) { "25565" }
-            }
-            version.getVersionInfo()?.minecraftVersion?.let { minecraftVersion ->
-                //                                          1.20+       该快照才加入quickPlayMultiplayer参数
-                if (minecraftVersion.isBiggerOrEqualVer("1.20", "23w14a")) {
+        version.getVersionInfo()?.let { info ->
+            val playSingle = version.quickPlaySingle?.takeIf { it.isNotEmpty() && it.isNotBlank() }
+            if (playSingle != null) { //快速启动单人游戏
+                if (info.quickPlay.isQuickPlaySingleplayer) {
+                    //将不受支持的字符转换为Unicode
+                    val saveName = playSingle.toUnicodeEscaped()
                     argsList.apply {
-                        add("--quickPlayMultiplayer")
-                        add("$ip:$port")
+                        add("--quickPlaySingleplayer")
+                        add(saveName)
                     }
                 } else {
-                    argsList.apply {
-                        add("--server")
-                        add(ip)
-                        add("--port")
-                        add(port)
+                    Log.w("LaunchArgs", "Quick Play for singleplayer is not supported and has been skipped.")
+                }
+            } else {
+                version.getServerIp()?.let { serverIp ->
+                    val (ip, port) = serverIp.split(":").run {
+                        first() to getOrElse(1) { "25565" }
+                    }
+                    if (info.quickPlay.isQuickPlayMultiplayer) {
+                        argsList.apply {
+                            add("--quickPlayMultiplayer")
+                            add("$ip:$port")
+                        }
+                    } else {
+                        argsList.apply {
+                            add("--server")
+                            add(ip)
+                            add("--port")
+                            add(port)
+                        }
                     }
                 }
             }

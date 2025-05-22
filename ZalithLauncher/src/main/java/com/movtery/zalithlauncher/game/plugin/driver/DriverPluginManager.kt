@@ -3,6 +3,8 @@ package com.movtery.zalithlauncher.game.plugin.driver
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.game.plugin.ApkPlugin
+import com.movtery.zalithlauncher.game.plugin.cacheAppIcon
 import com.movtery.zalithlauncher.setting.AllSettings
 
 /**
@@ -34,9 +36,9 @@ object DriverPluginManager {
         val applicationInfo = context.applicationInfo
         driverList.add(
             Driver(
-                AllSettings.vulkanDriver.defaultValue,
-                "Turnip",
-                applicationInfo.nativeLibraryDir
+                id = AllSettings.vulkanDriver.defaultValue,
+                name = "Turnip",
+                path = applicationInfo.nativeLibraryDir
             )
         )
         setDriverById(AllSettings.vulkanDriver.getValue())
@@ -45,30 +47,38 @@ object DriverPluginManager {
     /**
      * 通用 FCL 插件
      */
-    fun parsePlugin(context: Context, info: ApplicationInfo) {
+    fun parsePlugin(
+        context: Context,
+        info: ApplicationInfo,
+        loaded: (ApkPlugin) -> Unit = {}
+    ) {
         if (info.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
             val metaData = info.metaData ?: return
             if (metaData.getBoolean("fclPlugin", false)) {
                 val driver = metaData.getString("driver") ?: return
                 val nativeLibraryDir = info.nativeLibraryDir
 
+                val packageManager = context.packageManager
                 val packageName = info.packageName
+                val appName = info.loadLabel(packageManager).toString()
+
                 driverList.add(
                     Driver(
-                        packageName,
-                        "$driver (${
-                            context.getString(
-                                R.string.settings_renderer_from_plugins,
-                                runCatching {
-                                    context.packageManager.getApplicationLabel(info)
-                                }.getOrElse {
-                                    context.getString(R.string.generic_unknown)
-                                }
-                            )
-                        })",
-                        nativeLibraryDir
+                        id = packageName,
+                        name = driver,
+                        summary = context.getString(R.string.settings_renderer_from_plugins, appName),
+                        path = nativeLibraryDir
                     )
                 )
+
+                runCatching {
+                    cacheAppIcon(context, info)
+                    ApkPlugin(
+                        packageName = packageName,
+                        appName = appName,
+                        appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+                    )
+                }.getOrNull()?.let { loaded(it) }
             }
         }
     }

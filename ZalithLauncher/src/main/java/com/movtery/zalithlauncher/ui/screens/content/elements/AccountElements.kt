@@ -580,6 +580,7 @@ fun OtherServerLoginDialog(
                     val focusManager = LocalFocusManager.current
 
                     OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
                         value = email,
                         onValueChange = { email = it },
                         isError = email.isEmpty(),
@@ -603,7 +604,9 @@ fun OtherServerLoginDialog(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     OutlinedTextField(
-                        modifier = Modifier.focusRequester(passwordFocus),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(passwordFocus),
                         value = password,
                         onValueChange = { password = it },
                         isError = password.isEmpty(),

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -524,11 +525,9 @@ private fun AccountsLayout(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(shape = MaterialTheme.shapes.extraLarge),
-                contentPadding = PaddingValues(all = 12.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                items(accounts.size) { index ->
-                    val account = accounts[index]
-
+                items(accounts) { account ->
                     var accountSkinOperation by remember { mutableStateOf<AccountSkinOperation>(AccountSkinOperation.None) }
                     AccountSkinOperation(
                         account = account,
@@ -549,7 +548,7 @@ private fun AccountsLayout(
                     AccountItem(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = if (index != accounts.size - 1) 12.dp else 0.dp),
+                            .padding(vertical = 6.dp),
                         currentAccount = currentAccount,
                         account = account,
                         onSelected = { uniqueUUID ->

@@ -44,14 +44,18 @@ class SplashActivity : BaseComponentActivity() {
         checkAllTask()
 
         setContent {
-            if (eulaText == null && checkTasks()) return@setContent
+            if (eulaText == null && checkTasksToMain()) return@setContent
 
             ZalithLauncherTheme {
                 Box {
                     SplashScreen(
                         eulaText = eulaText,
                         eulaDate = eulaDate,
-                        checkTasks = { checkTasks() },
+                        checkTasks = {
+                            val isNoTasks = checkTasks()
+                            if (isNoTasks) swapToMain()
+                            !isNoTasks //返回：有解压任务
+                        },
                         startAllTask = { startAllTask() },
                         unpackItems = unpackItems
                     )
@@ -152,13 +156,17 @@ class SplashActivity : BaseComponentActivity() {
         }
     }
 
-    private fun checkTasks(): Boolean {
-        val toMain = finishedTaskCount.get() >= unpackItems.size
+    private fun checkTasksToMain(): Boolean {
+        val toMain = checkTasks()
         if (toMain) {
             Log.i("SplashActivity", "All content that needs to be extracted is already the latest version!")
             swapToMain()
         }
         return toMain
+    }
+
+    private fun checkTasks(): Boolean {
+        return finishedTaskCount.get() >= unpackItems.size
     }
 
     private fun swapToMain() {

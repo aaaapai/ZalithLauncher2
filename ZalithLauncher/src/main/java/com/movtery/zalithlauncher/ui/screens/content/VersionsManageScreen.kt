@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Refresh
@@ -130,8 +131,7 @@ private fun GamePathLayout(
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            items(gamePaths.size) { index ->
-                val pathItem = gamePaths[index]
+            items(gamePaths) { pathItem ->
                 GamePathItemLayout(
                     item = pathItem,
                     selected = currentPath == pathItem.path,
@@ -242,16 +242,15 @@ private fun VersionsLayout(
 
                         LazyColumn(
                             modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(all = 12.dp)
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                         ) {
-                            items(versions.size) { index ->
-                                val version = versions[index]
+                            items(versions) { version ->
                                 VersionItemLayout(
                                     version = version,
                                     selected = version == currentVersion,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(bottom = if (index != versions.size - 1) 12.dp else 0.dp),
+                                        .padding(vertical = 6.dp),
                                     onSelected = {
                                         if (version.isValid()) {
                                             if (version != currentVersion) {

@@ -83,7 +83,7 @@
     <string name="notification_title">Check Notification Permission</string>
     <string name="notification_request">Request Permission</string>
     <string name="notification_ignore">Ignore</string>
-    <string name="notification_data_jvm_service_message">To ensure a smooth installation, the launcher needs to run the installer in the background. We\'ll try to start a foreground service to keep things stable, but this requires notification permission. Could you help us enable it? This will help avoid any installation interruptions!</string>
+    <string name="notification_data_jvm_service_message">To ensure a smooth installation, the launcher needs to run the installer in the foreground. We\'ll try to start a foreground service to maintain stability, but this requires notification permissions. Could you help us enable notification permissions? This will help prevent installation interruptions!</string>
     <string name="notification_data_jvm_service_name">Foreground Installation Service</string>
     <string name="notification_data_jvm_service_running">Installing the game via foreground service</string>
     <!-- Unpacking -->
@@ -282,7 +282,7 @@
     <string name="versions_manage_delete_version_tip_hint2">If you have enabled version isolation, related files are stored only in this directory, so deleting the version will remove these files;</string>
     <string name="versions_manage_delete_version_tip_hint3">If version isolation is not enabled, game files are stored in the root directory, and deleting the version will not clean up all related files.</string>
     <string name="versions_manage_delete_version_tip_hint4">Please be sure to back up important data before proceeding and delete with caution!</string>
-    <string name="versions_manage_delete_version_tip_invalid">Missing JSON file. Confirm deletion of invalid version.</string>
+    <string name="versions_manage_delete_version_tip_invalid">The current version is missing its JSON file or is not in a valid format, so it has been marked as invalid. Therefore, you cannot select this version. Click OK to delete this faulty version.</string>
     <string name="versions_manage_task_error">Version operation failed</string>
     <string name="versions_manage_install_new">Install New</string>
     <string name="versions_manage_settings">Version Settings</string>
@@ -342,6 +342,9 @@
     <string name="saves_manage_save_name">Save Name</string>
     <string name="saves_manage_backup">Backup Save</string>
     <string name="saves_manage_delete_warning">Are you sure you want to delete the save file %s? This action cannot be undone!</string>
+    <string name="saves_manage_quick_play">Quick Play</string>
+    <string name="saves_manage_quick_play_disabled">Quick Play (1.20+ only)</string>
+    <string name="saves_manage_no_saves">No saves for this version</string>
     <!-- Game -->
     <string name="minecraft_download_stat_download_task">Preparing downloads</string>
     <string name="minecraft_download_stat_verify_task">Preparing verifications</string>
@@ -431,6 +434,7 @@
     <string name="settings_launcher_swap_animate_type_title">Transition Animation</string>
     <string name="settings_launcher_swap_animate_type_summary">Choose the page transition animation that best suits your preferences</string>
     <!-- About -->
+    <string name="about_plugin_title">Loaded Plugins</string>
     <string name="about_library_title">Third-Party Libraries</string>
     <!-- Permissions -->
     <string name="permissions_external_storage">%s requires file access to function properly</string>

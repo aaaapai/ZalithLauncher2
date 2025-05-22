@@ -120,5 +120,20 @@ class StringUtils {
         }
 
         fun String.isSurrounded(prefix: String, suffix: String): Boolean = this.startsWith(prefix) && this.endsWith(suffix)
+
+        fun String.toFullUnicode(): String {
+            return this.map { "\\u%04x".format(it.code) }.joinToString("")
+        }
+
+        fun String.toUnicodeEscaped(): String {
+            return this.flatMap { ch ->
+                if (ch.code > 127) {
+                    val hex = ch.code.toString(16).padStart(4, '0')
+                    listOf("\\u$hex")
+                } else {
+                    listOf(ch.toString())
+                }
+            }.joinToString("")
+        }
     }
 }

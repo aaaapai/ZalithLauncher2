@@ -3,6 +3,8 @@ package com.movtery.zalithlauncher.game.plugin.renderer
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.game.plugin.ApkPlugin
+import com.movtery.zalithlauncher.game.plugin.cacheAppIcon
 import com.movtery.zalithlauncher.game.renderer.Renderers
 
 /**
@@ -17,7 +19,7 @@ object RendererPluginManager {
      * 获取当前渲染器插件加载的所有渲染器
      */
     @JvmStatic
-    fun getRendererList() = rendererPluginList
+    fun getRendererList(): List<RendererPlugin> = rendererPluginList
 
     /**
      * 移除某些已加载的渲染器
@@ -72,7 +74,11 @@ object RendererPluginManager {
     /**
      * 解析 ZalithLauncher、FCL 渲染器插件
      */
-    fun parseApkPlugin(context: Context, info: ApplicationInfo) {
+    fun parseApkPlugin(
+        context: Context,
+        info: ApplicationInfo,
+        loaded: (ApkPlugin) -> Unit = {}
+    ) {
         if (info.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
             val metaData = info.metaData ?: return
             if (
@@ -107,19 +113,14 @@ object RendererPluginManager {
                     }
                 }
 
+                val packageManager = context.packageManager
                 val packageName = info.packageName
+                val appName = info.loadLabel(packageManager).toString()
 
                 val plugin = ApkRendererPlugin(
                     id = rendererId,
                     displayName = des,
-                    summary = context.getString(
-                        R.string.settings_renderer_from_plugins,
-                        runCatching {
-                            context.packageManager.getApplicationLabel(info)
-                        }.getOrElse {
-                            context.getString(R.string.generic_unknown)
-                        }
-                    ),
+                    summary = context.getString(R.string.settings_renderer_from_plugins, appName),
                     minMCVer = metaData.getString("minMCVer")?.takeIf { it.isNotEmpty() && it.isNotBlank() },
                     maxMCVer = metaData.getString("maxMCVer")?.takeIf { it.isNotEmpty() && it.isNotBlank() },
                     uniqueIdentifier = packageName,
@@ -133,6 +134,15 @@ object RendererPluginManager {
 
                 rendererPluginList.add(plugin)
                 apkRendererPluginList.add(plugin)
+
+                runCatching {
+                    cacheAppIcon(context, info)
+                    ApkPlugin(
+                        packageName = packageName,
+                        appName = appName,
+                        appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+                    )
+                }.getOrNull()?.let { loaded(it) }
             }
         }
     }

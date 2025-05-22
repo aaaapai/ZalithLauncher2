@@ -1,10 +1,15 @@
 package com.movtery.zalithlauncher.game.plugin.ffmpeg
 
-import android.content.pm.ApplicationInfo
+import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
+import com.movtery.zalithlauncher.game.plugin.ApkPlugin
+import com.movtery.zalithlauncher.game.plugin.cacheAppIcon
 import java.io.File
 
 object FFmpegPluginManager {
+    private const val PLUGIN_PACKAGE_NAME = "net.kdt.pojavlaunch.ffmpeg"
+
     var libraryPath: String? = null
         private set
 
@@ -17,18 +22,37 @@ object FFmpegPluginManager {
     var isAvailable: Boolean = false
         private set
 
-    fun parsePlugin(info: ApplicationInfo) {
-        if (info.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
-            if (info.packageName == "net.kdt.pojavlaunch.ffmpeg") {
+    /**
+     * 加载 FFmpeg 插件
+     */
+    fun loadPlugin(
+        context: Context,
+        loaded: (ApkPlugin) -> Unit = {}
+    ) {
+        val manager: PackageManager = context.packageManager
+        runCatching {
+            val info = manager.getPackageInfo(
+                PLUGIN_PACKAGE_NAME,
+                PackageManager.GET_SHARED_LIBRARY_FILES
+            )
+            val applicationInfo = info.applicationInfo!!
+            libraryPath = applicationInfo.nativeLibraryDir
+            val ffmpegExecutable = File(libraryPath, "libffmpeg.so")
+            executablePath = ffmpegExecutable.absolutePath
+            isAvailable = ffmpegExecutable.exists()
+
+            if (isAvailable) {
+                cacheAppIcon(context, applicationInfo)
                 runCatching {
-                    libraryPath = info.nativeLibraryDir
-                    val ffmpegExecutable = File(libraryPath, "libffmpeg.so")
-                    executablePath = ffmpegExecutable.absolutePath
-                    isAvailable = ffmpegExecutable.exists()
-                }.onFailure {
-                    Log.w("FFmpegPluginManager", "Failed to discover plugin", it)
-                }
+                    ApkPlugin(
+                        packageName = PLUGIN_PACKAGE_NAME,
+                        appName = applicationInfo.loadLabel(manager).toString(),
+                        appVersion = manager.getPackageInfo(PLUGIN_PACKAGE_NAME, 0).versionName ?: ""
+                    )
+                }.getOrNull()?.let { loaded(it) }
             }
+        }.onFailure { e ->
+            Log.w("FFmpegPluginManager", "Failed to discover plugin", e)
         }
     }
 }

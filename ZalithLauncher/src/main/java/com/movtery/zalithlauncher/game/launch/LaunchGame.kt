@@ -9,7 +9,7 @@ import com.movtery.zalithlauncher.game.account.microsoft.NotPurchasedMinecraftEx
 import com.movtery.zalithlauncher.game.account.otherserver.ResponseException
 import com.movtery.zalithlauncher.game.version.download.DownloadMode
 import com.movtery.zalithlauncher.game.version.download.MinecraftDownloader
-import com.movtery.zalithlauncher.game.version.installed.VersionsManager
+import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.activities.runGame
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
@@ -22,10 +22,12 @@ import java.nio.channels.UnresolvedAddressException
 object LaunchGame {
     private var isLaunching: Boolean = false
 
-    fun launchGame(context: Context) {
+    fun launchGame(
+        context: Context,
+        version: Version
+    ) {
         if (isLaunching) return
 
-        val version = VersionsManager.currentVersion ?: return
         val account = AccountsManager.getCurrentAccount() ?: return
 
         isLaunching = true

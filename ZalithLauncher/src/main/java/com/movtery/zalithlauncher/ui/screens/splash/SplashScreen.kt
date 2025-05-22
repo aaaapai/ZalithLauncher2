@@ -35,11 +35,18 @@ import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.getAnimateType
 
+/**
+ * @param eulaText 是否有 EULA 文本需要展示
+ * @param eulaDate EULA 最后更新日期
+ * @param checkTasks 检查是否有解压任务
+ * @param startAllTask 开启全部的解压任务
+ * @param unpackItems 解压任务列表
+ */
 @Composable
 fun SplashScreen(
     eulaText: String?,
     eulaDate: String,
-    checkTasks: () -> Unit,
+    checkTasks: () -> Boolean,
     startAllTask: () -> Unit,
     unpackItems: List<InstallableItem>,
 ) {
@@ -79,7 +86,7 @@ private fun TopBar(
     Surface(
         modifier = modifier,
         color = color,
-        shadowElevation = 3.dp
+        tonalElevation = 3.dp
     ) {
         Row(
             horizontalArrangement = Arrangement.Center
@@ -96,7 +103,7 @@ private fun TopBar(
 private fun NavigationUI(
     eulaText: String?,
     eulaDate: String,
-    checkTasks: () -> Unit,
+    checkTasks: () -> Boolean,
     startAllTask: () -> Unit,
     unpackItems: List<InstallableItem>,
     modifier: Modifier = Modifier
@@ -135,9 +142,10 @@ private fun NavigationUI(
             route = EULA_SCREEN_TAG
         ) {
             EulaScreen(eulaText!!) {
-                navController.navigateTo(UNPACK_SCREEN_TAG)
                 AllSettings.splashEulaDate.put(eulaDate).save()
-                checkTasks()
+                if (checkTasks()) { //是否有解压任务，如果有，则跳转到解压屏幕
+                    navController.navigateTo(UNPACK_SCREEN_TAG)
+                }
             }
         }
         composable(

@@ -82,7 +82,6 @@
     <string name="notification_title">Bildirim İzni Kontrolü</string>
     <string name="notification_request">İzin İste</string>
     <string name="notification_ignore">Yoksay</string>
-    <string name="notification_data_jvm_service_message">Kurulumun düzgün olması için arka planda yükleme servisi başlatılır. Kapatma, yükleme işlemini durdurur.</string>
     <string name="notification_data_jvm_service_name">Ön Plan Yükleme Servisi</string>
     <string name="notification_data_jvm_service_running">Ön planda oyun kuruluyor</string>
     <!-- Unpacking -->
@@ -281,7 +280,6 @@
     <string name="versions_manage_delete_version_tip_hint2">Yalıtım açıksa tüm dosyalar bu klasörde, silinince hepsi gider.</string>
     <string name="versions_manage_delete_version_tip_hint3">Yalıtım kapalıysa ana dizinde kalır, sürüm silinse de tüm dosyalar gitmez.</string>
     <string name="versions_manage_delete_version_tip_hint4">Önemli verileri yedekle, dikkatli ol!</string>
-    <string name="versions_manage_delete_version_tip_invalid">JSON dosyası eksik. Geçersiz sürümü sil.</string>
     <string name="versions_manage_task_error">Sürüm işlemi başarısız</string>
     <string name="versions_manage_install_new">Yeni Kur</string>
     <string name="versions_manage_settings">Sürüm Ayarları</string>

@@ -33,6 +33,11 @@ class Version(
     var offlineAccountLogin: Boolean = false
 
     /**
+     * 快速启动单人游戏（存档名），仅支持  1.20+  23w14a+
+     */
+    var quickPlaySingle: String? = null
+
+    /**
      * @return 获取版本所属的版本文件夹
      */
     fun getVersionsFolder(): String = getVersionsHome()
@@ -136,6 +141,7 @@ class Version(
         dest.writeParcelable(versionInfo, flags)
         dest.writeInt(isValid.getInt())
         dest.writeInt(offlineAccountLogin.getInt())
+        dest.writeString(quickPlaySingle)
     }
 
     companion object CREATOR : Parcelable.Creator<Version> {
@@ -145,9 +151,11 @@ class Version(
             val versionInfo = parcel.readParcelable<VersionInfo?>(VersionInfo::class.java.classLoader)
             val isValid = parcel.readInt().toBoolean()
             val offlineAccount = parcel.readInt().toBoolean()
+            val quickPlaySingle = parcel.readString()
 
             return Version(versionName, versionConfig, versionInfo, isValid).apply {
                 offlineAccountLogin = offlineAccount
+                this.quickPlaySingle = quickPlaySingle
             }
         }
 

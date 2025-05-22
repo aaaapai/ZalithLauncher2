@@ -3,6 +3,7 @@ package com.movtery.zalithlauncher.ui.screens.game.elements
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
@@ -114,8 +115,7 @@ private fun LogList(
         modifier = modifier,
         state = scrollState
     ) {
-        items(logs.size) { index ->
-            val log = logs[index]
+        items(logs) { log ->
             Text(
                 text = log,
                 modifier = Modifier.fillParentMaxWidth(),

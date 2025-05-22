@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardBackspace
 import androidx.compose.material.icons.automirrored.rounded.ArrowLeft
@@ -198,7 +199,7 @@ private fun TopBar(
     Surface(
         modifier = modifier,
         color = color,
-        shadowElevation = 3.dp
+        tonalElevation = 3.dp
     ) {
         ConstraintLayout {
             val (backButton, title, tasksLayout, download, settings) = createRefs()
@@ -480,20 +481,19 @@ private fun TaskMenu(
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(1f),
-                contentPadding = PaddingValues(all = 12.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                val size = tasks.size
-                items(size) { index ->
+                items(tasks) { task ->
                     TaskItem(
-                        taskProgress = tasks[index].currentProgress,
-                        taskMessageRes = tasks[index].currentMessageRes,
-                        taskMessageArgs = tasks[index].currentMessageArgs,
+                        taskProgress = task.currentProgress,
+                        taskMessageRes = task.currentMessageRes,
+                        taskMessageArgs = task.currentMessageArgs,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = if (index == size - 1) 0.dp else 12.dp)
+                            .padding(vertical = 6.dp)
                     ) {
                         //取消任务
-                        TaskSystem.cancelTask(tasks[index].id)
+                        TaskSystem.cancelTask(task.id)
                     }
                 }
             }

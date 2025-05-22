@@ -2,13 +2,17 @@ package com.movtery.zalithlauncher.game.version.installed
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.movtery.zalithlauncher.utils.getInt
+import com.movtery.zalithlauncher.utils.toBoolean
 
 class VersionInfo(
     val minecraftVersion: String,
+    val quickPlay: QuickPlay,
     val loaderInfo: LoaderInfo?
 ): Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
+        parcel.readParcelable(QuickPlay::class.java.classLoader)!!,
         parcel.readParcelable(LoaderInfo::class.java.classLoader)
     )
 
@@ -100,10 +104,41 @@ class VersionInfo(
         }
     }
 
+    data class QuickPlay(
+        val hasQuickPlaysSupport: Boolean,
+        val isQuickPlaySingleplayer: Boolean,
+        val isQuickPlayMultiplayer: Boolean
+    ): Parcelable {
+        constructor(parcel: Parcel) : this(
+            parcel.readInt().toBoolean(),
+            parcel.readInt().toBoolean(),
+            parcel.readInt().toBoolean()
+        )
+
+        override fun describeContents(): Int = 0
+
+        override fun writeToParcel(dest: Parcel, flags: Int) {
+            dest.writeInt(hasQuickPlaysSupport.getInt())
+            dest.writeInt(isQuickPlaySingleplayer.getInt())
+            dest.writeInt(isQuickPlayMultiplayer.getInt())
+        }
+
+        companion object CREATOR : Parcelable.Creator<QuickPlay> {
+            override fun createFromParcel(parcel: Parcel): QuickPlay {
+                return QuickPlay(parcel)
+            }
+
+            override fun newArray(size: Int): Array<QuickPlay?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
     override fun describeContents(): Int = 0
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
         dest.writeString(minecraftVersion)
+        dest.writeParcelable(quickPlay, flags)
         dest.writeParcelable(loaderInfo, flags)
     }
 
