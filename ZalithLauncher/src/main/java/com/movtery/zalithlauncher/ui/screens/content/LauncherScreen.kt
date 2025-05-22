@@ -88,7 +88,8 @@ private fun RightMenu(
 ) {
     val xOffset by swapAnimateDpAsState(
         targetValue = 40.dp,
-        swapIn = isVisible
+        swapIn = isVisible,
+        isHorizontal = true
     )
 
     var launchGameOperation by remember { mutableStateOf<LaunchGameOperation>(LaunchGameOperation.None) }

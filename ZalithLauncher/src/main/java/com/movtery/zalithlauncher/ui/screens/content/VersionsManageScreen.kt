@@ -103,7 +103,8 @@ private fun GamePathLayout(
 ) {
     val surfaceXOffset by swapAnimateDpAsState(
         targetValue = (-40).dp,
-        swapIn = isVisible
+        swapIn = isVisible,
+        isHorizontal = true
     )
 
     var gamePathOperation by remember { mutableStateOf<GamePathOperation>(GamePathOperation.None) }

@@ -169,7 +169,8 @@ private fun LeftActionMenu(
 ) {
     val surfaceXOffset by swapAnimateDpAsState(
         targetValue = (-40).dp,
-        swapIn = isVisible
+        swapIn = isVisible,
+        isHorizontal = true
     )
 
     Card(
@@ -222,7 +223,8 @@ private fun FilesLayout(
 ) {
     val surfaceXOffset by swapAnimateDpAsState(
         targetValue = 40.dp,
-        swapIn = isVisible
+        swapIn = isVisible,
+        isHorizontal = true
     )
 
     Card(

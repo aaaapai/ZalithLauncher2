@@ -30,3 +30,10 @@ fun CategoryIcon(image: ImageVector, textRes: Int) {
         modifier = Modifier.size(24.dp)
     )
 }
+
+data class CategoryItem(
+    val tag: String,
+    val icon: @Composable () -> Unit,
+    val textRes: Int,
+    val division: Boolean = false
+)

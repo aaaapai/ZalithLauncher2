@@ -4,15 +4,20 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.RocketLaunch
@@ -20,14 +25,17 @@ import androidx.compose.material.icons.outlined.VideoSettings
 import androidx.compose.material.icons.outlined.VideogameAsset
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -38,8 +46,8 @@ import androidx.navigation.compose.rememberNavController
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
-import com.movtery.zalithlauncher.ui.components.secondaryContainerDrawerItemColors
 import com.movtery.zalithlauncher.ui.screens.content.elements.CategoryIcon
+import com.movtery.zalithlauncher.ui.screens.content.elements.CategoryItem
 import com.movtery.zalithlauncher.ui.screens.content.settings.ABOUT_INFO_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.settings.AboutInfoScreen
 import com.movtery.zalithlauncher.ui.screens.content.settings.CONTROL_MANAGE_SCREEN_TAG
@@ -70,33 +78,28 @@ fun SettingsScreen() {
     ) { isVisible ->
         val settingsNavController = rememberNavController()
 
-        Row(
-            modifier = Modifier.fillMaxSize()
-        ) {
+        Row(modifier = Modifier.fillMaxSize()) {
             TabMenu(
                 isVisible = isVisible,
                 settingsNavController = settingsNavController,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(2.5f)
+                modifier = Modifier.fillMaxHeight()
             )
-
             NavigationUI(
                 settingsNavController = settingsNavController,
-                modifier = Modifier.weight(7.5f)
+                modifier = Modifier.fillMaxHeight()
             )
         }
     }
 }
 
 private val settingItems = listOf(
-    SettingsItem(RENDERER_SETTINGS_SCREEN_TAG, { CategoryIcon(Icons.Outlined.VideoSettings, R.string.settings_tab_renderer) }, R.string.settings_tab_renderer),
-    SettingsItem(GAME_SETTINGS_TAG, { CategoryIcon(Icons.Outlined.RocketLaunch, R.string.settings_tab_game) }, R.string.settings_tab_game),
-    SettingsItem(CONTROL_SETTINGS_SCREEN_TAG, { CategoryIcon(Icons.Outlined.VideogameAsset, R.string.settings_tab_control) }, R.string.settings_tab_control),
-    SettingsItem(LAUNCHER_SETTINGS_TAG, { CategoryIcon(R.drawable.ic_setting_launcher, R.string.settings_tab_launcher) }, R.string.settings_tab_launcher),
-    SettingsItem(JAVA_MANAGE_SCREEN_TAG, { CategoryIcon(R.drawable.ic_java, R.string.settings_tab_java_manage) }, R.string.settings_tab_java_manage, division = true),
-    SettingsItem(CONTROL_MANAGE_SCREEN_TAG, { CategoryIcon(Icons.Outlined.VideogameAsset, R.string.settings_tab_control_manage) }, R.string.settings_tab_control_manage),
-    SettingsItem(ABOUT_INFO_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Info, R.string.settings_tab_info_about) }, R.string.settings_tab_info_about, division = true)
+    CategoryItem(RENDERER_SETTINGS_SCREEN_TAG, { CategoryIcon(Icons.Outlined.VideoSettings, R.string.settings_tab_renderer) }, R.string.settings_tab_renderer),
+    CategoryItem(GAME_SETTINGS_TAG, { CategoryIcon(Icons.Outlined.RocketLaunch, R.string.settings_tab_game) }, R.string.settings_tab_game),
+    CategoryItem(CONTROL_SETTINGS_SCREEN_TAG, { CategoryIcon(Icons.Outlined.VideogameAsset, R.string.settings_tab_control) }, R.string.settings_tab_control),
+    CategoryItem(LAUNCHER_SETTINGS_TAG, { CategoryIcon(R.drawable.ic_setting_launcher, R.string.settings_tab_launcher) }, R.string.settings_tab_launcher),
+    CategoryItem(JAVA_MANAGE_SCREEN_TAG, { CategoryIcon(R.drawable.ic_java, R.string.settings_tab_java_manage) }, R.string.settings_tab_java_manage, division = true),
+    CategoryItem(CONTROL_MANAGE_SCREEN_TAG, { CategoryIcon(Icons.Outlined.VideogameAsset, R.string.settings_tab_control_manage) }, R.string.settings_tab_control_manage),
+    CategoryItem(ABOUT_INFO_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Info, R.string.settings_tab_info_about) }, R.string.settings_tab_info_about, division = true)
 )
 
 @Composable
@@ -107,52 +110,55 @@ private fun TabMenu(
 ) {
     val xOffset by swapAnimateDpAsState(
         targetValue = (-40).dp,
-        swapIn = isVisible
+        swapIn = isVisible,
+        isHorizontal = true
     )
 
-    LazyColumn(
+    NavigationRail(
         modifier = modifier
+            .width(IntrinsicSize.Min)
+            .padding(start = 8.dp)
             .offset { IntOffset(x = xOffset.roundToPx(), y = 0) }
-            .padding(start = 12.dp),
-        contentPadding = PaddingValues(vertical = 12.dp)
+            .verticalScroll(rememberScrollState()),
+        containerColor = Color.Transparent,
+        windowInsets = WindowInsets(0)
     ) {
-        items(settingItems) { item ->
+        Spacer(modifier = Modifier.height(8.dp))
+        settingItems.forEach { item ->
             if (item.division) {
                 HorizontalDivider(
                     modifier = Modifier
-                        .padding(horizontal = 8.dp, vertical = 12.dp)
+                        .padding(all = 12.dp)
                         .fillMaxWidth()
                         .alpha(0.5f),
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            NavigationDrawerItem(
+
+            NavigationRailItem(
+                selected = MutableStates.settingsScreenTag == item.tag,
+                onClick = {
+                    settingsNavController.navigateOnce(item.tag)
+                },
                 icon = {
                     item.icon()
                 },
                 label = {
                     Text(
+                        modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
                         text = stringResource(item.textRes),
-                        softWrap = true,
+                        overflow = TextOverflow.Clip,
+                        maxLines = 1,
                         style = MaterialTheme.typography.labelMedium
                     )
-                },
-                selected = MutableStates.settingsScreenTag == item.screenTag,
-                onClick = {
-                    settingsNavController.navigateOnce(item.screenTag)
-                },
-                colors = secondaryContainerDrawerItemColors()
+                }
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
-
-private data class SettingsItem(
-    val screenTag: String,
-    val icon: @Composable () -> Unit,
-    val textRes: Int,
-    val division: Boolean = false
-)
 
 @Composable
 private fun NavigationUI(

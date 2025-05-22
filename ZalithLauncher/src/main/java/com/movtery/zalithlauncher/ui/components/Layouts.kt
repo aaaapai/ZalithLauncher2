@@ -434,15 +434,11 @@ fun SwitchLayout(
     shape: Shape = RoundedCornerShape(22.0.dp),
     trailingIcon: @Composable (() -> Unit)? = null
 ) {
-    fun change(value: Boolean) {
-        onCheckedChange(value)
-    }
-
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape = shape)
-            .clickable { change(!checked) }
+            .clickable { onCheckedChange(!checked) }
             .padding(all = 8.dp)
             .padding(bottom = 4.dp)
     ) {
@@ -459,7 +455,7 @@ fun SwitchLayout(
         Switch(
             modifier = Modifier.align(Alignment.CenterVertically),
             checked = checked,
-            onCheckedChange = { value -> change(value) }
+            onCheckedChange = { value -> onCheckedChange(value) }
         )
     }
 }

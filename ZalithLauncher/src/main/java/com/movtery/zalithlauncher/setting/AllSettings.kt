@@ -180,6 +180,11 @@ class AllSettings {
         val launcherAnimateSpeed = IntSettingUnit("launcherAnimateSpeed", 5)
 
         /**
+         * 动画幅度
+         */
+        val launcherAnimateExtent = IntSettingUnit("launcherAnimateExtent", 5)
+
+        /**
          * 启动器页面切换动画类型
          */
         val launcherSwapAnimateType = StringSettingUnit("launcherSwapAnimateType", TransitionAnimationType.BOUNCE.name)

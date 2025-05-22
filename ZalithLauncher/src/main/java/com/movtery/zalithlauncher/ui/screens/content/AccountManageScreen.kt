@@ -187,7 +187,8 @@ private fun ServerTypeMenu(
 ) {
     val xOffset by swapAnimateDpAsState(
         targetValue = (-40).dp,
-        swapIn = isVisible
+        swapIn = isVisible,
+        isHorizontal = true
     )
 
     LaunchedEffect(true) {

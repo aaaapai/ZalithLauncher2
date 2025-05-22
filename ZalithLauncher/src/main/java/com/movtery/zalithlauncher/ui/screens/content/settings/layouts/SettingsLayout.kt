@@ -51,16 +51,12 @@ class SettingsLayoutScope {
     ) {
         var checked by rememberSaveable { mutableStateOf(unit.getValue()) }
 
-        fun change(value: Boolean) {
-            checked = value
-            unit.put(checked).save()
-            onCheckedChange(checked)
-        }
-
         SwitchLayout(
             checked = checked,
             onCheckedChange = { value ->
-                change(value)
+                checked = value
+                unit.put(checked).save()
+                onCheckedChange(checked)
             },
             modifier = modifier,
             title = title,

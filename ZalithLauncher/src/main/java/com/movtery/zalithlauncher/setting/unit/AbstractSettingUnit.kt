@@ -7,6 +7,8 @@ abstract class AbstractSettingUnit<V>(
     val key: String,
     val defaultValue: V
 ) {
+    protected var cacheValue: V? = null
+
     /**
      * @return 获取当前的设置值
      */
@@ -16,12 +18,16 @@ abstract class AbstractSettingUnit<V>(
      * @return 存入值，并返回一个设置构建器
      */
     @CheckResult
-    fun put(value: V): Settings.Manager.SettingBuilder = Settings.Manager.put(key, value!!)
+    fun put(value: V): Settings.Manager.SettingBuilder {
+        this.cacheValue = value!!
+        return Settings.Manager.SettingBuilder().put(this, value)
+    }
 
     /**
      * 重置当前设置单元为默认值
      */
     fun reset() {
-        Settings.Manager.put(key, defaultValue!!).save()
+        this.cacheValue = defaultValue!!
+        Settings.Manager.put(this, defaultValue).save()
     }
 }

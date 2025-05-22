@@ -86,7 +86,8 @@ private fun ActionMenu(
 
     val xOffset by swapAnimateDpAsState(
         targetValue = 40.dp,
-        swapIn = isVisible
+        swapIn = isVisible,
+        isHorizontal = true
     )
 
     Card(

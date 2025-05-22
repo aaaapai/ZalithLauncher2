@@ -2,7 +2,9 @@ package com.movtery.zalithlauncher.ui.screens.content.settings
 
 import android.os.Build
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +36,12 @@ import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 
 const val LAUNCHER_SETTINGS_TAG = "LauncherSettingsScreen"
 
+private sealed interface CustomColorOperation {
+    data object None : CustomColorOperation
+    /** 展示自定义主题颜色 Dialog */
+    data object Dialog: CustomColorOperation
+}
+
 @Composable
 fun LauncherSettingsScreen() {
     val context = LocalContext.current
@@ -52,21 +60,19 @@ fun LauncherSettingsScreen() {
         ) {
             val currentColorThemeState = LocalColorThemeState.current
 
-            val yOffset by swapAnimateDpAsState(
+            val yOffset1 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
                 swapIn = isVisible
             )
 
             SettingsBackground(
-                modifier = Modifier
-                    .offset {
-                        IntOffset(
-                            x = 0,
-                            y = yOffset.roundToPx()
-                        )
-                    }
+                modifier = Modifier.offset { IntOffset(x = 0, y = yOffset1.roundToPx()) }
             ) {
-                var showColorPicker by remember { mutableStateOf(false) }
+                var customColorOperation by remember { mutableStateOf<CustomColorOperation>(CustomColorOperation.None) }
+                CustomColorOperation(
+                    customColorOperation = customColorOperation,
+                    updateOperation = { customColorOperation = it }
+                )
 
                 EnumSettingsLayout(
                     unit = AllSettings.launcherColorTheme,
@@ -90,46 +96,47 @@ fun LauncherSettingsScreen() {
                         }
                     },
                     onRadioClick = { enum ->
-                        if (enum == ColorThemeType.CUSTOM) showColorPicker = true
+                        if (enum == ColorThemeType.CUSTOM) customColorOperation = CustomColorOperation.Dialog
                     }
                 ) { type ->
                     currentColorThemeState.updateValue(type)
                 }
 
-                if (showColorPicker) {
-                    val customColorTheme = LocalCustomColorThemeState.current
-                    ColorPickerDialog(
-                        initialColor = getCustomColorFromSettings(),
-                        realTimeUpdate = false,
-                        onColorChanged = { color ->
-                            customColorTheme.updateValue(color)
-                        },
-                        onDismissRequest = {
-                            showColorPicker = false
-                        },
-                        onConfirm = { color ->
-                            customColorTheme.updateValue(color)
-                            customColorTheme.saveValue()
-                            showColorPicker = false
-                        },
-                        showAlpha = false,
-                        showBrightness = false
-                    )
-                }
-
                 SwitchSettingsLayout(
                     unit = AllSettings.launcherFullScreen,
                     title = stringResource(R.string.settings_launcher_full_screen_title),
-                    summary = stringResource(R.string.settings_launcher_full_screen_summary)
-                ) {
-                    val activity = context as? FullScreenComponentActivity
-                    activity?.fullScreenViewModel?.triggerRefresh()
-                }
+                    summary = stringResource(R.string.settings_launcher_full_screen_summary),
+                    onCheckedChange = {
+                        val activity = context as? FullScreenComponentActivity
+                        activity?.fullScreenViewModel?.triggerRefresh()
+                    }
+                )
+            }
 
+            Spacer(modifier = Modifier.height(12.dp))
+            val yOffset2 by swapAnimateDpAsState(
+                targetValue = (-40).dp,
+                swapIn = isVisible,
+                delayMillis = 50
+            )
+
+            //动画设置板块
+            SettingsBackground(
+                modifier = Modifier.offset { IntOffset(x = 0, y = yOffset2.roundToPx()) }
+            ) {
                 SliderSettingsLayout(
                     unit = AllSettings.launcherAnimateSpeed,
                     title = stringResource(R.string.settings_launcher_animate_speed_title),
                     summary = stringResource(R.string.settings_launcher_animate_speed_summary),
+                    valueRange = 0f..10f,
+                    steps = 9,
+                    suffix = "x"
+                )
+
+                SliderSettingsLayout(
+                    unit = AllSettings.launcherAnimateExtent,
+                    title = stringResource(R.string.settings_launcher_animate_extent_title),
+                    summary = stringResource(R.string.settings_launcher_animate_extent_summary),
                     valueRange = 0f..10f,
                     steps = 9,
                     suffix = "x"
@@ -153,6 +160,36 @@ fun LauncherSettingsScreen() {
                     MutableStates.launcherAnimateType = type
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CustomColorOperation(
+    customColorOperation: CustomColorOperation,
+    updateOperation: (CustomColorOperation) -> Unit
+) {
+    when (customColorOperation) {
+        is CustomColorOperation.None -> {}
+        is CustomColorOperation.Dialog -> {
+            val customColorTheme = LocalCustomColorThemeState.current
+            ColorPickerDialog(
+                initialColor = getCustomColorFromSettings(),
+                realTimeUpdate = false,
+                onColorChanged = { color ->
+                    customColorTheme.updateValue(color)
+                },
+                onDismissRequest = {
+                    updateOperation(CustomColorOperation.None)
+                },
+                onConfirm = { color ->
+                    customColorTheme.updateValue(color)
+                    customColorTheme.saveValue()
+                    updateOperation(CustomColorOperation.None)
+                },
+                showAlpha = false,
+                showBrightness = false
+            )
         }
     }
 }

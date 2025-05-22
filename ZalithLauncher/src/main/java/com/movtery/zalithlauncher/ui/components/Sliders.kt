@@ -47,7 +47,7 @@ fun SimpleTextSlider(
         value.toInt()
     } else {
         formatter.format(value)
-    }}${if (suffix == null) "" else " $suffix"}"
+    }}"
 
     fun changeValue(newValue: Float, finished: Boolean) {
         onValueChange(newValue)
@@ -81,21 +81,26 @@ fun SimpleTextSlider(
                 .padding(start = 12.dp)
                 .align(Alignment.CenterVertically),
             shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         ) {
             Row(
                 modifier = Modifier.padding(PaddingValues(horizontal = 8.dp, vertical = 4.dp)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    modifier = Modifier.then(
-                        if (onTextClick != null) {
-                            Modifier.clickable(enabled = enabled, onClick = onTextClick)
-                        } else Modifier
-                    ),
+                    modifier = Modifier
+                        .then(
+                            if (onTextClick != null) {
+                                Modifier.clickable(enabled = enabled, onClick = onTextClick)
+                            } else Modifier
+                        ),
                     text = getTextString(value),
                     color = MaterialTheme.colorScheme.onPrimary,
                 )
+                suffix?.let { text ->
+                    Text(text = text)
+                }
                 if (fineTuningControl) {
                     Spacer(modifier = Modifier.width(8.dp))
                     IconButton(

@@ -61,10 +61,11 @@ class Settings {
 
             /**
              * 在启动器设置中存入键值
+             * @param unit 设置单元
              */
             @JvmStatic
             @CheckResult
-            fun put(key: String, value: Any) = SettingBuilder().put(key, value)
+            fun <V> put(unit: AbstractSettingUnit<V>, value: V) = unit.put(value)
         }
 
         class SettingBuilder {
@@ -72,9 +73,10 @@ class Settings {
 
             /**
              * 在启动器设置中存入键值
+             * 不开放单独设置键、值
              */
             @CheckResult
-            fun put(key: String, value: Any): SettingBuilder {
+            private fun put(key: String, value: Any): SettingBuilder {
                 valueMap[key] = value
                 return this
             }

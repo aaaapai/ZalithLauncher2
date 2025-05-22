@@ -95,15 +95,54 @@ fun <E> getSwapAnimateTween(
     }
 }
 
+/**
+ * 计算动画的幅度（计算targetValue）
+ * 以5为基准，5对应targetValue本身
+ *
+ * 幅度0，大小为 targetValue * 0.5
+ * 幅度5，大小为 targetValue * 1.0
+ * 幅度10，大小为 targetValue * 1.5
+ */
+fun getTargetValueByAmplitude(
+    targetValue: Dp,
+    amplitude: Int = 5
+): Dp {
+    val safeAmplitude = amplitude.coerceIn(0, 10)
+
+    val minScale = 0.5f
+    val maxScale = 1.5f
+    val baseAmplitude = 5
+
+    val scale = if (safeAmplitude == baseAmplitude) {
+        1.0f
+    } else if (safeAmplitude < baseAmplitude) {
+        minScale + (safeAmplitude.toFloat() / baseAmplitude) * (1.0f - minScale)
+    } else {
+        1.0f + ((safeAmplitude - baseAmplitude).toFloat() / (10 - baseAmplitude)) * (maxScale - 1.0f)
+    }
+
+    return (targetValue.value * scale).dp
+}
+
 @Composable
 fun swapAnimateDpAsState(
     targetValue: Dp,
     swapIn: Boolean,
+    amplitude: Int = AllSettings.launcherAnimateExtent.getValue(),
+    isHorizontal: Boolean = false,
     delayMillis: Int = 0
 ): State<Dp> {
     return if (!isSwapAnimateClosed()) {
+        val value = if (swapIn) 0.dp
+        else {
+            getTargetValueByAmplitude(
+                if (isHorizontal) targetValue / 2
+                else targetValue,
+                amplitude
+            )
+        }
         animateDpAsState(
-            targetValue = if (swapIn) 0.dp else targetValue,
+            targetValue = value,
             animationSpec = getSwapAnimateTween(swapIn, delayMillis = delayMillis)
         )
     } else {
