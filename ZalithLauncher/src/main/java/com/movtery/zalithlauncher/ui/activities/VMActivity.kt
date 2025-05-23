@@ -314,11 +314,6 @@ fun runJar(
     jreName: String? = null,
     customArgs: String? = null
 ) {
-    RuntimesManager.getExactJreName(8) ?: run {
-        Toast.makeText(context, R.string.multirt_no_java_8, Toast.LENGTH_SHORT).show()
-        return
-    }
-
     val jvmArgsPrefix = customArgs?.let { "$it " } ?: ""
     val jvmArgs = "$jvmArgsPrefix-jar ${jarFile.absolutePath}"
 
