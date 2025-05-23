@@ -9,7 +9,6 @@ import com.movtery.zalithlauncher.game.download.game.GameLibDownloader
 import com.movtery.zalithlauncher.game.download.game.copyVanillaFiles
 import com.movtery.zalithlauncher.game.download.game.getLibraryPath
 import com.movtery.zalithlauncher.game.download.game.models.ForgeLikeInstallProcessor
-import com.movtery.zalithlauncher.game.download.game.parseToJson
 import com.movtery.zalithlauncher.game.version.download.BaseMinecraftDownloader
 import com.movtery.zalithlauncher.game.version.download.artifactToPath
 import com.movtery.zalithlauncher.game.version.download.parseTo
@@ -20,6 +19,7 @@ import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.extractEntryToFile
 import com.movtery.zalithlauncher.utils.file.readText
 import com.movtery.zalithlauncher.utils.json.merge
+import com.movtery.zalithlauncher.utils.json.parseToJson
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import com.movtery.zalithlauncher.utils.network.withRetry
 import kotlinx.coroutines.Dispatchers

@@ -2,6 +2,7 @@ package com.movtery.zalithlauncher.utils.json
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 
 fun JsonObject.merge(other: JsonObject) {
     other.entrySet().forEach { (key, otherValue) ->
@@ -32,3 +33,8 @@ fun JsonObject.merge(other: JsonObject) {
 fun JsonObject.safeGetMember(memberName: String): String {
     return this.get(memberName)?.takeIf { it.isJsonPrimitive }?.asString ?: ""
 }
+
+/**
+ * 快速解析为JsonObject
+ */
+fun String.parseToJson(): JsonObject = JsonParser.parseString(this).asJsonObject

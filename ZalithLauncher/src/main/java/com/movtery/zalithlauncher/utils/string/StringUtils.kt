@@ -135,5 +135,12 @@ class StringUtils {
                 }
             }.joinToString("")
         }
+
+        /**
+         * 过滤掉颜色占位符
+         */
+        fun String.stripColorCodes(): String {
+            return replace(Regex("§[0-9a-fk-orA-FK-OR]"), "")
+        }
     }
 }

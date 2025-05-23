@@ -387,27 +387,10 @@ fun SimpleTaskDialog(
     val scope = rememberCoroutineScope()
 
     if (inProgress) {
-        Dialog(onDismissRequest = {}) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                shadowElevation = 6.dp
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .wrapContentHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
-                    text?.let {
-                        Text(text = it, style = MaterialTheme.typography.labelSmall)
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
+        ProgressDialog(
+            title = title,
+            text = text
+        )
     } else {
         onDismiss()
     }
@@ -421,6 +404,34 @@ fun SimpleTaskDialog(
                 onError(e)
             } finally {
                 inProgress = false
+            }
+        }
+    }
+}
+
+@Composable
+fun ProgressDialog(
+    title: String = stringResource(R.string.generic_in_progress),
+    text: String? = null
+) {
+    Dialog(onDismissRequest = {}) {
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            shadowElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .wrapContentHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                text?.let {
+                    Text(text = it, style = MaterialTheme.typography.labelSmall)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }

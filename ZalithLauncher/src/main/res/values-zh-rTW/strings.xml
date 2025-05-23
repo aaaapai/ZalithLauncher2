@@ -41,6 +41,8 @@
     <!--  啟動器版本  -->
     <string name="launcher_version_label_alpha">Alpha 版：%s，僅供演示</string>
     <string name="launcher_version_label_beta">Beta 版：%s，僅供演示</string>
+    <string name="launcher_version_debug_warning">您正在使用 %s 的測試版本！此版本可能不穩定，主要用於功能測試與搶先體驗，不建議長期使用！如果您在測試過程中發現任何問題，請透過 GitHub 回報給我們，我們會儘快處理！</string>
+    <string name="launcher_version_debug_warning_cant_close">此警告無法關閉</string>
     <!--  主題  -->
     <string name="theme_color_dynamic">動態 (Android 12+)</string>
     <string name="theme_color_embermire">釉燼</string>
@@ -323,7 +325,6 @@
     <string name="saves_manage_info">存檔資訊</string>
     <string name="saves_manage_only_show_compatible">僅顯示相容的存檔</string>
     <string name="saves_manage_invalid">無效的存檔</string>
-    <string name="saves_manage_level_name">存檔名稱：%s</string>
     <string name="saves_manage_gamemode">遊戲模式：%s</string>
     <string name="saves_manage_gamemode_survival">生存模式</string>
     <string name="saves_manage_gamemode_creative">創造模式</string>

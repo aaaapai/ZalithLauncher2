@@ -36,11 +36,16 @@
     <string name="generic_custom">自定义</string>
     <string name="generic_search">搜索</string>
     <string name="generic_loading">加载中</string>
+    <string name="generic_in_progress">执行中</string>
     <string name="generic_anyway">坚持使用</string>
     <string name="generic_go_it">我明白了</string>
+    <string name="generic_file_name">文件名：%s</string>
+    <string name="generic_file_size">文件大小：%s</string>
     <!--  启动器版本  -->
     <string name="launcher_version_label_alpha">内测版本：%s，仅供演示</string>
     <string name="launcher_version_label_beta">公测版本：%s，仅供演示</string>
+    <string name="launcher_version_debug_warning">您正在使用测试版的 %s！该版本可能并不稳定，主要是用于功能测试、尝鲜，不建议长期使用这个版本！如果您在测试过程中发现任何问题，请通过 Github 反馈给我们，我们会尽快处理！</string>
+    <string name="launcher_version_debug_warning_cant_close">这条警告无法被关闭</string>
     <!--  主题  -->
     <string name="theme_color_dynamic">动态 (Android 12+)</string>
     <string name="theme_color_embermire">釉烬</string>
@@ -323,7 +328,6 @@
     <string name="saves_manage_info">存档信息</string>
     <string name="saves_manage_only_show_compatible">仅显示兼容的存档</string>
     <string name="saves_manage_invalid">无效的存档</string>
-    <string name="saves_manage_level_name">存档名：%s</string>
     <string name="saves_manage_gamemode">游戏模式：%s</string>
     <string name="saves_manage_gamemode_survival">生存模式</string>
     <string name="saves_manage_gamemode_creative">创造模式</string>
@@ -345,6 +349,18 @@
     <string name="saves_manage_quick_play">快速启动</string>
     <string name="saves_manage_quick_play_disabled">快速启动（仅限 1.20+）</string>
     <string name="saves_manage_no_saves">当前版本还没有存档</string>
+    <string name="resource_pack_manage">资源包管理</string>
+    <string name="resource_pack_manage_info">资源包信息</string>
+    <string name="resource_pack_manage_only_show_valid">仅展示有效资源包</string>
+    <string name="resource_pack_manage_invalid">资源包格式无效</string>
+    <string name="resource_pack_manage_type">资源包类型：%s</string>
+    <string name="resource_pack_manage_type_folder">文件夹</string>
+    <string name="resource_pack_manage_type_zip">压缩包</string>
+    <string name="resource_pack_manage_formats">格式版本：%s</string>
+    <string name="resource_pack_manage_exists">该名称的资源包已经存在</string>
+    <string name="resource_pack_manage_name">资源包名称</string>
+    <string name="resource_pack_manage_delete_warning">您确定要删除资源包 %s 吗？该操作不可撤销！</string>
+    <string name="resource_pack_manage_no_packs">当前版本还没有资源包</string>
     <!--  游戏  -->
     <string name="minecraft_download_stat_download_task">统计下载任务</string>
     <string name="minecraft_download_stat_verify_task">统计验证任务</string>

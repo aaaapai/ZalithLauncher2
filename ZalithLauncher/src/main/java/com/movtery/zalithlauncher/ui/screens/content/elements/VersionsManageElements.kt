@@ -4,13 +4,13 @@ import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -449,16 +449,15 @@ fun DeleteVersionDialog(
         SimpleAlertDialog(
             title = stringResource(R.string.versions_manage_delete_version),
             text = {
-                Text(text = stringResource(R.string.versions_manage_delete_version_tip_hint1, version.getVersionName()))
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = stringResource(R.string.versions_manage_delete_version_tip_hint2))
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = stringResource(R.string.versions_manage_delete_version_tip_hint3))
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.versions_manage_delete_version_tip_hint3),
-                    fontWeight = FontWeight.Bold
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(text = stringResource(R.string.versions_manage_delete_version_tip_hint1, version.getVersionName()))
+                    Text(text = stringResource(R.string.versions_manage_delete_version_tip_hint2))
+                    Text(text = stringResource(R.string.versions_manage_delete_version_tip_hint3))
+                    Text(
+                        text = stringResource(R.string.versions_manage_delete_version_tip_hint4),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             },
             onConfirm = deleteVersion,
             onCancel = onDismissRequest,

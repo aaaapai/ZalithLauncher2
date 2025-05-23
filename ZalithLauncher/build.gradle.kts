@@ -52,6 +52,13 @@ android {
             storePassword = "FCL-Debug"
             keyAlias = "FCL-Debug"
             keyPassword = "FCL-Debug"
+
+        }
+        create("debugBuild") {
+            storeFile = file("zalith_launcher_debug.jks")
+            storePassword = defaultStorePassword
+            keyAlias = "movtery_zalith_debug"
+            keyPassword = defaultKeyPassword
         }
     }
 
@@ -70,6 +77,12 @@ android {
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("releaseBuild")
+        }
+        debug {
+            isMinifyEnabled = false
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            signingConfig = signingConfigs.getByName("debugBuild")
         }
     }
 

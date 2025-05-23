@@ -7,11 +7,13 @@ import com.movtery.zalithlauncher.utils.nbt.asCompoundTag
 import com.movtery.zalithlauncher.utils.nbt.asInt
 import com.movtery.zalithlauncher.utils.nbt.asLong
 import com.movtery.zalithlauncher.utils.nbt.asString
+import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.stripColorCodes
 import com.movtery.zalithlauncher.utils.string.isBiggerOrEqualTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.querz.nbt.io.NBTUtil
 import net.querz.nbt.tag.CompoundTag
+import org.apache.commons.io.FileUtils
 import java.io.File
 
 /** 存档加载状态 */
@@ -23,6 +25,8 @@ sealed interface SavesState {
 
 sealed interface SavesOperation {
     data object None : SavesOperation
+    /** 执行任务中 */
+    data object Progress : SavesOperation
     /** 快速启动 */
     data class QuickPlay(val saveData: SaveData) : SavesOperation
     /** 重命名存档输入对话框 */
@@ -51,8 +55,9 @@ fun List<SaveData>.filterSaves(
 
     val nameMatches = savesFilter.saveName.isEmpty() ||
             //存档名、存档文件夹名均可参与搜索
-            it.levelName?.contains(savesFilter.saveName) == true ||
-            it.saveFile.name.contains(savesFilter.saveName)
+            //自动过滤掉颜色占位符
+            it.levelName?.stripColorCodes()?.contains(savesFilter.saveName, true) == true ||
+            it.saveFile.name.stripColorCodes().contains(savesFilter.saveName, true)
 
     isCompatible && nameMatches
 }
@@ -68,8 +73,10 @@ fun SaveData.isCompatible(minecraftVersion: String) =
  * 存档解析后的信息类
  */
 data class SaveData(
-    /** 存档文件夹*/
+    /** 存档文件夹 */
     val saveFile: File,
+    /** 提前计算好的存档大小 */
+    val saveSize: Long,
     /** 该存档是否有效 */
     val isValid: Boolean,
     /** 存档真正的名字 */
@@ -125,6 +132,7 @@ enum class Difficulty(val levelCode: Int, val nameRes: Int) {
  * @param levelDatFile level.dat 文件
  */
 suspend fun parseLevelDatFile(saveFile: File, levelDatFile: File): SaveData = withContext(Dispatchers.IO) {
+    val fileSize = FileUtils.sizeOf(saveFile)
     runCatching {
         if (!levelDatFile.exists()) error("The ${levelDatFile.absolutePath} file does not exist!")
 
@@ -162,6 +170,7 @@ suspend fun parseLevelDatFile(saveFile: File, levelDatFile: File): SaveData = wi
 
         SaveData(
             saveFile = saveFile,
+            saveSize = fileSize,
             isValid = true,
             levelName = levelName,
             levelMCVersion = levelMCVersion,
@@ -180,6 +189,7 @@ suspend fun parseLevelDatFile(saveFile: File, levelDatFile: File): SaveData = wi
         //读取出现异常，返回一个无效数据
         SaveData(
             saveFile = saveFile,
+            saveSize = fileSize,
             isValid = false
         )
     }

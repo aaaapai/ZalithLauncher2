@@ -36,11 +36,16 @@
     <string name="generic_custom">Custom</string>
     <string name="generic_search">Search</string>
     <string name="generic_loading">Loading</string>
+    <string name="generic_in_progress">In Progress</string>
     <string name="generic_anyway">Use Anyway</string>
     <string name="generic_go_it">Got it</string>
+    <string name="generic_file_name">File Name: %s</string>
+    <string name="generic_file_size">File Size: %s</string>
     <!-- Launcher Version -->
     <string name="launcher_version_label_alpha">Alpha Version: %s (Demo Only)</string>
     <string name="launcher_version_label_beta">Beta Version: %s (Demo Only)</string>
+    <string name="launcher_version_debug_warning">You are using a test version of %s! This version may be unstable and is primarily intended for feature testing and early access. It is not recommended for long-term use! If you encounter any issues during testing, please report them to us via GitHub and we will address them as soon as possible.</string>
+    <string name="launcher_version_debug_warning_cant_close">This warning cannot be dismissed</string>
     <!-- Themes -->
     <string name="theme_color_dynamic">Dynamic (Android 12+)</string>
     <string name="theme_color_embermire">Embermire</string>
@@ -323,7 +328,6 @@
     <string name="saves_manage_info">Save Info</string>
     <string name="saves_manage_only_show_compatible">Only show compatible saves</string>
     <string name="saves_manage_invalid">Invalid save</string>
-    <string name="saves_manage_level_name">Save name: %s</string>
     <string name="saves_manage_gamemode">Game Mode: %s</string>
     <string name="saves_manage_gamemode_survival">Survival Mode</string>
     <string name="saves_manage_gamemode_creative">Creative Mode</string>
@@ -345,6 +349,18 @@
     <string name="saves_manage_quick_play">Quick Play</string>
     <string name="saves_manage_quick_play_disabled">Quick Play (1.20+ only)</string>
     <string name="saves_manage_no_saves">No saves for this version</string>
+    <string name="resource_pack_manage">Resource Pack Management</string>
+    <string name="resource_pack_manage_info">Resource Pack Information</string>
+    <string name="resource_pack_manage_only_show_valid">Only show valid packs</string>
+    <string name="resource_pack_manage_invalid">Invalid Resource Pack Format</string>
+    <string name="resource_pack_manage_type">Resource Pack Type: %s</string>
+    <string name="resource_pack_manage_type_folder">Folder</string>
+    <string name="resource_pack_manage_type_zip">ZIP Archive</string>
+    <string name="resource_pack_manage_formats">Format Version: %s</string>
+    <string name="resource_pack_manage_exists">A resource pack with this name already exists</string>
+    <string name="resource_pack_manage_name">Resource Pack Name</string>
+    <string name="resource_pack_manage_delete_warning">Are you sure you want to delete the resource pack %s? This action cannot be undone!</string>
+    <string name="resource_pack_manage_no_packs">No resource packs available for the current version</string>
     <!-- Game -->
     <string name="minecraft_download_stat_download_task">Preparing downloads</string>
     <string name="minecraft_download_stat_verify_task">Preparing verifications</string>

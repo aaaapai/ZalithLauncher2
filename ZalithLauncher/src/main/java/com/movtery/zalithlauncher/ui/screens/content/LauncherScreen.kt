@@ -2,6 +2,7 @@ package com.movtery.zalithlauncher.ui.screens.content
 
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ButtonDefaults
@@ -32,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -40,10 +44,12 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavController
+import com.movtery.zalithlauncher.BuildConfig
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
+import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
@@ -67,7 +73,11 @@ fun LauncherScreen(
         Row(
             modifier = Modifier.fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.weight(7f))
+            ContentMenu(
+                isVisible = isVisible,
+                modifier = Modifier.weight(7f)
+            )
+
             RightMenu(
                 isVisible = isVisible,
                 modifier = Modifier
@@ -76,6 +86,53 @@ fun LauncherScreen(
                     .padding(top = 12.dp, end = 12.dp, bottom = 12.dp),
                 navController = navController
             )
+        }
+    }
+}
+
+@Composable
+private fun ContentMenu(
+    isVisible: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val yOffset by swapAnimateDpAsState(
+        targetValue = (-40).dp,
+        swapIn = isVisible
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .offset { IntOffset(x = 0, y = yOffset.roundToPx()) }
+    ) {
+        if (BuildConfig.DEBUG) {
+            //debug版本关不掉的警告，防止有人把测试版当正式版用 XD
+            Card(
+                modifier = Modifier.padding(all = 12.dp),
+                shape = MaterialTheme.shapes.extraLarge
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.generic_warning),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = stringResource(R.string.launcher_version_debug_warning, InfoDistributor.LAUNCHER_NAME),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        modifier = Modifier
+                            .alpha(0.8f)
+                            .align(Alignment.End),
+                        text = stringResource(R.string.launcher_version_debug_warning_cant_close),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         }
     }
 }
@@ -100,12 +157,7 @@ private fun RightMenu(
     )
 
     Card(
-        modifier = modifier.offset {
-            IntOffset(
-                x = xOffset.roundToPx(),
-                y = 0
-            )
-        },
+        modifier = modifier.offset { IntOffset(x = xOffset.roundToPx(), y = 0) },
         shape = MaterialTheme.shapes.extraLarge
     ) {
         val account by AccountsManager.currentAccountFlow.collectAsState()

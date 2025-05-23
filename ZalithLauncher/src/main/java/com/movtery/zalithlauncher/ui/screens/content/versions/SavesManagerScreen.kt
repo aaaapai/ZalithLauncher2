@@ -10,13 +10,11 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -77,14 +76,15 @@ import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ContentCheckBox
+import com.movtery.zalithlauncher.ui.components.ProgressDialog
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
-import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
 import com.movtery.zalithlauncher.ui.components.TooltipIconButton
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.VERSION_SETTINGS_SCREEN_TAG
-import com.movtery.zalithlauncher.ui.screens.content.elements.isFilenameInvalid
+import com.movtery.zalithlauncher.ui.screens.content.versions.elements.FileNameInputDialog
+import com.movtery.zalithlauncher.ui.screens.content.versions.elements.MinecraftColorTextNormal
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.SaveData
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.SavesFilter
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.SavesOperation
@@ -96,6 +96,7 @@ import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionSet
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.copyText
+import com.movtery.zalithlauncher.utils.file.formatFileSize
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -158,27 +159,32 @@ fun SavesManagerScreen() {
                     val itemContentColor = MaterialTheme.colorScheme.onSurface
 
                     var savesOperation by remember { mutableStateOf<SavesOperation>(SavesOperation.None) }
+                    fun runProgress(task: () -> Unit) {
+                        operationScope.launch(Dispatchers.IO) {
+                            savesOperation = SavesOperation.Progress
+                            task()
+                            savesOperation = SavesOperation.None
+                            refreshTrigger = !refreshTrigger
+                        }
+                    }
                     SaveOperation(
                         version = version,
                         savesOperation = savesOperation,
                         savesDir = savesDir,
                         updateOperation = { savesOperation = it },
                         renameSave = { saveData, newName ->
-                            operationScope.launch(Dispatchers.IO) {
+                            runProgress {
                                 saveData.saveFile.renameTo(File(savesDir, newName))
-                                refreshTrigger = !refreshTrigger
                             }
                         },
                         backupSave = { saveData, name ->
-                            operationScope.launch(Dispatchers.IO) {
+                            runProgress {
                                 FileUtils.copyDirectory(saveData.saveFile, File(savesDir, name))
-                                refreshTrigger = !refreshTrigger
                             }
                         },
                         deleteSave = { saveData ->
-                            operationScope.launch(Dispatchers.IO) {
+                            runProgress {
                                 FileUtils.deleteQuietly(saveData.saveFile)
-                                refreshTrigger = !refreshTrigger
                             }
                         }
                     )
@@ -255,7 +261,7 @@ private fun SavesActionsHeader(
     refreshSaves: () -> Unit = {}
 ) {
     Column(modifier = modifier) {
-        Row {
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
             ContentCheckBox(
                 checked = savesFilter.onlyShowCompatible,
                 onCheckedChange = { onSavesFilterChange(savesFilter.copy(onlyShowCompatible = it)) }
@@ -266,11 +272,10 @@ private fun SavesActionsHeader(
                 )
             }
 
-            Spacer(modifier = Modifier.width(24.dp))
-
             Row(
                 modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 SimpleTextInputField(
                     modifier = Modifier.weight(1f),
@@ -286,8 +291,6 @@ private fun SavesActionsHeader(
                     contentColor = inputFieldContentColor,
                     singleLine = true
                 )
-
-                Spacer(modifier = Modifier.width(12.dp))
 
                 IconButton(
                     onClick = refreshSaves
@@ -390,7 +393,10 @@ private fun SaveItemLayout(
         contentColor = itemContentColor,
         shadowElevation = shadowElevation
     ) {
-        Row(modifier = Modifier.padding(all = 8.dp)) {
+        Row(
+            modifier = Modifier.padding(all = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             //存档的封面图标
             SaveIcon(
                 modifier = Modifier
@@ -399,35 +405,31 @@ private fun SaveItemLayout(
                 saveData = saveData
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
-
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = saveData.saveFile.name,
+                val levelName = saveData.levelName
+                MinecraftColorTextNormal(
+                    inputText = (levelName ?: saveData.saveFile.name),
                     style = MaterialTheme.typography.titleSmall
                 )
-                FlowRow {
-                    if (!saveData.isValid) {
-                        Text(
-                            text = stringResource(R.string.saves_manage_invalid),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    } else {
-                        saveData.levelName?.takeIf { it.isNotEmpty() }?.let { levelName ->
+
+                FlowRow(
+                    modifier = Modifier.alpha(0.8f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    if (saveData.isValid) {
+                        if (levelName != null) {
                             Text(
-                                text = stringResource(R.string.saves_manage_level_name, levelName),
+                                text = stringResource(R.string.generic_file_name, saveData.saveFile.name),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
 
                         saveData.levelMCVersion?.takeIf { it.isNotEmpty() }?.let { levelMCVer ->
-                            Spacer(modifier = Modifier.width(16.dp))
                             if (isCompatible) {
                                 Text(
                                     text = levelMCVer,
@@ -445,14 +447,12 @@ private fun SaveItemLayout(
                         //虽然极限模式与 gameMode 是分离开的
                         //不过它可以算作是一种游戏模式，毕竟创建世界时，极限模式就是在游戏模式里面选择的
                         if (saveData.hardcoreMode == true) {
-                            Spacer(modifier = Modifier.width(16.dp))
                             Text(
                                 text = stringResource(R.string.saves_manage_hardcore),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else {
                             saveData.gameMode?.let { gameMode ->
-                                Spacer(modifier = Modifier.width(16.dp))
                                 Text(
                                     text = stringResource(gameMode.nameRes),
                                     style = MaterialTheme.typography.bodySmall
@@ -464,7 +464,9 @@ private fun SaveItemLayout(
             }
 
             Row(
-                modifier = Modifier.align(Alignment.CenterVertically)
+                modifier = Modifier.align(Alignment.CenterVertically),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 if (saveData.isValid) {
                     //详细信息展示
@@ -487,8 +489,12 @@ private fun SaveItemLayout(
                             contentDescription = stringResource(R.string.saves_manage_info)
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
+                } else {
+                    Text(
+                        text = stringResource(R.string.saves_manage_invalid),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
 
                 //更多存档操作
@@ -574,10 +580,10 @@ private fun SaveInfoTooltip(
     copySeed: (String) -> Unit = {}
 ) {
     Column {
-        //存档名，不存在则不展示
-        saveData.levelName?.takeIf { it.isNotEmpty() }?.let { levelName ->
-            Text(text = stringResource(R.string.saves_manage_level_name, levelName))
-        }
+        //文件名
+        Text(text = stringResource(R.string.generic_file_name, saveData.saveFile.name))
+        //存档大小
+        Text(text = stringResource(R.string.generic_file_size, formatFileSize(saveData.saveSize)))
         //游戏模式，不存在则展示为未知
         Text(
             text = stringResource(
@@ -593,7 +599,7 @@ private fun SaveInfoTooltip(
             )
         )
         //游戏难度
-        Row {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             //游戏难度，不存在则展示为未知
             Text(
                 text = stringResource(
@@ -602,7 +608,6 @@ private fun SaveInfoTooltip(
                 )
             )
             if (saveData.difficultyLocked == true) {
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(text = stringResource(R.string.saves_manage_difficulty_locked))
             }
         }
@@ -612,7 +617,10 @@ private fun SaveInfoTooltip(
         }
         //世界种子
         val worldSeed = saveData.worldSeed?.toString()
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
                 text = stringResource(
                     R.string.saves_manage_world_seed,
@@ -621,7 +629,6 @@ private fun SaveInfoTooltip(
             )
             //不为未知时，允许复制种子码
             worldSeed?.let { seed ->
-                Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
                     modifier = Modifier.size(24.dp),
                     onClick = {
@@ -755,6 +762,9 @@ private fun SaveOperation(
 
     when (savesOperation) {
         is SavesOperation.None -> {}
+        is SavesOperation.Progress -> {
+            ProgressDialog()
+        }
         is SavesOperation.QuickPlay -> {
             val saveData = savesOperation.saveData
             AccountsManager.getCurrentAccount() ?: run {
@@ -821,35 +831,18 @@ private fun SaveNameInputDialog(
     onDismissRequest: () -> Unit = {},
     onConfirm: (vale: String) -> Unit = {}
 ) {
-    var value by remember { mutableStateOf(saveData.saveFile.name) }
-    var errorMessage by remember { mutableStateOf("") }
-
-    val isError = value.isEmpty() || isFilenameInvalid(value) { message ->
-        errorMessage = message
-    } || File(savesDir, value).exists().also {
-        if (it) errorMessage = stringResource(R.string.saves_manage_exists)
-    }
-
-    SimpleEditDialog(
+    FileNameInputDialog(
+        initValue = saveData.saveFile.name,
+        existsCheck = { value ->
+            if (File(savesDir, value).exists()) {
+                stringResource(R.string.saves_manage_exists)
+            } else {
+                null
+            }
+        },
         title = title,
-        value = value,
-        onValueChange = { value = it },
-        isError = isError,
-        label = {
-            Text(text = stringResource(R.string.saves_manage_save_name))
-        },
-        supportingText = {
-            when {
-                value.isEmpty() -> Text(text = stringResource(R.string.generic_cannot_empty))
-                isError -> Text(text = errorMessage)
-            }
-        },
-        singleLine = true,
+        label = stringResource(R.string.saves_manage_save_name),
         onDismissRequest = onDismissRequest,
-        onConfirm = {
-            if (!isError) {
-                onConfirm(value)
-            }
-        }
+        onConfirm = onConfirm
     )
 }

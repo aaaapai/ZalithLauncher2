@@ -2,11 +2,11 @@ package com.movtery.zalithlauncher.game.download.game
 
 import android.util.Log
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.movtery.zalithlauncher.game.download.game.models.LibraryComponents
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
+import com.movtery.zalithlauncher.utils.json.parseToJson
 import java.io.File
 import java.io.IOException
 
@@ -29,11 +29,6 @@ fun String?.getJsonOrNull(tag: String): JsonObject? {
         text.parseToJson()
     }
 }
-
-/**
- * 快速解析为JsonObject
- */
-fun String.parseToJson(): JsonObject = JsonParser.parseString(this).asJsonObject
 
 fun copyLibraries(
     from: File,

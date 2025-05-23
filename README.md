@@ -29,7 +29,7 @@ Here’s the current roadmap of features and development status:
 * [x] Customizable game installation directory
 * [x] Account system: Microsoft OAuth login, offline accounts, and authentication server support
 * [x] Java runtime management
-* [x] Content managers: UI for managing saves
+* [x] Content managers: UI for managing saves / resource packs
 
 ### 🛠️ In Development / Planned Features
 
@@ -43,7 +43,7 @@ Here’s the current roadmap of features and development status:
 * [ ] Resource pack download and automatic installation
 * [ ] World save download and installation
 * [ ] Shader pack download and automatic installation
-* [ ] Content managers: UI for managing mods / resource packs / shaders
+* [ ] Content managers: UI for managing mods / shaders
 * [ ] Gamepad control support
 
 ## 🌐 Language and Translation Support

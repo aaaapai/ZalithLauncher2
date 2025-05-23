@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +48,8 @@ import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.screens.content.elements.CategoryIcon
 import com.movtery.zalithlauncher.ui.screens.content.elements.CategoryItem
+import com.movtery.zalithlauncher.ui.screens.content.versions.RESOURCE_PACK_MANAGE_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.versions.ResourcePackManageScreen
 import com.movtery.zalithlauncher.ui.screens.content.versions.SAVES_MANAGER_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.versions.SavesManagerScreen
 import com.movtery.zalithlauncher.ui.screens.content.versions.VERSION_CONFIG_SCREEN_TAG
@@ -87,7 +90,8 @@ fun VersionSettingsScreen() {
 private val settingItems = listOf(
     CategoryItem(VERSION_OVERVIEW_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Dashboard, R.string.versions_settings_overview) }, R.string.versions_settings_overview),
     CategoryItem(VERSION_CONFIG_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Build, R.string.versions_settings_config) }, R.string.versions_settings_config),
-    CategoryItem(SAVES_MANAGER_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Public, R.string.saves_manage) }, R.string.saves_manage, division = true)
+    CategoryItem(SAVES_MANAGER_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Public, R.string.saves_manage) }, R.string.saves_manage, division = true),
+    CategoryItem(RESOURCE_PACK_MANAGE_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Image, R.string.resource_pack_manage) }, R.string.resource_pack_manage)
 )
 
 @Composable
@@ -193,6 +197,11 @@ private fun NavigationUI(
             route = SAVES_MANAGER_SCREEN_TAG
         ) {
             SavesManagerScreen()
+        }
+        composable(
+            route = RESOURCE_PACK_MANAGE_SCREEN_TAG
+        ) {
+            ResourcePackManageScreen()
         }
     }
 }
