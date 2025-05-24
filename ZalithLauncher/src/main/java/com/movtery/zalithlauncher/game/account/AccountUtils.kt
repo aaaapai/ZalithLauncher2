@@ -261,7 +261,7 @@ fun addOtherServer(
                     task.updateProgress(0.8f, R.string.account_other_login_saving_server)
                     val configString = GSON.toJson(serverConfig().value, Servers::class.java)
                     val text = CryptoManager.encrypt(configString)
-                    serverConfigFile.writeText(text)
+                    serverConfigFile.writeText(configString)
                     task.updateProgress(1f, R.string.generic_done)
                 }
             }
