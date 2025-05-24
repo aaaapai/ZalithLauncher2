@@ -238,6 +238,8 @@ private fun RuntimeOperation(
         }
         is RuntimeOperation.ExecuteJar -> {
             val context = LocalContext.current
+            RuntimesManager.getExactJreName(8) ?: run {
+            }
             (context as? Activity)?.let { activity ->
                 val jreName = AllSettings.javaRuntime.takeIf { AllSettings.autoPickJavaRuntime.getValue() }?.getValue()
                 JvmLauncher.executeJarWithUri(activity, runtimeOperation.uri, jreName)
