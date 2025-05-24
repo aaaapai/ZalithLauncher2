@@ -37,7 +37,7 @@ class Account(
         val accountFile = File(PathManager.DIR_ACCOUNT, uniqueUUID)
         val rawJson = GSON.toJson(this)
         val encryptedData = CryptoManager.encrypt(rawJson)
-        accountFile.writeText(encryptedData)
+        accountFile.writeText(rawJson)
     }
 
     fun getSkinFile() = File(PathManager.DIR_ACCOUNT_SKIN, "$uniqueUUID.png")
