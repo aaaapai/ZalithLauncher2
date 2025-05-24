@@ -109,7 +109,7 @@ private val otherServerConfigFile = File(PathManager.DIR_GAME, "other_servers.js
 private fun refreshOtherServer() {
     val text: String = otherServerConfigFile.takeIf { it.exists() }?.readText() ?: return
     val config = CryptoManager.decrypt(text)
-    otherServerConfig.value = GSON.fromJson(config, Servers::class.java)
+    otherServerConfig.value = GSON.fromJson(text, Servers::class.java)
 }
 
 @Composable
