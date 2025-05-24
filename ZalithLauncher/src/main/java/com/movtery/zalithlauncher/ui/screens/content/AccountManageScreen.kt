@@ -469,7 +469,7 @@ private fun ServerTypeOperation(
                         val configString = GSON.toJson(currentConfig, Servers::class.java)
                         val text = CryptoManager.encrypt(configString)
                         runCatching {
-                            otherServerConfigFile.writeText(text)
+                            otherServerConfigFile.writeText(configString)
                         }.onFailure {
                             Log.e("ServerTypeTab", "Failed to save other server config", it)
                         }
