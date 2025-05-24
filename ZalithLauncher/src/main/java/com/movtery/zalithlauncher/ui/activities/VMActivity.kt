@@ -314,6 +314,8 @@ fun runJar(
     jreName: String? = null,
     customArgs: String? = null
 ) {
+    RuntimesManager.getExactJreName(8) ?: run {
+    }
     val jvmArgsPrefix = customArgs?.let { "$it " } ?: ""
     val jvmArgs = "$jvmArgsPrefix-jar ${jarFile.absolutePath}"
 
