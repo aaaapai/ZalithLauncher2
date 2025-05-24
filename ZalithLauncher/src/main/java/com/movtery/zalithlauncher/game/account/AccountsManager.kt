@@ -161,9 +161,8 @@ object AccountsManager {
      * 通过账号信息字符串读取账号
      */
     @Throws(JsonSyntaxException::class)
-    fun parseAccount(encryptedData: String): Account {
-        val plainJson = CryptoManager.decrypt(encryptedData)
-        return GSON.fromJson(plainJson, Account::class.java)
+    fun parseAccount(rawJson: String): Account {
+        return GSON.fromJson(rawJson, Account::class.java)
     }
 
     /**
