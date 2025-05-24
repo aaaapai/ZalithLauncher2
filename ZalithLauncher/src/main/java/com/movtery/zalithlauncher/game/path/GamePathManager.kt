@@ -182,7 +182,7 @@ object GamePathManager {
         val rawConfig = GSON.toJson(filteredData)
         val string = CryptoManager.encrypt(rawConfig)
         runCatching {
-            pathConfig.writeText(string)
+            pathConfig.writeText(rawConfig)
         }.onFailure { e ->
             Log.e("GamePathManager", "Failed to save game path config!", e)
         }
