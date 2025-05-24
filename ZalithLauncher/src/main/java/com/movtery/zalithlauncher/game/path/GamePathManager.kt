@@ -50,8 +50,7 @@ object GamePathManager {
 
         run parseConfig@{
             if (pathConfig.exists()) {
-                val rawString = pathConfig.readText().takeIf { it.isNotEmpty() } ?: return@parseConfig
-                val configString = rawString
+                val configString = pathConfig.readText().takeIf { it.isNotEmpty() } ?: return@parseConfig
                 parsePathConfig(configString).takeIf { it.isNotEmpty() }?.let {
                     newValue.addAll(it)
                 }
