@@ -51,7 +51,7 @@ object GamePathManager {
         run parseConfig@{
             if (pathConfig.exists()) {
                 val rawString = pathConfig.readText().takeIf { it.isNotEmpty() } ?: return@parseConfig
-                val configString = CryptoManager.decrypt(rawString)
+                val configString = rawString
                 parsePathConfig(configString).takeIf { it.isNotEmpty() }?.let {
                     newValue.addAll(it)
                 }
@@ -168,7 +168,7 @@ object GamePathManager {
         else uuid
     }
 
-    private fun parsePathConfig(configString: rawConfig): List<GamePathItem> {
+    private fun parsePathConfig(configString: String): List<GamePathItem> {
         return runCatching {
             GSON.fromJson(configString, Array<GamePathItem>::class.java).toList()
         }.getOrElse { e ->
