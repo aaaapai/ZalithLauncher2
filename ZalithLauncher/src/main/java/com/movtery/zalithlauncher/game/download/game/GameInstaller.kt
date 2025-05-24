@@ -537,6 +537,9 @@ class GameInstaller(
                     destinationGameFolder = targetGameFolder,
                     targetVersion = info.customVersionName
                 )
+
+                //清除临时游戏目录
+                clearTempGameDir()
             }
         )
     }

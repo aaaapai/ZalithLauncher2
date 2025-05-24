@@ -229,7 +229,10 @@ fun LaunchGameOperation(
                 updateOperation(LaunchGameOperation.None)
                 return
             }
-            version.quickPlaySingle = null //清除快速启动
+            version.apply {
+                offlineAccountLogin = false
+                quickPlaySingle = null //清除快速启动
+            }
             LaunchGame.launchGame(context, version)
             updateOperation(LaunchGameOperation.None)
         }

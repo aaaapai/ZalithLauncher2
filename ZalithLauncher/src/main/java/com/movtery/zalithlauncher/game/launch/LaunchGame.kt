@@ -101,6 +101,7 @@ object LaunchGame {
         loginTask?.let { task ->
             TaskSystem.submitTask(task)
         } ?: run {
+            version.offlineAccountLogin = true
             runDownloadTask()
         }
     }

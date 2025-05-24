@@ -14,8 +14,6 @@ import com.movtery.zalithlauncher.game.account.otherserver.OtherLoginApi
 import com.movtery.zalithlauncher.game.account.otherserver.OtherLoginHelper
 import com.movtery.zalithlauncher.game.account.otherserver.models.Servers
 import com.movtery.zalithlauncher.game.account.otherserver.models.Servers.Server
-import com.movtery.zalithlauncher.game.skin.SkinModelType
-import com.movtery.zalithlauncher.game.skin.getLocalUUIDWithSkinModel
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.screens.content.WEB_VIEW_SCREEN_TAG
@@ -225,8 +223,7 @@ fun otherLogin(
 fun localLogin(userName: String) {
     val account = Account(
         username = userName,
-        accountType = AccountType.LOCAL.tag,
-        profileId = getLocalUUIDWithSkinModel(userName, SkinModelType.NONE)
+        accountType = AccountType.LOCAL.tag
     )
     saveAccount(account)
 }

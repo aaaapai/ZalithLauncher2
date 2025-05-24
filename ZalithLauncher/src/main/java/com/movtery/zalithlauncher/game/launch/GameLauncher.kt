@@ -13,6 +13,7 @@ import com.movtery.zalithlauncher.bridge.LoggerBridge.appendTitle
 import com.movtery.zalithlauncher.bridge.ZLBridge
 import com.movtery.zalithlauncher.context.readAssetFile
 import com.movtery.zalithlauncher.game.account.Account
+import com.movtery.zalithlauncher.game.account.AccountType
 import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.multirt.Runtime
 import com.movtery.zalithlauncher.game.multirt.RuntimesManager
@@ -52,7 +53,16 @@ class GameLauncher(
         gameManifest = getGameManifest(version)
         CallbackBridge.nativeSetUseInputStackQueue(gameManifest.arguments != null)
 
-        val account = AccountsManager.currentAccountFlow.value!!
+        val currentAccount = AccountsManager.currentAccountFlow.value!!
+        val account = if (version.offlineAccountLogin) {
+            //使用临时离线账号启动游戏
+            Account(
+                username = currentAccount.username,
+                accountType = AccountType.LOCAL.tag
+            )
+        } else {
+            currentAccount
+        }
         val customArgs = version.getJvmArgs().takeIf { it.isNotBlank() } ?: AllSettings.jvmArgs.getValue()
         val javaRuntime = getRuntime()
 

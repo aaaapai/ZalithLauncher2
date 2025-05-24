@@ -772,7 +772,10 @@ private fun SaveOperation(
                 updateOperation(SavesOperation.None)
                 return
             }
-            version.quickPlaySingle = saveData.saveFile.name
+            version.apply {
+                offlineAccountLogin = false
+                quickPlaySingle = saveData.saveFile.name
+            }
             LaunchGame.launchGame(context, version)
             updateOperation(SavesOperation.None)
         }

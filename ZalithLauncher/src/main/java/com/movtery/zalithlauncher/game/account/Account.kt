@@ -3,6 +3,7 @@ package com.movtery.zalithlauncher.game.account
 import android.util.Log
 import com.movtery.zalithlauncher.game.skin.SkinFileDownloader
 import com.movtery.zalithlauncher.game.skin.SkinModelType
+import com.movtery.zalithlauncher.game.skin.getLocalUUIDWithSkinModel
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.CryptoManager
 import com.movtery.zalithlauncher.utils.GSON
@@ -15,8 +16,8 @@ import java.util.UUID
 class Account(
     var accessToken: String = "0",
     var clientToken: String = "0",
-    var profileId: String = "00000000-0000-0000-0000-000000000000",
     var username: String = "Steve",
+    var profileId: String = getLocalUUIDWithSkinModel(username, SkinModelType.NONE),
     var refreshToken: String = "0",
     var xuid: String? = null,
     var otherBaseUrl: String? = null,
