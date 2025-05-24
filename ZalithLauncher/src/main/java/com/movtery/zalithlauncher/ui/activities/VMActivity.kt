@@ -320,13 +320,13 @@ fun runJar(
     val jvmArgs = "$jvmArgsPrefix-jar ${jarFile.absolutePath}"
 
     val jvmLaunchInfo = JvmLaunchInfo(
-        jvmArgs = jvmArgs
+        jvmArgs = jvmArgs,
+        jreName = jreName
     )
 
     val intent = Intent(context, VMActivity::class.java).apply {
         putExtra(VMActivity.INTENT_RUN_JAR, true)
         putExtra(VMActivity.INTENT_JAR_INFO, jvmLaunchInfo)
-        putExtra(VMActivity.INTENT_VERSION, version)
         addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
     }
     context.startActivity(intent)
