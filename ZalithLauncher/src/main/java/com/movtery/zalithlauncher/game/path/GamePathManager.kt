@@ -168,7 +168,7 @@ object GamePathManager {
         else uuid
     }
 
-    private fun parsePathConfig(configString: String): List<GamePathItem> {
+    private fun parsePathConfig(configString: rawConfig): List<GamePathItem> {
         return runCatching {
             GSON.fromJson(configString, Array<GamePathItem>::class.java).toList()
         }.getOrElse { e ->
