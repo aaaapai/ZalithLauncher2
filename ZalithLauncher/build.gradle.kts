@@ -249,7 +249,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.sqlcipher.android)
-    ksp(libs.androidx.room.compiler)
+    ksp(libs.symbol-processing)
     //Support
     implementation(libs.proxy.client.android)
 }
