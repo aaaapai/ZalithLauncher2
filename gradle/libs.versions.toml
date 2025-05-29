@@ -23,6 +23,7 @@ navigationCompose = "2.9.0"
 okhttp = "5.0.0-alpha.14"
 proxyClientAndroid = "0.0.2"
 room = "2.7.1"
+ksp = "2.2.0-RC-2.0.1"
 stringfog-gradlePlugin = "5.2.0"
 stringfog-xor = "5.0.0"
 sqlcipher = "4.9.0"
@@ -41,6 +42,7 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+symbol-processing = { module = "com.google.devtools.ksp:symbol-processing", version.ref = "ksp" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
