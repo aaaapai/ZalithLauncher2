@@ -6,6 +6,7 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.plugin.ApkPlugin
 import com.movtery.zalithlauncher.game.plugin.cacheAppIcon
 import com.movtery.zalithlauncher.game.renderer.Renderers
+import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.isNotEmptyOrBlank
 
 /**
  * FCL、ZalithLauncher 渲染器插件，同时支持使用本地渲染器插件
@@ -121,8 +122,8 @@ object RendererPluginManager {
                     id = rendererId,
                     displayName = des,
                     summary = context.getString(R.string.settings_renderer_from_plugins, appName),
-                    minMCVer = metaData.getString("minMCVer")?.takeIf { it.isNotEmpty() && it.isNotBlank() },
-                    maxMCVer = metaData.getString("maxMCVer")?.takeIf { it.isNotEmpty() && it.isNotBlank() },
+                    minMCVer = metaData.getString("minMCVer")?.takeIf { it.isNotEmptyOrBlank() },
+                    maxMCVer = metaData.getString("maxMCVer")?.takeIf { it.isNotEmptyOrBlank() },
                     uniqueIdentifier = packageName,
                     glName = renderer[1],
                     eglName = renderer[2].progressEglName(nativeLibraryDir),

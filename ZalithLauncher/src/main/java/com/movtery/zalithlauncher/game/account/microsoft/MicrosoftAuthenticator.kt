@@ -1,9 +1,19 @@
 package com.movtery.zalithlauncher.game.account.microsoft
 
-import android.util.Log
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.AccountType
 import com.movtery.zalithlauncher.game.account.AccountsManager
+import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileException.ExceptionStatus.BLOCKED_IP
+import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileException.ExceptionStatus.FREQUENT
+import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileException.ExceptionStatus.PROFILE_NOT_EXISTS
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException.ExceptionStatus.BANNED
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException.ExceptionStatus.BLOCKED_REGION
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException.ExceptionStatus.NOT_ACCEPTED_SERVICE
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException.ExceptionStatus.REACHED_PLAYTIME_LIMIT
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException.ExceptionStatus.REQUIRES_PROOF_OF_AGE
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException.ExceptionStatus.RESTRICTED
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException.ExceptionStatus.UNDERAGE
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException.ExceptionStatus.UNREGISTERED
 import com.movtery.zalithlauncher.game.account.microsoft.models.DeviceCodeResponse
 import com.movtery.zalithlauncher.game.account.microsoft.models.MinecraftAuthResponse
 import com.movtery.zalithlauncher.game.account.microsoft.models.TokenResponse
@@ -14,9 +24,11 @@ import com.movtery.zalithlauncher.game.account.microsoft.models.XSTSProperties
 import com.movtery.zalithlauncher.game.account.microsoft.models.XSTSRequest
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.path.UrlManager.Companion.GLOBAL_CLIENT
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -144,7 +156,7 @@ object MicrosoftAuthenticator {
                 handleClientRequestException(e, pollingInterval)
                 pollingInterval = adjustPollingInterval(e, pollingInterval)
             } catch (e: CancellationException) {
-                Log.d("Auth", "Authentication cancelled")
+                lDebug("Authentication cancelled")
                 throw e
             }
             delay(pollingInterval).also {
@@ -159,7 +171,7 @@ object MicrosoftAuthenticator {
         val errorBody = Json.parseToJsonElement(e.response.bodyAsText()).jsonObject
         when (errorBody["error"]?.jsonPrimitive?.content) {
             "authorization_pending" -> Unit /* 正常情况，继续轮询 */
-            "slow_down" -> Log.d("Auth", "Slowing down polling to ${interval + 1000}ms")
+            "slow_down" -> lDebug("Slowing down polling to ${interval + 1000}ms")
             else -> throw e
         }
     }
@@ -180,7 +192,7 @@ object MicrosoftAuthenticator {
      *
      * 支持刷新现有访问令牌或使用提供的访问令牌。然后，继续使用 Xbox Live （XBL）、Xbox 安全令牌服务 （XSTS） 进行身份验证，最后访问 Minecraft。
      *
-     * 支持验证用户是否拥有游戏，然后创建 'Account' 对象。
+     * 支持验证用户是否拥有游戏，然后创建 [Account] 对象。
      *
      * @param statusUpdate 验证执行到哪个步骤，通过这个进行回调更新
      */
@@ -278,6 +290,19 @@ object MicrosoftAuthenticator {
                 ),
                 context
             )
+
+            when (response["XErr"].text()) {
+                //Reference : https://github.com/PrismarineJS/prismarine-auth/blob/1aef6e1/src/common/Constants.js#L50-L59
+                "2148916227" -> throw XboxLoginException(BANNED)
+                "2148916229" -> throw XboxLoginException(RESTRICTED)
+                "2148916233" -> throw XboxLoginException(UNREGISTERED)
+                "2148916234" -> throw XboxLoginException(NOT_ACCEPTED_SERVICE)
+                "2148916235" -> throw XboxLoginException(BLOCKED_REGION)
+                "2148916236" -> throw XboxLoginException(REQUIRES_PROOF_OF_AGE)
+                "2148916237" -> throw XboxLoginException(REACHED_PLAYTIME_LIMIT)
+                "2148916238" -> throw XboxLoginException(UNDERAGE)
+            }
+
             XSTSAuthResult(token = response["Token"].text(), uhs = uhs)
         }
     }
@@ -290,12 +315,21 @@ object MicrosoftAuthenticator {
         update(AsyncStatus.AUTHENTICATE_MINECRAFT)
 
         return withRetry {
-            val authResponse = httpPostJson<MinecraftAuthResponse>(
-                "$MINECRAFT_SERVICES_URL/authentication/login_with_xbox",
-                mapOf("identityToken" to "XBL3.0 x=${xstsResult.uhs};${xstsResult.token}"),
-                context
-            )
-            authResponse.accessToken
+            runCatching {
+                httpPostJson<MinecraftAuthResponse>(
+                    "$MINECRAFT_SERVICES_URL/authentication/login_with_xbox",
+                    mapOf("identityToken" to "XBL3.0 x=${xstsResult.uhs};${xstsResult.token}"),
+                    context
+                )
+            }.onFailure { e ->
+                if (e is ResponseException) {
+                    when (e.response.status.value) {
+                        429 -> throw MinecraftProfileException(FREQUENT)
+                        403 -> throw MinecraftProfileException(BLOCKED_IP)
+                    }
+                }
+            }.getOrThrow()
+                .accessToken
         }
     }
 
@@ -319,9 +353,18 @@ object MicrosoftAuthenticator {
     ): Account {
         statusUpdate(AsyncStatus.GETTING_PLAYER_PROFILE)
 
-        val profile = GLOBAL_CLIENT.get("$MINECRAFT_SERVICES_URL/minecraft/profile") {
-            header(HttpHeaders.Authorization, "Bearer $accessToken")
-        }.body<JsonObject>()
+        val profile = runCatching {
+            GLOBAL_CLIENT.get("$MINECRAFT_SERVICES_URL/minecraft/profile") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+            }.body<JsonObject>()
+        }.onFailure { e ->
+            if (e is ResponseException) {
+                when (e.response.status.value) {
+                    429 -> throw MinecraftProfileException(FREQUENT)
+                    404 -> throw MinecraftProfileException(PROFILE_NOT_EXISTS)
+                }
+            }
+        }.getOrThrow()
 
         val profileId = profile["id"].text()
         //避免同一个账号反复添加
@@ -334,7 +377,7 @@ object MicrosoftAuthenticator {
             this.clientToken = UUID.randomUUID().toString().replace("-", "")
             this.profileId = profileId
             this.refreshToken = refreshToken.ifEmpty { "None" }
-            this.xuid = uhs
+            this.xUid = uhs
         }
     }
 

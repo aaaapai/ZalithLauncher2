@@ -16,6 +16,7 @@ import com.movtery.zalithlauncher.bridge.ZLBridgeStates;
 import com.movtery.zalithlauncher.bridge.ZLNativeInvoker;
 import com.movtery.zalithlauncher.context.ContextsKt;
 import com.movtery.zalithlauncher.game.keycodes.LwjglGlfwKeycode;
+import com.movtery.zalithlauncher.info.InfoDistributor;
 
 import java.util.function.Consumer;
 
@@ -126,7 +127,7 @@ public class CallbackBridge {
         ClipboardManager clipboard = (ClipboardManager) ContextsKt.getGlobalContext().getSystemService(Context.CLIPBOARD_SERVICE);
         switch (type) {
             case CLIPBOARD_COPY:
-                ClipData clip = ClipData.newPlainText("ZalithLauncher", copy);
+                ClipData clip = ClipData.newPlainText(InfoDistributor.LAUNCHER_IDENTIFIER, copy);
                 clipboard.setPrimaryClip(clip);
                 return null;
             case CLIPBOARD_PASTE:

@@ -1,9 +1,9 @@
 package com.movtery.zalithlauncher.game.skin
 
-import android.util.Log
 import com.google.gson.JsonObject
 import com.movtery.zalithlauncher.path.UrlManager
 import com.movtery.zalithlauncher.utils.GSON
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import com.movtery.zalithlauncher.utils.string.StringUtils
 import okhttp3.Request
@@ -56,7 +56,7 @@ class SkinFileDownloader {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("SkinFileDownloader", "Failed to download skin file", e)
+                lError("Failed to download skin file", e)
             }
         }
     }

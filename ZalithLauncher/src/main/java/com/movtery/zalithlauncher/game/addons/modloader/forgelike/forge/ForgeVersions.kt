@@ -1,9 +1,10 @@
 package com.movtery.zalithlauncher.game.addons.modloader.forgelike.forge
 
-import android.util.Log
 import com.movtery.zalithlauncher.game.addons.modloader.ResponseTooShortException
 import com.movtery.zalithlauncher.path.UrlManager.Companion.GLOBAL_CLIENT
 import com.movtery.zalithlauncher.path.UrlManager.Companion.URL_USER_AGENT
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.network.withRetry
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
@@ -52,16 +53,16 @@ object ForgeVersions {
         } catch (e: ClientRequestException) {
             val statusCode = e.response.status
             if (statusCode == HttpStatusCode.NotFound) {
-                Log.d(TAG, "Not found.")
+                lDebug("Not found.")
                 null
             } else {
                 throw e
             }
         } catch (e: CancellationException) {
-            Log.d(TAG, "Client cancelled.")
+            lDebug("Client cancelled.")
             null
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to fetch forge list!", e)
+            lWarning("Failed to fetch forge list!", e)
             throw e
         }
     }

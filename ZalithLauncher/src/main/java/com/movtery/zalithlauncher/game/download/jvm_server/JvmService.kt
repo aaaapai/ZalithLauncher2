@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import androidx.compose.ui.unit.IntSize
 import androidx.core.app.NotificationCompat
 import com.movtery.zalithlauncher.R
@@ -14,6 +13,9 @@ import com.movtery.zalithlauncher.game.launch.JvmLauncher
 import com.movtery.zalithlauncher.game.launch.Launcher
 import com.movtery.zalithlauncher.notification.NotificationChannelData
 import com.movtery.zalithlauncher.path.PathManager
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,7 +45,7 @@ class JvmService : Service() {
                 jreName = jreName,
                 userHome = userHome,
                 onExit = { code, _ ->
-                    Log.i(JVM_SERVICE_TAG, "Process exit with code $code")
+                    lInfo("Process exit with code $code")
                     scope.launch(Dispatchers.IO) {
                         sendCode(code)
                         stopSelf()
@@ -62,10 +64,10 @@ class JvmService : Service() {
                 val data = (code.toString() + "").toByteArray()
                 val packet = DatagramPacket(data, data.size)
                 socket.send(packet)
-                Log.i(JVM_SERVICE_TAG, "Send code $code to 127.0.0.1:$PROCESS_SERVICE_PORT")
+                lInfo("Send code $code to 127.0.0.1:$PROCESS_SERVICE_PORT")
             }
         } catch (e: Exception) {
-            Log.e(JVM_SERVICE_TAG, "Failed to send exit code", e)
+            lError("Failed to send exit code", e)
         }
     }
 
@@ -124,12 +126,12 @@ class JvmService : Service() {
         if (!logFile.exists() && !logFile.createNewFile()) throw IOException("Failed to create a new log file")
         LoggerBridge.start(logFile.absolutePath)
 
-        Log.i(JVM_SERVICE_TAG, "start jvm!")
+        lInfo("start jvm!")
 
         val code = runCatching {
             launcher.launch()
         }.onFailure { e ->
-            Log.w(JVM_SERVICE_TAG, "jvm crashed!", e)
+            lWarning("jvm crashed!", e)
         }.getOrElse { 1 }
 
         onExit(code, false)

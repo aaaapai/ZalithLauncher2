@@ -1,9 +1,9 @@
 package com.movtery.zalithlauncher.game.version.installed
 
-import android.util.Log
 import com.google.gson.annotations.SerializedName
 import com.movtery.zalithlauncher.game.path.getGameHome
 import com.movtery.zalithlauncher.utils.GSON
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -27,7 +27,7 @@ data class CurrentGameInfo(
         runCatching {
             FileUtils.writeByteArrayToFile(infoFile, GSON.toJson(this).toByteArray(Charsets.UTF_8))
         }.onFailure { e ->
-            Log.e("CurrentGameInfo", "Save failed: ${infoFile.absolutePath}", e)
+            lError("Save failed: ${infoFile.absolutePath}", e)
         }
     }
 
@@ -46,7 +46,7 @@ data class CurrentGameInfo(
                     else -> createNewConfig()
                 }
             }.getOrElse { e ->
-                Log.e("CurrentGameInfo", "Refresh failed", e)
+                lError("Refresh failed", e)
                 createNewConfig()
             }
         }

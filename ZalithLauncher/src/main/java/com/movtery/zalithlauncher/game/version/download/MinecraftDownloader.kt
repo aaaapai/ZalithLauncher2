@@ -1,11 +1,11 @@
 package com.movtery.zalithlauncher.game.version.download
 
 import android.content.Context
-import android.util.Log
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.utils.file.formatFileSize
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -87,13 +87,13 @@ class MinecraftDownloader(
                 onCompletion()
             },
             onError = { e ->
-                Log.e(DOWNLOADER_TAG, "Failed to download Minecraft!", e)
+                lError("Failed to download Minecraft!", e)
                 val message = when(e) {
                     is InterruptedException, is InterruptedIOException, is CancellationException -> return@runTask
                     is FileNotFoundException -> context.getString(R.string.minecraft_download_failed_notfound)
                     is DownloadFailedException -> {
                         val failedUrls = downloadFailedTasks.map { it.url }
-                        "${ context.getString(R.string.minecraft_download_failed_retried) }\r\n${ failedUrls.joinToString("\r\n") } }"
+                        "${ context.getString(R.string.minecraft_download_failed_retried) }\r\n${ failedUrls.joinToString("\r\n") }"
                     }
                     else -> e.getMessageOrToString()
                 }

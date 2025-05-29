@@ -2,13 +2,13 @@ package com.movtery.zalithlauncher.game.version.installed
 
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager.getZalithVersionPath
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.getInt
-import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getStringNotNull
 import com.movtery.zalithlauncher.utils.toBoolean
 import java.io.File
@@ -96,13 +96,12 @@ class VersionConfig(private var versionPath: File) : Parcelable {
         runCatching {
             saveWithThrowable()
         }.onFailure { e ->
-            Log.e("Save Version Config", "$this\n${StringUtils.throwableToString(e)}")
+            lError("An exception occurred while saving the version configuration.", e)
         }
     }
 
     @Throws(Throwable::class)
     fun saveWithThrowable() {
-        Log.i("Save Version Config", "Trying to save: $this")
         val zalithVersionPath = getZalithVersionPath(versionPath)
         val configFile = File(zalithVersionPath, "version.config")
         if (!zalithVersionPath.exists()) zalithVersionPath.mkdirs()
@@ -111,7 +110,7 @@ class VersionConfig(private var versionPath: File) : Parcelable {
             val json = GSON.toJson(this)
             it.write(json)
         }
-        Log.i("Save Version Config", "Saved: $this")
+        lInfo("Saved version configuration: $this")
     }
 
     fun getVersionPath() = versionPath
@@ -206,8 +205,9 @@ class VersionConfig(private var versionPath: File) : Parcelable {
                     }
                     else -> createNewConfig(versionPath)
                 }
-            }.getOrElse { e ->
-                Log.e("Refresh Versions", StringUtils.throwableToString(e))
+            }.onFailure {  e ->
+                lError("An exception occurred while parsing the version configuration.", e)
+            }.getOrElse {
                 createNewConfig(versionPath)
             }
         }

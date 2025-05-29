@@ -2,7 +2,6 @@ package com.movtery.zalithlauncher.game.launch.handler
 
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.util.Log
 import android.view.KeyEvent
 import android.view.Surface
 import androidx.compose.runtime.Composable
@@ -13,7 +12,7 @@ import com.movtery.zalithlauncher.bridge.ZLBridge
 import com.movtery.zalithlauncher.game.input.AWTInputEvent
 import com.movtery.zalithlauncher.game.launch.JvmLauncher
 import com.movtery.zalithlauncher.ui.screens.game.JVMScreen
-import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -59,7 +58,7 @@ class JVMHandler(
                         canvas?.let { surface.unlockCanvasAndPost(it) }
                     }
                 } catch (throwable: Throwable) {
-                    Log.e("JVMHandler", StringUtils.throwableToString(throwable))
+                    lError("An exception occurred while rendering the AWT frame.", throwable)
                 } finally {
                     rgbArrayBitmap.recycle()
                     surface.release()

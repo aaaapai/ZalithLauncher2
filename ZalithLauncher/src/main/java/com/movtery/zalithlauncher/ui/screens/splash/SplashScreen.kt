@@ -28,25 +28,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.movtery.zalithlauncher.components.InstallableItem
 import com.movtery.zalithlauncher.info.InfoDistributor
-import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.state.MutableStates
-import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.getAnimateType
 
 /**
- * @param eulaText 是否有 EULA 文本需要展示
- * @param eulaDate EULA 最后更新日期
- * @param checkTasks 检查是否有解压任务
  * @param startAllTask 开启全部的解压任务
  * @param unpackItems 解压任务列表
  */
 @Composable
 fun SplashScreen(
-    eulaText: String?,
-    eulaDate: String,
-    checkTasks: () -> Boolean,
     startAllTask: () -> Unit,
     unpackItems: List<InstallableItem>,
 ) {
@@ -65,9 +57,6 @@ fun SplashScreen(
                 .weight(1f)
         ) {
             NavigationUI(
-                eulaText = eulaText,
-                eulaDate = eulaDate,
-                checkTasks = checkTasks,
                 startAllTask = startAllTask,
                 unpackItems = unpackItems,
                 modifier = Modifier
@@ -101,12 +90,10 @@ private fun TopBar(
 
 @Composable
 private fun NavigationUI(
-    eulaText: String?,
-    eulaDate: String,
-    checkTasks: () -> Boolean,
+    modifier: Modifier = Modifier,
+    startDestination: String = UNPACK_SCREEN_TAG,
     startAllTask: () -> Unit,
     unpackItems: List<InstallableItem>,
-    modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
 
@@ -116,8 +103,6 @@ private fun NavigationUI(
         }
         navController.addOnDestinationChangedListener(listener)
     }
-
-    val startDestination = if (eulaText != null) EULA_SCREEN_TAG else UNPACK_SCREEN_TAG
 
     NavHost(
         modifier = modifier,
@@ -138,16 +123,6 @@ private fun NavigationUI(
             }
         }
     ) {
-        composable(
-            route = EULA_SCREEN_TAG
-        ) {
-            EulaScreen(eulaText!!) {
-                AllSettings.splashEulaDate.put(eulaDate).save()
-                if (checkTasks()) { //是否有解压任务，如果有，则跳转到解压屏幕
-                    navController.navigateTo(UNPACK_SCREEN_TAG)
-                }
-            }
-        }
         composable(
             route = UNPACK_SCREEN_TAG
         ) {

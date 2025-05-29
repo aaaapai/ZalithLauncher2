@@ -25,7 +25,7 @@ import com.movtery.zalithlauncher.utils.getSerializableSafely
 import com.movtery.zalithlauncher.utils.string.StringUtils
 import com.movtery.zalithlauncher.utils.toBoolean
 
-class ErrorActivity : BaseComponentActivity() {
+class ErrorActivity : BaseComponentActivity(refreshData = false) {
 
     companion object {
         const val BUNDLE_EXIT_TYPE = "BUNDLE_EXIT_TYPE"

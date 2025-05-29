@@ -1,6 +1,5 @@
 package com.movtery.zalithlauncher.ui.screens.content.download.game
 
-import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -67,6 +66,7 @@ import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCRE
 import com.movtery.zalithlauncher.ui.screens.content.elements.isFilenameInvalid
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
@@ -784,7 +784,7 @@ private suspend fun <T> runWithState(
                 AddonState.Error(res, arrayOf(statusCode))
             }
             else -> {
-                Log.e(DOWNLOAD_GAME_WITH_ADDON_SCREEN_TAG, "An unknown exception was caught!", e)
+                lError("An unknown exception was caught!", e)
                 val errorMessage = e.localizedMessage ?: e.message ?: e::class.qualifiedName ?: "Unknown error"
                 AddonState.Error(R.string.error_unknown, arrayOf(errorMessage))
             }

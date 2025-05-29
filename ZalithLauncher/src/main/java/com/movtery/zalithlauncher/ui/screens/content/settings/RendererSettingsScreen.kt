@@ -1,15 +1,13 @@
 package com.movtery.zalithlauncher.ui.screens.content.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -59,7 +57,8 @@ fun RendererSettingsScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(state = rememberScrollState())
-                .padding(all = 12.dp)
+                .padding(all = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val yOffset1 by swapAnimateDpAsState(
                 targetValue =  (-40).dp,
@@ -115,7 +114,6 @@ fun RendererSettingsScreen() {
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
             val yOffset2 by swapAnimateDpAsState(
                 targetValue =  (-40).dp,
                 swapIn = isVisible,
@@ -197,27 +195,30 @@ fun RendererSettingsScreen() {
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun RendererSummaryLayout(renderer: RendererInterface) {
-    FlowRow(modifier = Modifier.alpha(0.7f)) {
+    FlowRow(
+        modifier = Modifier.alpha(0.7f),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         with(renderer) {
             getRendererSummary()?.let { summary ->
                 Text(text = summary, style = MaterialTheme.typography.labelSmall)
-                Spacer(modifier = Modifier.width(12.dp))
             }
 
             val minVer = getMinMCVersion()
             val maxVer = getMaxMCVersion()
 
             if (minVer != null || maxVer != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(text = stringResource(R.string.renderer_version_support), style = MaterialTheme.typography.labelSmall)
 
                     minVer?.let {
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(text = ">= $it", style = MaterialTheme.typography.labelSmall)
                     }
 
                     maxVer?.let {
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(text = "<= $it", style = MaterialTheme.typography.labelSmall)
                     }
                 }

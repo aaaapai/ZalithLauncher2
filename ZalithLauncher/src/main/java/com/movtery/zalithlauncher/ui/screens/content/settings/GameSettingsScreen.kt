@@ -1,9 +1,8 @@
 package com.movtery.zalithlauncher.ui.screens.content.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -39,7 +38,8 @@ fun GameSettingsScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(state = rememberScrollState())
-                .padding(all = 12.dp)
+                .padding(all = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val yOffset1 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
@@ -73,8 +73,6 @@ fun GameSettingsScreen() {
                     summary = stringResource(R.string.settings_game_version_custom_info_summary)
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             val yOffset2 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
@@ -121,8 +119,6 @@ fun GameSettingsScreen() {
                     summary = stringResource(R.string.settings_game_jvm_args_summary)
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             val yOffset3 by swapAnimateDpAsState(
                 targetValue = (-40).dp,

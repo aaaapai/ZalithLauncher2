@@ -1,6 +1,5 @@
 package com.movtery.zalithlauncher.game.version.installed
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,7 +10,9 @@ import com.movtery.zalithlauncher.game.path.getVersionsHome
 import com.movtery.zalithlauncher.game.version.installed.favorites.FavoritesVersionUtils
 import com.movtery.zalithlauncher.game.version.installed.utils.VersionInfoUtils
 import com.movtery.zalithlauncher.info.InfoDistributor
-import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.string.compareChar
 import com.movtery.zalithlauncher.utils.string.compareVersion
 import kotlinx.coroutines.CoroutineScope
@@ -125,9 +126,11 @@ object VersionsManager {
                 isVersion
             )
 
-            Log.i("VersionsManager", "Identified and added version: ${version.getVersionName()}, " +
-                    "Path: (${version.getVersionPath()}), " +
-                    "Info: ${version.getVersionInfo()?.getInfoString()}")
+            lInfo(
+                "Identified and added version: ${version.getVersionName()}, " +
+                        "Path: (${version.getVersionPath()}), " +
+                        "Info: ${version.getVersionInfo()?.getInfoString()}"
+            )
 
             return version
         }
@@ -148,8 +151,9 @@ object VersionsManager {
             runCatching {
                 val versionString = currentGameInfo!!.version
                 getVersion(versionString) ?: returnVersionByFirst()
-            }.getOrElse { e ->
-                Log.e("Get Current Version", StringUtils.throwableToString(e))
+            }.onFailure { e ->
+                lWarning("The current version information has not been initialized yet.", e)
+            }.getOrElse {
                 returnVersionByFirst()
             }
         }
@@ -209,7 +213,9 @@ object VersionsManager {
                 saveCurrentInfo()
             }
             refreshCurrentVersion()
-        }.onFailure { e -> Log.e("Save Current Version", StringUtils.throwableToString(e)) }
+        }.onFailure { e ->
+            lError("An exception occurred while saving the currently selected version information.", e)
+        }
     }
 
     @Composable

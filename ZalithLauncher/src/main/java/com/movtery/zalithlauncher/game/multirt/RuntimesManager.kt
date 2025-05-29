@@ -1,16 +1,15 @@
 package com.movtery.zalithlauncher.game.multirt
 
 import android.system.Os
-import android.util.Log
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.components.jre.Jre
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
-import com.movtery.zalithlauncher.utils.file.readString
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.math.findNearestPositive
-import com.movtery.zalithlauncher.utils.string.StringUtils
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.extractUntilCharacter
 import com.movtery.zalithlauncher.utils.string.compareVersion
 import kotlinx.coroutines.Dispatchers
@@ -25,9 +24,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
-import java.util.zip.ZipFile
 
 /**
  * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/v3_openjdk/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/multirt/MultiRTUtils.java)
@@ -38,11 +35,10 @@ object RuntimesManager {
     private val RUNTIME_FOLDER = PathManager.DIR_MULTIRT
     private const val JAVA_VERSION_STR: String = "JAVA_VERSION=\""
     private const val OS_ARCH_STR: String = "OS_ARCH=\""
-    private const val TAG = "RuntimeManager"
 
     fun getRuntimes(forceLoad: Boolean = false): List<Runtime> {
         if (!RUNTIME_FOLDER.exists()) {
-            Log.w(TAG, "Runtime directory not found: ${RUNTIME_FOLDER.absolutePath}")
+            lWarning("Runtime directory not found: ${RUNTIME_FOLDER.absolutePath}")
             return emptyList()
         }
 
@@ -93,7 +89,7 @@ object RuntimesManager {
                     Runtime(name)
                 }
             }.onFailure { e ->
-                Log.e(TAG, "Failed to load runtime $name", e)
+                lError("Failed to load runtime $name", e)
             }.getOrElse {
                 Runtime(name)
             }.also { cache[name] = it }
@@ -156,12 +152,14 @@ object RuntimesManager {
 
     fun loadInternalRuntimeVersion(name: String): String? {
         val versionFile = RUNTIME_FOLDER.child(name, "version")
-        return runCatching {
-            if (versionFile.exists()) versionFile.readText()
-            else null
-        }.getOrElse { e ->
-            if (e is IOException) null
-            else throw e
+        try {
+            return if (versionFile.exists()) {
+                versionFile.readText()
+            } else {
+                null
+            }
+        } catch (_: IOException) {
+            return null
         }
     }
 
@@ -209,7 +207,7 @@ object RuntimesManager {
                     }
                 }.onFailure { e ->
                     if (e is IOException) {
-                        Log.e(TAG, "Failed to unpack the runtime!", e)
+                        lError("Failed to unpack the runtime!", e)
                     } else throw e
                 }
             }
@@ -260,7 +258,7 @@ object RuntimesManager {
                     tarEntry.isSymbolicLink -> try {
                         Os.symlink(tarEntry.linkName, tarEntryName)
                     } catch (e: Throwable) {
-                        Log.e(TAG, StringUtils.throwableToString(e))
+                        lError("Exception occurred while creating symbolic link", e)
                     }
 
                     tarEntry.isDirectory -> destPath.ensureDirectory()
@@ -271,46 +269,5 @@ object RuntimesManager {
                 }
             }
         }
-    }
-
-    /**
-     * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/19dc51f/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/JavaGUILauncherActivity.java#L400-L429)
-     */
-    fun getJavaVersionFromJar(jarFile: File): Int {
-        return runCatching {
-            ZipFile(jarFile).use { zipFile ->
-                val manifest = zipFile.getEntry("META-INF/MANIFEST.MF") ?: return -1
-
-                val manifestString = zipFile.getInputStream(manifest).readString()
-                val mainClass = manifestString.extractUntilCharacter("Main-Class:", '\n')?.trim() ?: return -1
-
-                val mainClassPath = "${mainClass.replace('.', '/')}.class"
-                val mainClassFile = zipFile.getEntry(mainClassPath) ?: return -1
-
-                zipFile.getInputStream(mainClassFile).use { classStream ->
-                    val bytesWeNeed = ByteArray(8)
-                    if (classStream.read(bytesWeNeed) < 8) return -1
-
-                    with(ByteBuffer.wrap(bytesWeNeed)) {
-                        if (getInt().toLong() != 0xCAFEBABE) return -1
-                        val minorVersion = getShort()
-                        val majorVersion = getShort()
-                        Log.i(TAG, "$majorVersion,$minorVersion")
-                        classVersionToJavaVersion(majorVersion.toInt())
-                    }
-                }
-            }
-        }.getOrElse { e ->
-            Log.e(TAG, "Exception thrown", e)
-            -1
-        }
-    }
-
-    /**
-     * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/19dc51f/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/JavaGUILauncherActivity.java#L430-L433)
-     */
-    private fun classVersionToJavaVersion(majorVersion: Int): Int {
-        if (majorVersion < 46) return 2 // there isn't even an arm64 port of jre 1.1 (or anything before 1.8 in fact)
-        return majorVersion - 44
     }
 }

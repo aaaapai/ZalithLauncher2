@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 
-const val JVM_SERVICE_TAG = "JvmService"
-
 const val PROCESS_SERVICE_PORT = 53151 //random
 
 //构造变量

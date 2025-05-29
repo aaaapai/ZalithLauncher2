@@ -1,12 +1,14 @@
 package com.movtery.zalithlauncher.game.download.game
 
-import android.util.Log
 import com.google.gson.JsonObject
 import com.movtery.zalithlauncher.game.download.game.models.LibraryComponents
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
 import com.movtery.zalithlauncher.utils.json.parseToJson
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import java.io.File
 import java.io.IOException
 
@@ -19,11 +21,11 @@ fun GameManifest.isOldVersion(): Boolean = !minecraftArguments.isNullOrEmpty()
 fun String?.getJsonOrNull(tag: String): JsonObject? {
     return this?.let { path ->
         val text: String = File(path).takeIf { it.exists() && it.isFile }?.readText() ?: run {
-            Log.w("_DownloadUtils.Game.getJsonOrNull", "The $tag json file is invalid!")
+            lWarning("The $tag json file is invalid!")
             return@let null
         }
         if (!text.startsWith("{")) {
-            Log.w("_DownloadUtils.Game.getJsonOrNull", "The $tag JSON is invalid, first part of the content: ${text.take(1000)}")
+            lWarning("The $tag JSON is invalid, first part of the content: ${text.take(1000)}")
             return@let null
         }
         text.parseToJson()
@@ -61,9 +63,9 @@ fun copyLibraries(
         try {
             targetFile.ensureParentDirectory()
             file.copyTo(targetFile, overwrite = true)
-            Log.i("CopyLibraries", "copied: ${file.path} -> ${targetFile.path}")
+            lInfo("copied: ${file.path} -> ${targetFile.path}")
         } catch (e: IOException) {
-            Log.e("CopyLibraries", "Failed to copy: ${file.path} -> ${targetFile.path}", e)
+            lError("Failed to copy: ${file.path} -> ${targetFile.path}", e)
         }
         onProgress?.invoke((index + 1).toFloat() / fileCount)
     }
@@ -100,11 +102,11 @@ fun copyVanillaFiles(
 /**
  * 根据提供的原始库名称生成对应的本地路径。
  * @param original 库的原始名称，例如 `groupId:artifactId:version`
- * @param baseFolder 基础文件夹路径，作为文件路径前缀
+ * @param baseFolder 基础文件夹路径，作为文件路径前缀，为 null 则不连接
  */
 fun getLibraryPath(
     original: String,
-    baseFolder: String
+    baseFolder: String? = null
 ): String {
     val components = parseLibraryComponents(original)
 
@@ -123,8 +125,8 @@ fun getLibraryPath(
     val classifierSuffix = if (!components.classifier.isNullOrEmpty()) "-${components.classifier}" else ""
     val jarName = "${components.artifactId}-${components.version}$classifierSuffix.jar"
 
-    return listOf(
-        "$baseFolder/libraries",
+    return listOfNotNull(
+        baseFolder?.let { "$it/libraries" },
         groupIdPath,
         components.artifactId,
         components.version,

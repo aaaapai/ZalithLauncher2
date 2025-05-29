@@ -2,7 +2,6 @@ package com.movtery.zalithlauncher.game.launch
 
 import android.app.Activity
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.ui.unit.IntSize
 import com.movtery.zalithlauncher.BuildConfig
@@ -17,12 +16,10 @@ import com.movtery.zalithlauncher.game.account.AccountType
 import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.multirt.Runtime
 import com.movtery.zalithlauncher.game.multirt.RuntimesManager
-import com.movtery.zalithlauncher.game.path.getLibrariesHome
 import com.movtery.zalithlauncher.game.plugin.driver.DriverPluginManager
 import com.movtery.zalithlauncher.game.plugin.renderer.RendererPluginManager
 import com.movtery.zalithlauncher.game.renderer.Renderers
 import com.movtery.zalithlauncher.game.support.touch_controller.ControllerProxy
-import com.movtery.zalithlauncher.game.version.download.artifactToPath
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.getGameManifest
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
@@ -31,6 +28,9 @@ import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.ensureDirectorySilently
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import org.lwjgl.glfw.CallbackBridge
 import java.io.File
 import javax.microedition.khronos.egl.EGL10
@@ -113,7 +113,7 @@ class GameLauncher(
 
         val rendererLib = loadGraphicsLibrary() ?: return
         if (!ZLBridge.dlopen(rendererLib) && !ZLBridge.dlopen(findInLdLibPath(rendererLib))) {
-            Log.e("GameLauncher", "Failed to load renderer $rendererLib")
+            lError("Failed to load renderer $rendererLib")
         }
     }
 
@@ -134,15 +134,18 @@ class GameLauncher(
         val gameDirPath = version.getGameDir()
 
         disableSplash(gameDirPath)
-        val launchClassPath = generateLaunchClassPath(gameManifest)
+
+        //初始化运行环境
+        this.runtime = runtime
+        this.relocateLibPath()
 
         val launchArgs = LaunchArgs(
+            launcher = this,
             account = account,
             gameDirPath = gameDirPath,
             version = version,
             gameManifest = gameManifest,
             runtime = runtime,
-            launchClassPath = launchClassPath,
             readAssetsFile = { path -> activity.readAssetFile(path) },
             getCacioJavaArgs = { isJava8 ->
                 val size = getWindowSize()
@@ -156,8 +159,7 @@ class GameLauncher(
             context = activity,
             jvmArgs = launchArgs,
             userArgs = customArgs,
-            getWindowSize = getWindowSize,
-            runtime = runtime
+            getWindowSize = getWindowSize
         )
     }
 
@@ -234,71 +236,12 @@ class GameLauncher(
                         )
                     }
                 }.onFailure {
-                    Log.w("GameLauncher", "Could not disable Forge 1.12.2 and below splash screen!", it)
+                    lWarning("Could not disable Forge 1.12.2 and below splash screen!", it)
                 }
             } else {
-                Log.w("GameLauncher", "Failed to create the configuration directory")
+                lWarning("Failed to create the configuration directory")
             }
         }
-    }
-
-    /**
-     * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L572-L592)
-     */
-    private fun generateLaunchClassPath(
-        gameManifest: GameManifest,
-        isClientFirst: Boolean = false
-    ): String {
-        val classpathList = mutableListOf<String>()
-
-        val classpath: Array<String> = generateLibClasspath(gameManifest)
-
-        val clientClass = File(version.getVersionPath(), "${version.getVersionName()}.jar")
-        val clientClasspath: String = clientClass.absolutePath
-
-        if (isClientFirst && clientClass.exists()) {
-            classpathList.add(clientClasspath)
-        }
-        for (jarFile in classpath) {
-            val jarFileObj = File(jarFile)
-            if (!jarFileObj.exists()) {
-                Log.d("GameLauncher", "Ignored non-exists file: $jarFile")
-                continue
-            }
-            classpathList.add(jarFile)
-        }
-        if (!isClientFirst && clientClass.exists()) {
-            classpathList.add(clientClasspath)
-        }
-
-        return classpathList.joinToString(":")
-    }
-
-    /**
-     * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L871-L882)
-     */
-    private fun generateLibClasspath(gameManifest: GameManifest): Array<String> {
-        val libDir: MutableList<String> = ArrayList()
-        for (libItem in gameManifest.libraries) {
-            if (!checkRules(libItem.rules)) continue
-            val libArtifactPath: String = artifactToPath(libItem) ?: continue
-            libDir.add(getLibrariesHome() + "/" + libArtifactPath)
-        }
-        return libDir.toTypedArray<String>()
-    }
-
-    /**
-     * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L815-L823)
-     */
-    private fun checkRules(rules: List<GameManifest.Rule>?): Boolean {
-        if (rules == null) return true // always allow
-
-        for (rule in rules) {
-            if (rule.action.equals("allow") && rule.os != null && rule.os.name.equals("osx")) {
-                return false //disallow
-            }
-        }
-        return true // allow if none match
     }
 
     companion object {
@@ -346,7 +289,7 @@ class GameLauncher(
 
             if (!envMap.containsKey("LIBGL_ES")) {
                 val glesMajor = getDetectedVersion()
-                Log.i("glesDetect", "GLES version detected: $glesMajor")
+                lInfo("GLES version detected: $glesMajor")
 
                 envMap["LIBGL_ES"] = if (glesMajor < 3) {
                     //fallback to 2 since it's the minimum for the entire app
@@ -426,8 +369,8 @@ class GameLauncher(
                                         if (highestEsVersion < 1) highestEsVersion = 1
                                     }
                                 } else {
-                                    Log.w(
-                                        "glesDetect", ("Getting config attribute with "
+                                    lWarning(
+                                        ("Getting config attribute with "
                                                 + "EGL10#eglGetConfigAttrib failed "
                                                 + "(" + i + "/" + numConfigs[0] + "): "
                                                 + egl.eglGetError())
@@ -436,15 +379,14 @@ class GameLauncher(
                             }
                             return highestEsVersion
                         } else {
-                            Log.e(
-                                "glesDetect", "Getting configs with EGL10#eglGetConfigs failed: "
+                            lError(
+                                "Getting configs with EGL10#eglGetConfigs failed: "
                                         + egl.eglGetError()
                             )
                             return -1
                         }
                     } else {
-                        Log.e(
-                            "glesDetect",
+                        lError(
                             "Getting number of configs with EGL10#eglGetConfigs failed: "
                                     + egl.eglGetError()
                         )
@@ -454,7 +396,7 @@ class GameLauncher(
                     egl.eglTerminate(display)
                 }
             } else {
-                Log.e("glesDetect", "Couldn't initialize EGL.")
+                lError("Couldn't initialize EGL.")
                 return -3
             }
         }

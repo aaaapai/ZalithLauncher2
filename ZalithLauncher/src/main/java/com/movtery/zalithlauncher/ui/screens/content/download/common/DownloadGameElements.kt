@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.ui.screens.content.download.common
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -107,7 +108,8 @@ private fun InstallingTaskItem(
     modifier: Modifier = Modifier
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val icon = when (task.taskState) {
             TaskState.PREPARING -> Icons.Outlined.Schedule
@@ -119,7 +121,6 @@ private fun InstallingTaskItem(
             imageVector = icon,
             contentDescription = null
         )
-        Spacer(modifier = Modifier.width(8.dp))
 
         Column(
             modifier = modifier

@@ -1,16 +1,14 @@
 package com.movtery.zalithlauncher.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -69,118 +67,120 @@ fun ColorPickerDialog(
 
     Dialog(onDismissRequest = {}) {
         Surface(
-            modifier = Modifier.fillMaxHeight(),
             shape = MaterialTheme.shapes.extraLarge,
             shadowElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier.padding(all = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
                     text = stringResource(R.string.theme_color_picker_title),
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                Row(
+                Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth()
                 ) {
-                    HsvColorPicker(
-                        modifier = Modifier.weight(1f),
-                        controller = colorController
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(state = rememberScrollState())
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (showAlpha) {
-                            AlphaSlider(
-                                modifier = Modifier
-                                    .height(30.dp)
-                                    .fillMaxWidth(),
-                                controller = colorController
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
+                        HsvColorPicker(
+                            modifier = Modifier.size(120.dp),
+                            controller = colorController
+                        )
 
-                        if (showBrightness) {
-                            BrightnessSlider(
-                                modifier = Modifier
-                                    .height(30.dp)
-                                    .fillMaxWidth(),
-                                controller = colorController
-                            )
-                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Column {
+                                if (showAlpha) {
+                                    AlphaSlider(
+                                        modifier = Modifier
+                                            .height(30.dp)
+                                            .fillMaxWidth(),
+                                        controller = colorController
+                                    )
+                                }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                                if (showBrightness) {
+                                    BrightnessSlider(
+                                        modifier = Modifier
+                                            .height(30.dp)
+                                            .fillMaxWidth(),
+                                        controller = colorController
+                                    )
+                                }
+                            }
 
-                        //颜色预览
-                        ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
-                            val (initialHex, initialBox, arrow, currentHex, currentBox) = createRefs()
+                            //颜色预览
+                            ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
+                                val (initialHex, initialBox, arrow, currentHex, currentBox) = createRefs()
 
-                            //初始颜色
-                            Text(
-                                modifier = Modifier.constrainAs(initialHex) {
-                                    start.linkTo(parent.start)
-                                    top.linkTo(parent.top)
-                                },
-                                text = initialColor.toHex(),
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .constrainAs(initialBox) {
+                                //初始颜色
+                                Text(
+                                    modifier = Modifier.constrainAs(initialHex) {
                                         start.linkTo(parent.start)
-                                        top.linkTo(anchor = initialHex.bottom, margin = 4.dp)
-                                    }
-                                    .size(50.dp)
-                                    .background(color = initialColor, shape = MaterialTheme.shapes.medium)
-                            )
-
-                            Icon(
-                                modifier = Modifier
-                                    .constrainAs(arrow) {
-                                        top.linkTo(initialBox.top)
-                                        bottom.linkTo(initialBox.bottom)
-                                        start.linkTo(initialBox.end)
-                                        end.linkTo(currentBox.start)
+                                        top.linkTo(parent.top)
                                     },
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null
-                            )
+                                    text = initialColor.toHex(),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .constrainAs(initialBox) {
+                                            start.linkTo(parent.start)
+                                            top.linkTo(anchor = initialHex.bottom, margin = 4.dp)
+                                        }
+                                        .size(50.dp)
+                                        .background(color = initialColor, shape = MaterialTheme.shapes.medium)
+                                )
 
-                            //当前颜色
-                            Text(
-                                modifier = Modifier.constrainAs(currentHex) {
-                                    end.linkTo(parent.end)
-                                    top.linkTo(parent.top)
-                                },
-                                text = selectedHex,
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .constrainAs(currentBox) {
+                                Icon(
+                                    modifier = Modifier
+                                        .constrainAs(arrow) {
+                                            top.linkTo(initialBox.top)
+                                            bottom.linkTo(initialBox.bottom)
+                                            start.linkTo(initialBox.end)
+                                            end.linkTo(currentBox.start)
+                                        },
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null
+                                )
+
+                                //当前颜色
+                                Text(
+                                    modifier = Modifier.constrainAs(currentHex) {
                                         end.linkTo(parent.end)
-                                        top.linkTo(anchor = currentHex.bottom, margin = 4.dp)
-                                    }
-                                    .size(50.dp)
-                                    .background(color = selectedColor, shape = MaterialTheme.shapes.medium)
-                            )
+                                        top.linkTo(parent.top)
+                                    },
+                                    text = selectedHex,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .constrainAs(currentBox) {
+                                            end.linkTo(parent.end)
+                                            top.linkTo(anchor = currentHex.bottom, margin = 4.dp)
+                                        }
+                                        .size(50.dp)
+                                        .background(color = selectedColor, shape = MaterialTheme.shapes.medium)
+                                )
+                            }
                         }
                     }
                 }
 
                 Row(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Button(
                         modifier = Modifier.weight(1f),
@@ -191,7 +191,6 @@ fun ColorPickerDialog(
                     ) {
                         Text(text = stringResource(R.string.generic_cancel))
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
                     Button(
                         modifier = Modifier.weight(1f),
                         onClick = {

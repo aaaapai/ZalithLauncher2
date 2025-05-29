@@ -1,38 +1,34 @@
 package com.movtery.zalithlauncher.game.account
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
+import com.movtery.zalithlauncher.game.account.auth_server.AuthServerApi
+import com.movtery.zalithlauncher.game.account.auth_server.AuthServerHelper
+import com.movtery.zalithlauncher.game.account.auth_server.data.AuthServer
 import com.movtery.zalithlauncher.game.account.microsoft.AsyncStatus
 import com.movtery.zalithlauncher.game.account.microsoft.AuthType
 import com.movtery.zalithlauncher.game.account.microsoft.MicrosoftAuthenticator
+import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileException
 import com.movtery.zalithlauncher.game.account.microsoft.NotPurchasedMinecraftException
-import com.movtery.zalithlauncher.game.account.otherserver.OtherLoginApi
-import com.movtery.zalithlauncher.game.account.otherserver.OtherLoginHelper
-import com.movtery.zalithlauncher.game.account.otherserver.models.Servers
-import com.movtery.zalithlauncher.game.account.otherserver.models.Servers.Server
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException
+import com.movtery.zalithlauncher.game.account.microsoft.toLocal
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.screens.content.WEB_VIEW_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.elements.MicrosoftLoginOperation
-import com.movtery.zalithlauncher.utils.CryptoManager
-import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.copyText
-import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.io.File
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -42,7 +38,7 @@ import java.util.Locale
 import java.util.Objects
 import kotlin.coroutines.CoroutineContext
 
-fun Account.isOtherLoginAccount(): Boolean {
+fun Account.isAuthServerAccount(): Boolean {
     return !Objects.isNull(otherBaseUrl) && otherBaseUrl != "0"
 }
 
@@ -60,6 +56,14 @@ fun Account?.isNoLoginRequired(): Boolean {
 
 fun Account.isSkinChangeAllowed(): Boolean {
     return isMicrosoftAccount() || isLocalAccount()
+}
+
+fun Account.accountTypePriority(): Int {
+    return when (this.accountType) {
+        AccountType.MICROSOFT.tag -> 0 //微软账号优先
+        null -> Int.MAX_VALUE
+        else -> 1
+    }
 }
 
 private const val MICROSOFT_LOGGING_TASK = "microsoft_logging_task"
@@ -102,12 +106,14 @@ fun microsoftLogin(
             )
             task.updateMessage(R.string.account_logging_in_saving)
             account.downloadSkin()
-            saveAccount(account)
+            AccountsManager.saveAccount(account)
         },
         onError = { th ->
             when (th) {
                 is HttpRequestTimeoutException -> context.getString(R.string.account_logging_time_out)
-                is NotPurchasedMinecraftException -> context.getString(R.string.account_logging_not_purchased_minecraft)
+                is NotPurchasedMinecraftException -> toLocal(context)
+                is MinecraftProfileException -> th.toLocal(context)
+                is XboxLoginException -> th.toLocal(context)
                 is UnknownHostException, is UnresolvedAddressException -> context.getString(R.string.error_network_unreachable)
                 is ConnectException -> context.getString(R.string.error_connection_failed)
                 is ResponseException -> {
@@ -185,7 +191,7 @@ fun microsoftRefresh(
                 this.profileId = newAcc.profileId
                 this.username = newAcc.username
                 this.refreshToken = newAcc.refreshToken
-                this.xuid = newAcc.xuid
+                this.xUid = newAcc.xUid
             }
             onSuccess(account, task)
         },
@@ -206,7 +212,7 @@ fun otherLogin(
 ): Task? {
     if (TaskSystem.containsTask(account.uniqueUUID)) return null
 
-    return OtherLoginHelper(
+    return AuthServerHelper(
         baseUrl = account.otherBaseUrl!!,
         serverName = account.accountType!!,
         email = account.otherAccount!!,
@@ -225,13 +231,11 @@ fun localLogin(userName: String) {
         username = userName,
         accountType = AccountType.LOCAL.tag
     )
-    saveAccount(account)
+    AccountsManager.saveAccount(account)
 }
 
 fun addOtherServer(
     serverUrl: String,
-    serverConfig: () -> MutableStateFlow<Servers>,
-    serverConfigFile: File,
     onThrowable: (Throwable) -> Unit = {}
 ) {
     val task = Task.runTask(
@@ -240,47 +244,30 @@ fun addOtherServer(
             val fullServerUrl = tryGetFullServerUrl(serverUrl)
             ensureActive()
             task.updateProgress(0.5f, R.string.account_other_login_getting_server_info)
-            OtherLoginApi.getServeInfo(fullServerUrl)?.let { data ->
+            AuthServerApi.getServeInfo(fullServerUrl)?.let { data ->
                 JSONObject(data).optJSONObject("meta")?.let { meta ->
-                    val server = Server(
+                    if (AccountsManager.isAuthServerExists(fullServerUrl)) {
+                        //确保服务器不重复
+                        return@runTask
+                    }
+                    val server = AuthServer(
                         serverName = meta.optString("serverName"),
                         baseUrl = fullServerUrl,
                         register = meta.optJSONObject("links")?.optString("register") ?: ""
                     )
-                    if (serverConfig().value.server.any { it.baseUrl == server.baseUrl }) {
-                        //确保服务器不重复
-                        return@runTask
-                    }
-                    serverConfig().update { currentConfig ->
-                        currentConfig.server.add(server)
-                        currentConfig.copy()
-                    }
                     task.updateProgress(0.8f, R.string.account_other_login_saving_server)
-                    val configString = GSON.toJson(serverConfig().value, Servers::class.java)
-                    val text = CryptoManager.encrypt(configString)
-                    serverConfigFile.writeText(configString)
+                    AccountsManager.saveAuthServer(server)
                     task.updateProgress(1f, R.string.generic_done)
                 }
             }
         },
         onError = { e ->
             onThrowable(e)
-            Log.e("AddOtherServer", "Failed to add other server\n${StringUtils.throwableToString(e)}")
+            lError("Failed to add auth server", e)
         }
     )
 
     TaskSystem.submitTask(task)
-}
-
-fun saveAccount(account: Account) {
-    runCatching {
-        account.save()
-        Log.i("SaveAccount", "Saved account: ${account.username}")
-    }.onFailure { e ->
-        Log.e("SaveAccount", "Failed to save account: ${account.username}", e)
-    }
-
-    AccountsManager.reloadAccounts()
 }
 
 /**
@@ -289,7 +276,7 @@ fun saveAccount(account: Account) {
 fun getAccountTypeName(context: Context, account: Account): String {
     return if (account.isMicrosoftAccount()) {
         context.getString(R.string.account_type_microsoft)
-    } else if (account.isOtherLoginAccount()) {
+    } else if (account.isAuthServerAccount()) {
         account.accountType ?: "Unknown"
     } else {
         context.getString(R.string.account_type_local)
@@ -322,7 +309,7 @@ fun tryGetFullServerUrl(baseUrl: String): String {
 
         return url.addSlashIfMissing()
     }.getOrElse { e ->
-        Log.e("getFullServerUrl", "Failed to get full server url", e)
+        lError("Failed to get full server url", e)
     }
     return baseUrl
 }

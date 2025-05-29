@@ -1,6 +1,5 @@
 package com.movtery.zalithlauncher.game.download.game.forge
 
-import android.util.Log
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import com.movtery.zalithlauncher.R
@@ -21,6 +20,8 @@ import com.movtery.zalithlauncher.utils.file.extractEntryToFile
 import com.movtery.zalithlauncher.utils.file.extractFromZip
 import com.movtery.zalithlauncher.utils.file.readText
 import com.movtery.zalithlauncher.utils.json.parseToJson
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.string.isBiggerOrEqualTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -123,7 +124,7 @@ private suspend fun installNewForgeHMCLWay(
                 if (value.isJsonObject) {
                     val client = value.asJsonObject["client"]
                     if (client != null && client.isJsonPrimitive) {
-                        Log.i(FORGE_LIKE_INSTALL_ID, "Attempting to recognize mapping: ${client.asString}")
+                        lInfo("Attempting to recognize mapping: ${client.asString}")
                         parseLiteral(
                             baseDir = tempMinecraftDir,
                             literal = client.asString,
@@ -134,12 +135,12 @@ private suspend fun installNewForgeHMCLWay(
                                     .removePrefix("/")
                                     .replace("\\", "/")
                                 zip.extractEntryToFile(item, dest.toFile())
-                                Log.i(FORGE_LIKE_INSTALL_ID, "Extracting item %item to directory $dest")
+                                lInfo("Extracting item %item to directory $dest")
                                 dest.toString()
                             }
                         )?.let {
                             vars[key] = it
-                            Log.i(FORGE_LIKE_INSTALL_ID, "Recognized as mapping $key - $it")
+                            lInfo("Recognized as mapping $key - $it")
                         }
                     }
                 }
@@ -188,7 +189,7 @@ private suspend fun installNewForgePCLWay(
     //记录当前文件夹列表，稍后用于检测差异
     val dirsBeforeInstall = File(tempMinecraftDir, "versions").listFiles { file -> file.isDirectory } ?: emptyArray()
     val beforeLog = dirsBeforeInstall.joinToString(", ") { it.name }
-    Log.i(FORGE_LIKE_INSTALL_ID, "All version folders before installation: $beforeLog")
+    lInfo("All version folders before installation: $beforeLog")
 
     task.updateProgress(-1f, R.string.download_game_install_base_installing, forgeLikeVersion.loaderName)
     runJvmRetryRuntimes(
@@ -217,7 +218,7 @@ private suspend fun installNewForgePCLWay(
     //检测差异
     val currentArray = File(tempMinecraftDir, "versions").listFiles { file -> file.isDirectory } ?: emptyArray()
     val currentLog = dirsBeforeInstall.joinToString(", ") { it.name }
-    Log.i(FORGE_LIKE_INSTALL_ID, "All version folders after installation: $currentLog")
+    lInfo("All version folders after installation: $currentLog")
 
     //过滤
     val deltaArray = currentArray.filter { file ->
@@ -226,17 +227,17 @@ private suspend fun installNewForgePCLWay(
                 file.name.contains("forge", ignoreCase = true) && file.listFiles()?.isNotEmpty() == true
     }
     val filteredLog = dirsBeforeInstall.joinToString(", ") { it.name }
-    Log.i(FORGE_LIKE_INSTALL_ID, "Version folders remaining after filtering: $filteredLog")
+    lInfo("Version folders remaining after filtering: $filteredLog")
 
     when (deltaArray.size) {
         1 -> {
             //复制新增的 json 文件
             val newJson = deltaArray[0].listFiles()?.first()!!
             newJson.copyTo(tempVersionJson)
-            Log.i(FORGE_LIKE_INSTALL_ID, "The newly added version JSON file has been copied: ${newJson.absolutePath} -> ${tempVersionJson.absolutePath}")
+            lInfo("The newly added version JSON file has been copied: ${newJson.absolutePath} -> ${tempVersionJson.absolutePath}")
         }
-        0 -> Log.i(FORGE_LIKE_INSTALL_ID, "The newly added version folder was not found.")
-        else -> Log.w(FORGE_LIKE_INSTALL_ID, "There are multiple suspected new versions, but it's unclear: ${deltaArray.joinToString { it.name }}")
+        0 -> lInfo("The newly added version folder was not found.")
+        else -> lWarning("There are multiple suspected new versions, but it's unclear: ${deltaArray.joinToString { it.name }}")
     }
 
     task.updateProgress(1f, null)
@@ -265,7 +266,7 @@ private suspend fun installOldForge(
         task.updateProgress(0.5f)
 
         if (!installProfile.has("install")) {
-            Log.i(FORGE_LIKE_INSTALL_ID, "Starting the Forge installation, Legacy method A")
+            lInfo("Starting the Forge installation, Legacy method A")
 
             //建立 Json 文件
             val jsonVersion = zip.readText(installProfile["json"].asString.trimStart('/')).parseToJson()
@@ -278,7 +279,7 @@ private suspend fun installOldForge(
 
             null
         } else {
-            Log.i(FORGE_LIKE_INSTALL_ID, "Starting the Forge installation, Legacy method B")
+            lInfo("Starting the Forge installation, Legacy method B")
             val artifact = installProfile["install"].asJsonObject["path"].asString
             val jarPath = getLibraryPath(artifact, baseFolder = tempMinecraftDir.absolutePath)
 
@@ -349,7 +350,7 @@ private suspend fun runProcessors(
             require(it.keys.none { key -> key == null } && it.values.none { v -> v == null }) {
                 "Invalid forge installation configuration"
             }
-            Log.i(FORGE_LIKE_INSTALL_ID, "Parsed output mappings for ${processor.javaClass.simpleName}: ${it.entries.joinToString("\n")}")
+            lInfo("Parsed output mappings for ${processor.javaClass.simpleName}: ${it.entries.joinToString("\n")}")
         }
 
         val anyMissing = outputs.any { (key, expectedHash) ->
@@ -361,7 +362,7 @@ private suspend fun runProcessors(
             }
             if (actualHash != expectedHash) {
                 Files.delete(artifact)
-                Log.i(FORGE_LIKE_INSTALL_ID, "Invalid artifact removed: $artifact")
+                lInfo("Invalid artifact removed: $artifact")
                 true
             } else false
         }
@@ -417,7 +418,7 @@ private suspend fun runProcessors(
             val progress = index.toFloat() / commandList.size
             task.updateProgress(progress, R.string.download_game_install_base_installing, jarName)
 
-            Log.i(FORGE_LIKE_INSTALL_ID, "Start to run $jarPath with args: $jvmArgs")
+            lInfo("Start to run $jarPath with args: $jvmArgs")
         }
 
         for ((key, value) in outputs) {

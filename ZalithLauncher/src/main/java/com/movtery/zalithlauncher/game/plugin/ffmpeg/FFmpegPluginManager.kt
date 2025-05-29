@@ -2,9 +2,9 @@ package com.movtery.zalithlauncher.game.plugin.ffmpeg
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
 import com.movtery.zalithlauncher.game.plugin.ApkPlugin
 import com.movtery.zalithlauncher.game.plugin.cacheAppIcon
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import java.io.File
 
 object FFmpegPluginManager {
@@ -52,7 +52,7 @@ object FFmpegPluginManager {
                 }.getOrNull()?.let { loaded(it) }
             }
         }.onFailure { e ->
-            Log.w("FFmpegPluginManager", "Failed to discover plugin", e)
+            lWarning("Failed to discover plugin", e)
         }
     }
 }

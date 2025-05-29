@@ -41,6 +41,8 @@
     <string name="generic_go_it">Got it</string>
     <string name="generic_file_name">File Name: %s</string>
     <string name="generic_file_size">File Size: %s</string>
+    <!-- Unit -->
+    <string name="unit_day">day</string>
     <!-- Launcher Version -->
     <string name="launcher_version_label_alpha">Alpha Version: %s (Demo Only)</string>
     <string name="launcher_version_label_beta">Beta Version: %s (Demo Only)</string>
@@ -167,6 +169,17 @@
     <string name="account_logging_in_failed">Login failed</string>
     <string name="account_logging_in_saving">Fetching skin and saving account info</string>
     <string name="account_logging_time_out">Network timeout. Check your connection.</string>
+    <string name="account_logging_xbox_banned">Your account has been banned for violating the Xbox Community Standards and can no longer be used!</string>
+    <string name="account_logging_xbox_restricted">Your account is currently restricted. A guardian has not authorized you to play online games.</string>
+    <string name="account_logging_xbox_unregistered">Your account has not yet created an Xbox profile. Please go to https://signup.live.com/signup to register.</string>
+    <string name="account_logging_xbox_not_accepted_service">Your account has not accepted the Xbox Terms of Service.</string>
+    <string name="account_logging_xbox_blocked_region">Your account\'s region is not authorized to use Xbox services. The login attempt has been blocked.</string>
+    <string name="account_logging_xbox_requires_proof_of_age">Your account requires proof of age. Please log in at https://login.live.com/login.srf to provide the necessary information.</string>
+    <string name="account_logging_xbox_reached_playtime_limit">Your account has reached the playtime limit and has been blocked from logging in.</string>
+    <string name="account_logging_xbox_underage">The birthdate on the account indicates the user is under 18. A guardian must add this account to a family group to continue using it.</string>
+    <string name="account_logging_frequent">Login attempts are too frequent. Please try again later.</string>
+    <string name="account_logging_blocked_ip">The current IP address has been blocked from logging in.</string>
+    <string name="account_logging_profile_not_exists">Please create a Minecraft player profile first, then try logging in again!</string>
     <string name="account_logging_not_purchased_minecraft">Minecraft ownership not verified. Purchase it from Mojang\'s official site.</string>
     <string name="account_type_microsoft">Microsoft</string>
     <string name="account_type_local">Offline</string>
@@ -451,6 +464,11 @@
     <string name="settings_launcher_animate_extent_summary">Adjust the intensity of the launcher animations</string>
     <string name="settings_launcher_swap_animate_type_title">Transition Animation</string>
     <string name="settings_launcher_swap_animate_type_summary">Choose the page transition animation that best suits your preferences</string>
+    <string name="settings_launcher_log_retention_days_title">Log Retention Days</string>
+    <string name="settings_launcher_log_retention_days_summary">Set how many days launcher logs should be retained. Logs older than this will be automatically deleted.</string>
+    <string name="settings_launcher_log_share_title">Share Launcher Logs</string>
+    <string name="settings_launcher_log_share_summary">Tap to share the launcher log files, so developers can identify and fix issues with the launcher.</string>
+    <string name="settings_launcher_log_share_packing">Package launcher log files</string>
     <!-- About -->
     <string name="about_plugin_title">Loaded Plugins</string>
     <string name="about_library_title">Third-Party Libraries</string>

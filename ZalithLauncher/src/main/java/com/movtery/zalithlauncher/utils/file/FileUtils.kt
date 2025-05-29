@@ -3,14 +3,17 @@ package com.movtery.zalithlauncher.utils.file
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.content.FileProvider
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import com.movtery.zalithlauncher.utils.string.compareChar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.IOUtils
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
@@ -18,13 +21,15 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
-fun compareSHA1(file: File, sourceSHA: String?, default: Boolean = true): Boolean {
+fun compareSHA1(file: File, sourceSHA: String?, default: Boolean = false): Boolean {
+    if (!file.exists()) return false //文件不存在
+
     val computedSHA = runCatching {
         FileInputStream(file).use { fis ->
             String(Hex.encodeHex(DigestUtils.sha1(fis)))
         }
     }.getOrElse { e ->
-        Log.i("CompareSHA1", "An exception occurred while reading, returning the default value.", e)
+        lInfo("An exception occurred while reading, returning the default value.", e)
         return default
     }
 
@@ -147,8 +152,10 @@ fun zipDirRecursive(baseDir: File, current: File, zipOut: ZipOutputStream) {
     }
 }
 
-fun ZipFile.readText(entryPath: String): String =
-    getInputStream(getEntry(entryPath))
+fun ZipFile.readText(entryPath: String): String = getEntry(entryPath).readText(this)
+
+fun ZipEntry.readText(zip: ZipFile): String =
+    zip.getInputStream(this)
         .bufferedReader()
         .use {
             it.readText()
@@ -156,7 +163,7 @@ fun ZipFile.readText(entryPath: String): String =
 
 /**
  * 从ZIP文件中提取指定内部路径下的所有条目到输出目录，保持相对路径结构
- * @param internalPath ZIP文件中的路径前缀（类似目录），自动添加结尾斜杠
+ * @param internalPath ZIP文件中的路径前缀（类似目录），留空则解压整个压缩包
  * @param outputDir 目标输出目录（必须为目录）
  * @throws IllegalArgumentException 如果路径不存在或参数无效
  * @throws SecurityException 如果检测到路径穿越攻击
@@ -164,7 +171,11 @@ fun ZipFile.readText(entryPath: String): String =
 fun ZipFile.extractFromZip(internalPath: String, outputDir: File) {
     require(outputDir.isDirectory || outputDir.mkdirs()) { "The output directory does not exist and cannot be created: $outputDir" }
 
-    val prefix = if (internalPath.endsWith("/")) internalPath else "$internalPath/"
+    val prefix = when {
+        internalPath.isEmpty() -> "" //传入空路径以解压整个的压缩包
+        internalPath.endsWith("/") -> internalPath
+        else -> "$internalPath/"
+    }
     val outputDirCanonical = outputDir.canonicalFile
 
     entries()
@@ -219,5 +230,30 @@ fun ZipFile.extractEntryToFile(entry: ZipEntry, outputFile: File) {
     getInputStream(entry).use { input ->
         outputCanonical.ensureParentDirectory()
         input.copyTo(outputCanonical.outputStream())
+    }
+}
+
+/**
+ * 压缩指定目录内的文件到压缩包
+ * @param outputZipFile 指定压缩包
+ */
+suspend fun zipDirectory(
+    sourceDir: File,
+    outputZipFile: File
+) = withContext(Dispatchers.IO) {
+    if (!sourceDir.exists() || !sourceDir.isDirectory) {
+        throw IllegalArgumentException("Source path must be an existing directory")
+    }
+
+    ZipOutputStream(FileOutputStream(outputZipFile)).use { zipOut ->
+        sourceDir.walkTopDown().filter { it.isFile }.forEach { file ->
+            val entryName = file.relativeTo(sourceDir).path.replace("\\", "/")
+            val zipEntry = ZipEntry(entryName)
+            zipOut.putNextEntry(zipEntry)
+            file.inputStream().use { input ->
+                input.copyTo(zipOut)
+            }
+            zipOut.closeEntry()
+        }
     }
 }

@@ -11,11 +11,12 @@ import androidx.annotation.CallSuper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.viewmodel.LauncherFullScreenViewModel
 import kotlinx.coroutines.launch
 
-abstract class FullScreenComponentActivity : AbstractComponentActivity() {
+abstract class FullScreenComponentActivity(
+    protected val shouldIgnoreNotch: Boolean
+) : AbstractComponentActivity() {
     val fullScreenViewModel: LauncherFullScreenViewModel by viewModels()
 
     @CallSuper
@@ -38,8 +39,6 @@ abstract class FullScreenComponentActivity : AbstractComponentActivity() {
         setFullscreen()
         ignoreNotch()
     }
-
-    protected open fun shouldIgnoreNotch() = AllSettings.launcherFullScreen.getValue()
 
     private fun setFullscreen() {
         val decorView = window.decorView
@@ -68,7 +67,7 @@ abstract class FullScreenComponentActivity : AbstractComponentActivity() {
     private fun ignoreNotch() {
         if (Build.VERSION.SDK_INT >= VERSION_CODES.P) {
             window.attributes.layoutInDisplayCutoutMode =
-                if (shouldIgnoreNotch()) {
+                if (shouldIgnoreNotch) {
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
                 } else {
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER

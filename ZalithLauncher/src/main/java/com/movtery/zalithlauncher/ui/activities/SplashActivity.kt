@@ -3,7 +3,6 @@ package com.movtery.zalithlauncher.ui.activities
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -16,46 +15,37 @@ import com.movtery.zalithlauncher.components.Components
 import com.movtery.zalithlauncher.components.InstallableItem
 import com.movtery.zalithlauncher.components.UnpackComponentsTask
 import com.movtery.zalithlauncher.components.jre.Jre
+import com.movtery.zalithlauncher.components.jre.UnpackJnaTask
 import com.movtery.zalithlauncher.components.jre.UnpackJreTask
-import com.movtery.zalithlauncher.context.readAssetFile
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.base.BaseComponentActivity
 import com.movtery.zalithlauncher.ui.screens.splash.SplashScreen
 import com.movtery.zalithlauncher.ui.theme.ZalithLauncherTheme
-import com.movtery.zalithlauncher.utils.getSystemLanguage
-import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getLine
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 
 @SuppressLint("CustomSplashScreen")
-class SplashActivity : BaseComponentActivity() {
+class SplashActivity : BaseComponentActivity(refreshData = false) {
     private val unpackItems: MutableList<InstallableItem> = ArrayList()
     private var finishedTaskCount = AtomicInteger(0)
-    private var eulaDate: String = AllSettings.splashEulaDate.getValue()
-    private var eulaText: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        eulaText = getEulaText()
 
         initUnpackItems()
         checkAllTask()
 
         setContent {
-            if (eulaText == null && checkTasksToMain()) return@setContent
+            if (checkTasksToMain()) {
+                return@setContent
+            }
 
             ZalithLauncherTheme {
                 Box {
                     SplashScreen(
-                        eulaText = eulaText,
-                        eulaDate = eulaDate,
-                        checkTasks = {
-                            val isNoTasks = checkTasks()
-                            if (isNoTasks) swapToMain()
-                            !isNoTasks //返回：有解压任务
-                        },
                         startAllTask = { startAllTask() },
                         unpackItems = unpackItems
                     )
@@ -66,29 +56,6 @@ class SplashActivity : BaseComponentActivity() {
                     )
                 }
             }
-        }
-    }
-
-    private fun getEulaText(): String? {
-        val language = getSystemLanguage()
-        val fileName = when(language) {
-            "zh_cn" -> "eula_zh-cn.txt"
-            else -> "eula.txt"
-        }
-        val eulaText: String = runCatching {
-            readAssetFile(fileName)
-        }.onFailure {
-            Log.e("SplashActivity", "Failed to read $fileName", it)
-        }.getOrNull() ?: return null
-
-        val newDate = eulaText.getLine(2)?.also {
-            Log.i("SplashActivity", "The content of the date line of the existing EULA has been read: $it")
-        } ?: return null
-        if (eulaDate != newDate) {
-            eulaDate = newDate
-            return eulaText
-        } else {
-            return null
         }
     }
 
@@ -116,6 +83,16 @@ class SplashActivity : BaseComponentActivity() {
                     )
                 )
             }
+        }
+        val jnaTask = UnpackJnaTask(this@SplashActivity)
+        if (!jnaTask.isCheckFailed()) {
+            unpackItems.add(
+                InstallableItem(
+                    "JNA",
+                    null,
+                    jnaTask
+                )
+            )
         }
         unpackItems.sort()
     }
@@ -157,16 +134,12 @@ class SplashActivity : BaseComponentActivity() {
     }
 
     private fun checkTasksToMain(): Boolean {
-        val toMain = checkTasks()
+        val toMain = finishedTaskCount.get() >= unpackItems.size
         if (toMain) {
-            Log.i("SplashActivity", "All content that needs to be extracted is already the latest version!")
+            lInfo("All content that needs to be extracted is already the latest version!")
             swapToMain()
         }
         return toMain
-    }
-
-    private fun checkTasks(): Boolean {
-        return finishedTaskCount.get() >= unpackItems.size
     }
 
     private fun swapToMain() {

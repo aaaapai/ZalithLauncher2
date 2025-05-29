@@ -88,18 +88,21 @@ fun SimpleTextSlider(
                 modifier = Modifier.padding(PaddingValues(horizontal = 8.dp, vertical = 4.dp)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
+                Row(
                     modifier = Modifier
                         .then(
                             if (onTextClick != null) {
                                 Modifier.clickable(enabled = enabled, onClick = onTextClick)
                             } else Modifier
-                        ),
-                    text = getTextString(value),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                )
-                suffix?.let { text ->
-                    Text(text = text)
+                        )
+                ) {
+                    Text(
+                        text = getTextString(value),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                    suffix?.let { text ->
+                        Text(text = text)
+                    }
                 }
                 if (fineTuningControl) {
                     Spacer(modifier = Modifier.width(8.dp))

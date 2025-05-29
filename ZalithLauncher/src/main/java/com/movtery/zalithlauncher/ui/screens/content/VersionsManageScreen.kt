@@ -1,17 +1,16 @@
 package com.movtery.zalithlauncher.ui.screens.content
 
 import android.os.Environment
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -217,14 +216,18 @@ private fun VersionsLayout(
 
                     Column(modifier = Modifier.fillMaxSize()) {
                         Column(modifier = Modifier.fillMaxWidth().padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))) {
-                            Row(modifier = Modifier.padding(horizontal = 4.dp).fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 IconTextButton(
                                     onClick = onRefresh,
                                     imageVector = Icons.Filled.Refresh,
                                     contentDescription = stringResource(R.string.generic_refresh),
                                     text = stringResource(R.string.generic_refresh),
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
                                 IconTextButton(
                                     onClick = onInstall,
                                     imageVector = Icons.Filled.Download,

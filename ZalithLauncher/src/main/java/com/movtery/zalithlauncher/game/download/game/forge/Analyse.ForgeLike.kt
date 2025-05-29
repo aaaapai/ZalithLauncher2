@@ -1,6 +1,5 @@
 package com.movtery.zalithlauncher.game.download.game.forge
 
-import android.util.Log
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import com.movtery.zalithlauncher.coroutine.Task
@@ -20,6 +19,7 @@ import com.movtery.zalithlauncher.utils.file.extractEntryToFile
 import com.movtery.zalithlauncher.utils.file.readText
 import com.movtery.zalithlauncher.utils.json.merge
 import com.movtery.zalithlauncher.utils.json.parseToJson
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import com.movtery.zalithlauncher.utils.network.withRetry
 import kotlinx.coroutines.Dispatchers
@@ -111,7 +111,7 @@ private suspend fun analyseNewForge(
             }
 
             installProfile["path"]?.takeIf { it.isJsonPrimitive }?.let { path ->
-                val libraryPath = getLibraryPath(path.asString, tempMinecraftFolder.absolutePath)
+                val libraryPath = getLibraryPath(path.asString)
                 zip.getEntry("maven/$libraryPath")?.let { entry ->
                     val dest = File(tempMinecraftFolder, "libraries/$libraryPath")
                     zip.extractEntryToFile(entry, dest)
@@ -157,8 +157,7 @@ private suspend fun analyseNewForge(
             (lib.targetFile.name.endsWith("$neoforgeVersionString.jar") ||
              lib.targetFile.name.endsWith("$neoforgeVersionString-client.jar")).also {
                 if (it) {
-                    Log.i(
-                        FORGE_LIKE_ANALYSE_ID,
+                    lInfo(
                         "The download task has been removed from the scheduled downloads: \n" +
                                 "url: ${lib.url}\n" +
                                 "target path: ${lib.targetFile.absolutePath}"
@@ -251,7 +250,7 @@ private suspend fun parseProcessors(
         if (options["task"] != "DOWNLOAD_MOJMAPS" || options["side"] != "client") return@forEach
         val version = options["version"] ?: return@forEach
         val output = options["output"] ?: return@forEach
-        Log.i(FORGE_LIKE_ANALYSE_ID, "Patching DOWNLOAD_MOJMAPS task")
+        lInfo("Patching DOWNLOAD_MOJMAPS task")
 
         val versionManifest = MinecraftVersions.getVersionManifest()
         versionManifest.versions.find { it.id == version }?.let { vanilla ->
@@ -260,7 +259,7 @@ private suspend fun parseProcessors(
             }
             manifest.downloads?.clientMappings?.let { mappings ->
                 schedule(mappings.url, mappings.sha1, File(output), mappings.size)
-                Log.i(FORGE_LIKE_ANALYSE_ID, "Mappings: ${mappings.url} (SHA1: ${mappings.sha1})")
+                lInfo("Mappings: ${mappings.url} (SHA1: ${mappings.sha1})")
             } ?: throw Exception("client_mappings download info not found")
         }
     }

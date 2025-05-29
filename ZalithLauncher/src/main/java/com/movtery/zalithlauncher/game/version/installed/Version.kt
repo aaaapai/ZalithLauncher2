@@ -10,6 +10,7 @@ import com.movtery.zalithlauncher.game.path.getVersionsHome
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.utils.getInt
 import com.movtery.zalithlauncher.utils.platform.MemoryUtils
+import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.isNotEmptyOrBlank
 import com.movtery.zalithlauncher.utils.toBoolean
 import java.io.File
 import kotlin.math.min
@@ -53,6 +54,11 @@ class Version(
     fun getVersionName(): String = getVersionPath().name
 
     /**
+     * @return 获取客户端 jar 文件
+     */
+    fun getClientJar(): File = File(getVersionPath(), "$versionName.jar")
+
+    /**
      * 设置新的版本名称
      */
     fun setVersionName(versionName: String) {
@@ -74,7 +80,7 @@ class Version(
      */
     fun isSummaryValid(): Boolean {
         val summary = versionConfig.versionSummary
-        return summary.isNotEmpty() && summary.isNotBlank()
+        return summary.isNotEmptyOrBlank()
     }
 
     /**
@@ -123,7 +129,7 @@ class Version(
     fun getCustomInfo(): String = versionConfig.customInfo.getValueOrDefault(AllSettings.versionCustomInfo.getValue())
         .replace("[zl_version]", BuildConfig.VERSION_NAME)
 
-    fun getServerIp(): String? = versionConfig.serverIp.takeIf { it.isNotEmpty() && it.isNotBlank() }
+    fun getServerIp(): String? = versionConfig.serverIp.takeIf { it.isNotEmptyOrBlank() }
 
     fun getRamAllocation(context: Context = GlobalContext): Int = versionConfig.ramAllocation.takeIf { it >= 256 }?.let {
         min(it, MemoryUtils.getMaxMemoryForSettings(context))

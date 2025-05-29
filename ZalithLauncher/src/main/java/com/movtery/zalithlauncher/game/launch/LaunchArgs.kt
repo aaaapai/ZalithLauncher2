@@ -1,13 +1,13 @@
 package com.movtery.zalithlauncher.game.launch
 
-import android.util.Log
 import androidx.collection.ArrayMap
 import com.movtery.zalithlauncher.BuildConfig
 import com.movtery.zalithlauncher.game.account.Account
-import com.movtery.zalithlauncher.game.account.isOtherLoginAccount
+import com.movtery.zalithlauncher.game.account.isAuthServerAccount
 import com.movtery.zalithlauncher.game.multirt.Runtime
 import com.movtery.zalithlauncher.game.path.getAssetsHome
 import com.movtery.zalithlauncher.game.path.getLibrariesHome
+import com.movtery.zalithlauncher.game.version.download.artifactToPath
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.getGameManifest
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
@@ -15,18 +15,21 @@ import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.path.LibPath
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.file.child
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.isNotEmptyOrBlank
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.toUnicodeEscaped
 import com.movtery.zalithlauncher.utils.string.isLowerTo
 import java.io.File
 
 class LaunchArgs(
+    private val launcher: Launcher,
     private val account: Account,
     private val gameDirPath: File,
     private val version: Version,
     private val gameManifest: GameManifest,
     private val runtime: Runtime,
-    private val launchClassPath: String,
     private val readAssetsFile: (path: String) -> String,
     private val getCacioJavaArgs: (isJava8: Boolean) -> List<String>
 ) {
@@ -35,8 +38,6 @@ class LaunchArgs(
 
         argsList.addAll(getJavaArgs())
         argsList.addAll(getMinecraftJVMArgs())
-        argsList.add("-cp")
-        argsList.add("${getLWJGL3ClassPath()}:$launchClassPath")
 
         if (runtime.javaVersion > 8) {
             argsList.add("--add-exports")
@@ -48,7 +49,7 @@ class LaunchArgs(
         argsList.addAll(getMinecraftClientArgs())
 
         version.getVersionInfo()?.let { info ->
-            val playSingle = version.quickPlaySingle?.takeIf { it.isNotEmpty() && it.isNotBlank() }
+            val playSingle = version.quickPlaySingle?.takeIf { it.isNotEmptyOrBlank() }
             if (playSingle != null) { //快速启动单人游戏
                 if (info.quickPlay.isQuickPlaySingleplayer) {
                     //将不受支持的字符转换为Unicode
@@ -58,7 +59,7 @@ class LaunchArgs(
                         add(saveName)
                     }
                 } else {
-                    Log.w("LaunchArgs", "Quick Play for singleplayer is not supported and has been skipped.")
+                    lWarning("Quick Play for singleplayer is not supported and has been skipped.")
                 }
             } else {
                 version.getServerIp()?.let { serverIp ->
@@ -94,7 +95,7 @@ class LaunchArgs(
     private fun getJavaArgs(): List<String> {
         val argsList: MutableList<String> = ArrayList()
 
-        if (account.isOtherLoginAccount()) {
+        if (account.isAuthServerAccount()) {
             if (account.otherBaseUrl!!.contains("auth.mc-user.com")) {
                 argsList.add("-javaagent:${LibPath.NIDE_8_AUTH.absolutePath}=${account.otherBaseUrl!!.replace("https://auth.mc-user.com:233/", "")}")
                 argsList.add("-Dnide8auth.client=true")
@@ -116,10 +117,11 @@ class LaunchArgs(
                 }
                 configFilePath.writeText(content)
             }.onFailure {
-                Log.w("LaunchArgs", "Failed to write fallback Log4j configuration autonomously!", it)
+                lWarning("Failed to write fallback Log4j configuration autonomously!", it)
             }
         }
         argsList.add("-Dlog4j.configurationFile=${configFilePath.absolutePath}")
+        argsList.add("-Dminecraft.client.jar=${version.getClientJar().absolutePath}")
 
         val versionSpecificNativesDir = File(PathManager.DIR_CACHE, "natives/${version.getVersionName()}")
         if (versionSpecificNativesDir.exists()) {
@@ -140,42 +142,117 @@ class LaunchArgs(
 //        }
 
         val varArgMap: MutableMap<String, String> = android.util.ArrayMap()
+        val launchClassPath = "${getLWJGL3ClassPath()}:${generateLaunchClassPath(gameManifest)}"
+        var hasClasspath = false //是否已经在jvm参数中包含 ${classpath} 配置
+
         varArgMap["classpath_separator"] = ":"
         varArgMap["library_directory"] = getLibrariesHome()
         varArgMap["version_name"] = gameManifest1.id
-        varArgMap["natives_directory"] = PathManager.DIR_NATIVE_LIB
+        varArgMap["natives_directory"] = launcher.libraryPath
+        setLauncherInfo(varArgMap)
 
-        val minecraftArgs: MutableList<String> = java.util.ArrayList()
-        gameManifest1.arguments?.let {
-            fun String.addIgnoreListIfHas(): String {
-                if (startsWith("-DignoreList=")) return "$this,${version.getVersionName()}.jar"
-                return this
-            }
-            it.jvm?.forEach { arg ->
-                if (arg is String) {
-                    minecraftArgs.add(arg.addIgnoreListIfHas())
+        fun Any.processJvmArg(): String? = (this as? String)?.let {
+            when {
+                it.startsWith("-DignoreList=") -> {
+                    "$it,${version.getVersionName()}.jar"
                 }
+                it.contains("-Dio.netty.native.workdir") ||
+                it.contains("-Djna.tmpdir") ||
+                it.contains("-Dorg.lwjgl.system.SharedLibraryExtractPath") -> {
+                    //使用一个可读的目录
+                    it.replace("\${natives_directory}", PathManager.DIR_CACHE.absolutePath)
+                }
+                it == "\${classpath}" -> {
+                    hasClasspath = true
+                    launchClassPath
+                }
+                else -> it
             }
         }
-        return StringUtils.insertJSONValueList(minecraftArgs.toTypedArray<String>(), varArgMap)
+
+        val jvmArgs = gameManifest1.arguments?.jvm
+            ?.mapNotNull { it.processJvmArg() }
+            ?.toTypedArray()
+            ?: emptyArray()
+
+        val replacedArgs = StringUtils.insertJSONValueList(jvmArgs, varArgMap)
+        return if (hasClasspath) {
+            replacedArgs
+        } else {
+            //不包含 ${classpath} 配置，则需要手动添加
+            replacedArgs + arrayOf("-cp", launchClassPath)
+        }
+    }
+
+    /**
+     * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L572-L592)
+     */
+    private fun generateLaunchClassPath(gameManifest: GameManifest): String {
+        val classpathList = mutableListOf<String>()
+
+        val classpath: Array<String> = generateLibClasspath(gameManifest)
+
+        val clientClass = version.getClientJar()
+        val clientClasspath: String = clientClass.absolutePath
+
+        for (jarFile in classpath) {
+            val jarFileObj = File(jarFile)
+            if (!jarFileObj.exists()) {
+                lDebug("Ignored non-exists file: $jarFile")
+                continue
+            }
+            classpathList.add(jarFile)
+        }
+        if (clientClass.exists()) {
+            classpathList.add(clientClasspath)
+        }
+
+        return classpathList.joinToString(":")
+    }
+
+    /**
+     * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L871-L882)
+     */
+    private fun generateLibClasspath(gameManifest: GameManifest): Array<String> {
+        val libDir: MutableList<String> = ArrayList()
+        for (libItem in gameManifest.libraries) {
+            if (!checkRules(libItem.rules)) continue
+            val libArtifactPath: String = artifactToPath(libItem) ?: continue
+            libDir.add(getLibrariesHome() + "/" + libArtifactPath)
+        }
+        return libDir.toTypedArray<String>()
+    }
+
+    /**
+     * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L815-L823)
+     */
+    private fun checkRules(rules: List<GameManifest.Rule>?): Boolean {
+        if (rules == null) return true // always allow
+
+        for (rule in rules) {
+            if (rule.action.equals("allow") && rule.os != null && rule.os.name.equals("osx")) {
+                return false //disallow
+            }
+        }
+        return true // allow if none match
     }
 
     private fun getMinecraftClientArgs(): Array<String> {
-        val verArgMap: MutableMap<String, String> = ArrayMap()
-        verArgMap["auth_session"] = account.accessToken
-        verArgMap["auth_access_token"] = account.accessToken
-        verArgMap["auth_player_name"] = account.username
-        verArgMap["auth_uuid"] = account.profileId.replace("-", "")
-        verArgMap["auth_xuid"] = account.xuid ?: ""
-        verArgMap["assets_root"] = getAssetsHome()
-        verArgMap["assets_index_name"] = gameManifest.assets
-        verArgMap["game_assets"] = getAssetsHome()
-        verArgMap["game_directory"] = gameDirPath.absolutePath
-        verArgMap["user_properties"] = "{}"
-        verArgMap["user_type"] = "msa"
-        verArgMap["version_name"] = version.getVersionInfo()!!.minecraftVersion
+        val varArgMap: MutableMap<String, String> = ArrayMap()
+        varArgMap["auth_session"] = account.accessToken
+        varArgMap["auth_access_token"] = account.accessToken
+        varArgMap["auth_player_name"] = account.username
+        varArgMap["auth_uuid"] = account.profileId.replace("-", "")
+        varArgMap["auth_xuid"] = account.xUid ?: ""
+        varArgMap["assets_root"] = getAssetsHome()
+        varArgMap["assets_index_name"] = gameManifest.assets
+        varArgMap["game_assets"] = getAssetsHome()
+        varArgMap["game_directory"] = gameDirPath.absolutePath
+        varArgMap["user_properties"] = "{}"
+        varArgMap["user_type"] = "msa"
+        varArgMap["version_name"] = version.getVersionInfo()!!.minecraftVersion
 
-        setLauncherInfo(verArgMap)
+        setLauncherInfo(varArgMap)
 
         val minecraftArgs: MutableList<String> = ArrayList()
         gameManifest.arguments?.apply {
@@ -187,7 +264,7 @@ class LaunchArgs(
             splitAndFilterEmpty(
                 gameManifest.minecraftArguments ?:
                 minecraftArgs.toTypedArray().joinToString(" ")
-            ), verArgMap
+            ), varArgMap
         )
     }
 
@@ -195,7 +272,7 @@ class LaunchArgs(
         verArgMap["launcher_name"] = InfoDistributor.LAUNCHER_NAME
         verArgMap["launcher_version"] = BuildConfig.VERSION_NAME
         verArgMap["version_type"] = version.getCustomInfo()
-            .takeIf { it.isNotEmpty() && it.isNotBlank() }
+            .takeIf { it.isNotEmptyOrBlank() }
             ?: gameManifest.type
     }
 

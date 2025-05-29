@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.path
 
 import com.movtery.zalithlauncher.path.PathManager.Companion.DIR_COMPONENTS
+import com.movtery.zalithlauncher.path.PathManager.Companion.DIR_JNA
 import java.io.File
 
 class LibPath {
@@ -10,6 +11,8 @@ class LibPath {
 
         @JvmField val CACIO_8 = File(DIR_COMPONENTS, "caciocavallo")
         @JvmField val CACIO_17 = File(DIR_COMPONENTS, "caciocavallo17")
+
+        @JvmField val JNA = File(DIR_JNA, "jna")
 
         @JvmField val MIO_LIB_PATCHER = File(LAUNCHER_COMPONENTS, "MioLibPatcher.jar")
         /**

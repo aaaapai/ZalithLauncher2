@@ -67,6 +67,7 @@
 
 * **土耳其語** - 作者：Star1xr
 * **繁體中文** - 作者：HongyiHank
+* **俄語** - 作者：warrior-genius
 
 ### 📌 為什麼只保證英語與簡體中文？
 
@@ -135,3 +136,13 @@ git clone git@github.com:ZalithLauncher/ZalithLauncher2.git
 ## 📜 License
 
 本專案程式碼遵循 **[GPL-3.0 license](LICENSE)** 開源協議。
+
+### 附加條款（依據 GPLv3 開源授權條款第七條）
+
+1. 當你分發本程式的修改版本時，必須以合理方式修改該程式的名稱或版本號，以區別於原始版本。（依據 [GPLv3, 7(c)](https://github.com/ZalithLauncher/ZalithLauncher2/blob/969827b/LICENSE#L372-L374)）
+    - 修改版本 **不得在名稱中包含原程式名稱「ZalithLauncher」或其縮寫「ZL」，亦不得使用與官方名稱相近、可能造成混淆的名稱**。
+    - 所有修改版本 **必須在程式啟動畫面或主介面中以明顯方式標示其為「非官方修改版」**。
+    - 程式的應用名稱可於 [gradle.properties](./ZalithLauncher/gradle.properties) 中進行修改。
+
+2. 你不得移除本程式所顯示的版權聲明。（依據 [GPLv3, 7(b)](https://github.com/ZalithLauncher/ZalithLauncher2/blob/969827b/LICENSE#L368-L370)）
+

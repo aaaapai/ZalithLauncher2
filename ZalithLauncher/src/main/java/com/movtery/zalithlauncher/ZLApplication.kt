@@ -10,10 +10,15 @@ import android.util.Log
 import com.movtery.zalithlauncher.context.getContextWrapper
 import com.movtery.zalithlauncher.context.refreshContext
 import com.movtery.zalithlauncher.coroutine.TaskSystem
+import com.movtery.zalithlauncher.game.account.AccountsManager
+import com.movtery.zalithlauncher.game.path.GamePathManager
+import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.ui.activities.ErrorActivity
 import com.movtery.zalithlauncher.ui.activities.showLauncherCrash
 import com.movtery.zalithlauncher.utils.device.Architecture
+import com.movtery.zalithlauncher.utils.logging.Logger
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import java.io.PrintStream
 import java.text.DateFormat
 import java.util.Date
@@ -33,11 +38,11 @@ class ZLApplication : Application() {
             val throwable = if (th is SplashException) th.cause!!
             else th
 
-            Log.e("Application", "An exception occurred: \n${Log.getStackTraceString(throwable)}")
+            lError("An exception occurred", throwable)
 
             runCatching {
                 PrintStream(PathManager.FILE_CRASH_REPORT).use { stream ->
-                    stream.append("================ ZalithLauncher Crash Report ================\n")
+                    stream.append("================ ${InfoDistributor.LAUNCHER_IDENTIFIER} Crash Report ================\n")
                     stream.append("- Time: ${DateFormat.getDateTimeInstance().format(Date())}\n")
                     stream.append("- Device: ${Build.PRODUCT} ${Build.MODEL}\n")
                     stream.append("- Android Version: ${Build.VERSION.RELEASE}\n")
@@ -46,8 +51,7 @@ class ZLApplication : Application() {
                     stream.append(Log.getStackTraceString(throwable))
                 }
             }.onFailure { t ->
-                Log.e("Application", "An exception occurred while saving the crash report: ", t)
-                Log.e("Application", "Crash stack trace: ", throwable)
+                lError("An exception occurred while saving the crash report", t)
             }
 
             showLauncherCrash(this@ZLApplication, throwable, th !is SplashException)
@@ -56,6 +60,9 @@ class ZLApplication : Application() {
 
         super.onCreate()
         runCatching {
+            Logger.initialize(this)
+
+            initializeData()
             PathManager.DIR_FILES_PRIVATE = getDir("files", MODE_PRIVATE)
             DEVICE_ARCHITECTURE = Architecture.getDeviceArchitecture()
             //Force x86 lib directory for Asus x86 based zenfones
@@ -82,5 +89,10 @@ class ZLApplication : Application() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         refreshContext(this)
+    }
+
+    private fun initializeData() {
+        AccountsManager.initialize(this)
+        GamePathManager.initialize(this)
     }
 }

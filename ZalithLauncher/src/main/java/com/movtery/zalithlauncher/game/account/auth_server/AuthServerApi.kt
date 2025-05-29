@@ -1,14 +1,15 @@
-package com.movtery.zalithlauncher.game.account.otherserver
+package com.movtery.zalithlauncher.game.account.auth_server
 
 import android.content.Context
-import android.util.Log
 import com.google.gson.Gson
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.account.Account
-import com.movtery.zalithlauncher.game.account.otherserver.models.AuthRequest
-import com.movtery.zalithlauncher.game.account.otherserver.models.AuthResult
-import com.movtery.zalithlauncher.game.account.otherserver.models.Refresh
+import com.movtery.zalithlauncher.game.account.auth_server.models.AuthRequest
+import com.movtery.zalithlauncher.game.account.auth_server.models.AuthResult
+import com.movtery.zalithlauncher.game.account.auth_server.models.Refresh
 import com.movtery.zalithlauncher.path.UrlManager.Companion.GLOBAL_CLIENT
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.string.StringUtils
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -27,7 +28,7 @@ import java.io.IOException
 import java.util.Objects
 import java.util.UUID
 
-object OtherLoginApi {
+object AuthServerApi {
     private var baseUrl: String? = null
 
     fun setBaseUrl(baseUrl: String) {
@@ -35,7 +36,7 @@ object OtherLoginApi {
         if (baseUrl.endsWith("/")) {
             url = baseUrl.dropLast(1)
         }
-        OtherLoginApi.baseUrl = url
+        AuthServerApi.baseUrl = url
     }
 
     @Throws(IOException::class)
@@ -114,13 +115,13 @@ object OtherLoginApi {
                 onSuccess(result)
             } else {
                 val errorMessage = "(${response.status.value}) ${parseError(response)}"
-                Log.e("Other Login", errorMessage)
+                lError(errorMessage)
                 onFailed(ResponseException(errorMessage))
             }
         } catch (e: CancellationException) {
-            Log.d("Other Login", "Login cancelled")
+            lDebug("Login cancelled")
         } catch (e: Exception) {
-            Log.e("Other Login", "Request failed", e)
+            lError("Request failed", e)
             onFailed(e)
         }
     }
@@ -139,7 +140,7 @@ object OtherLoginApi {
             }
             message
         } catch (e: Exception) {
-            Log.e("Other Login", "Failed to parse error", e)
+            lError("Failed to parse error", e)
             "Unknown error"
         }
     }
@@ -153,7 +154,7 @@ object OtherLoginApi {
                 null
             }
         } catch (e: Exception) {
-            Log.e("Other Login", "Failed to get server info", e)
+            lError("Failed to get server info", e)
             null
         }
     }

@@ -1,11 +1,9 @@
 package com.movtery.zalithlauncher.ui.screens.content.versions
 
 import android.content.Context
-import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -43,6 +41,7 @@ import com.movtery.zalithlauncher.ui.screens.content.settings.DriverSummaryLayou
 import com.movtery.zalithlauncher.ui.screens.content.settings.RendererSummaryLayout
 import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionSettingsBackground
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.platform.MemoryUtils
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
 
@@ -66,7 +65,8 @@ fun VersionConfigScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(state = rememberScrollState())
-                .padding(all = 12.dp)
+                .padding(all = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val yOffset1 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
@@ -78,7 +78,6 @@ fun VersionConfigScreen() {
                 modifier = Modifier.offset { IntOffset(x = 0, y = yOffset1.roundToPx()) }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
             val yOffset2 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
                 swapIn = isVisible,
@@ -90,7 +89,6 @@ fun VersionConfigScreen() {
                 modifier = Modifier.offset { IntOffset(x = 0, y = yOffset2.roundToPx()) }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
             val yOffset3 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
                 swapIn = isVisible,
@@ -341,7 +339,7 @@ private fun VersionConfig.saveOrShowError(context: Context) {
     runCatching {
         saveWithThrowable()
     }.onFailure { e ->
-        Log.e(VERSION_CONFIG_SCREEN_TAG, "Failed to save version config!", e)
+        lError("Failed to save version config!", e)
         ObjectStates.updateThrowable(
             ObjectStates.ThrowableMessage(
                 title = context.getString(R.string.versions_config_failed_to_save),

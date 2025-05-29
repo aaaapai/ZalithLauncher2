@@ -1,4 +1,4 @@
-package com.movtery.zalithlauncher.game.account.otherserver.models
+package com.movtery.zalithlauncher.game.account.auth_server.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

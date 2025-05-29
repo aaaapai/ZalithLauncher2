@@ -11,13 +11,14 @@ import com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest.Versio
 import com.movtery.zalithlauncher.utils.classes.Quadruple
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
+import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.isNotEmptyOrBlank
 import java.io.File
 
 const val DOWNLOADER_TAG = "MinecraftDownloader"
 const val MINECRAFT_RES: String = "https://resources.download.minecraft.net/"
 
 /**
- * 设计为通用化 Minecraft 原本完整下载
+ * 设计为通用化 Minecraft 原版完整下载
  */
 class BaseMinecraftDownloader(
     private val verifyIntegrity: Boolean
@@ -134,12 +135,18 @@ class BaseMinecraftDownloader(
                     } ?: return@forEach
                 } ?: run {
                     var isDownloadable = true
-                    val u1 = library.url?.replace("http://", "https://") ?: run {
-                        //对于没有提供下载链接的，可能是需要文件已经安装，而不是临时获取
-                        //不过尝试使用官方源下载，若下载失败则表明这个版本 文件有缺失的情况
-                        isDownloadable = false
-                        "https://libraries.minecraft.net/"
-                    }
+                    val u1 = library.url
+                        ?.takeIf {
+                            // fix(#53): Forge 明明可以不写，但还是给留了个空的值 >:(
+                            it.isNotEmptyOrBlank()
+                        }
+                        ?.replace("http://", "https://")
+                        ?: run {
+                            //对于没有提供下载链接的，可能是需要文件已经安装，而不是临时获取
+                            //不过尝试使用官方源下载，若下载失败则表明这个版本 文件有缺失的情况
+                            isDownloadable = false
+                            "https://libraries.minecraft.net/"
+                        }
                     val url = u1.let { "${it}$artifactPath" }
                     Quadruple(library.sha1, url, library.size, isDownloadable)
                 }

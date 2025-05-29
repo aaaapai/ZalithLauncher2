@@ -189,6 +189,11 @@ class AllSettings {
          */
         val launcherSwapAnimateType = StringSettingUnit("launcherSwapAnimateType", TransitionAnimationType.BOUNCE.name)
 
+        /**
+         * 启动器日志保留天数
+         */
+        val launcherLogRetentionDays = IntSettingUnit("launcherLogRetentionDays", 7)
+
         //Other
         /**
          * 当前选择的账号
@@ -204,10 +209,5 @@ class AllSettings {
          * 启动器任务菜单是否展开
          */
         val launcherTaskMenuExpanded = BooleanSettingUnit("launcherTaskMenuExpanded", true)
-
-        /**
-         * 启动屏幕最终用户协议上次更新日期
-         */
-        val splashEulaDate = StringSettingUnit("splashEulaDate", "")
     }
 }

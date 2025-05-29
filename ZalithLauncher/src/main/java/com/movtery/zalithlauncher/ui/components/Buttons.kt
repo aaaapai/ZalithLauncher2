@@ -12,11 +12,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -160,10 +158,10 @@ private fun BaseIconTextButton(
         modifier = modifier
             .clip(shape = shape)
             .clickable(onClick = onClick)
-            .padding(PaddingValues(horizontal = 8.dp, vertical = 4.dp))
+            .padding(PaddingValues(horizontal = 8.dp, vertical = 4.dp)),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         icon(Modifier.align(Alignment.CenterVertically))
-        Spacer(modifier = Modifier.width(8.dp))
         Text(
             modifier = Modifier
                 .align(Alignment.CenterVertically)

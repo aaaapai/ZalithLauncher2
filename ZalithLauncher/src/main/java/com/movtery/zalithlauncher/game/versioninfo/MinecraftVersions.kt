@@ -1,10 +1,10 @@
 package com.movtery.zalithlauncher.game.versioninfo
 
-import android.util.Log
 import com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.path.UrlManager
 import com.movtery.zalithlauncher.utils.GSON
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import com.movtery.zalithlauncher.utils.network.withRetry
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +33,7 @@ object MinecraftVersions {
             try {
                 GSON.fromJson(localManifestFile.readText(), VersionManifest::class.java)
             } catch (e: Exception) {
-                Log.w("MinecraftVersions", "Failed to parse version manifest, will redownload", e)
+                lWarning("Failed to parse version manifest, will redownload", e)
                 //读取失败则删除当前的版本信息文件
                 FileUtils.deleteQuietly(localManifestFile)
                 downloadVersionManifest()
@@ -49,7 +49,6 @@ object MinecraftVersions {
     private suspend fun downloadVersionManifest(): VersionManifest {
         return withContext(Dispatchers.IO) {
             withRetry("MinecraftVersions", maxRetries = 1) {
-                Log.d("MinecraftVersions", "Downloading version manifest")
                 val rawJson = NetWorkUtils.fetchStringFromUrl(UrlManager.URL_MINECRAFT_VERSION_REPOS)
                 val versionManifest = GSON.fromJson(rawJson, VersionManifest::class.java)
                 PathManager.FILE_MINECRAFT_VERSIONS.writeText(rawJson)

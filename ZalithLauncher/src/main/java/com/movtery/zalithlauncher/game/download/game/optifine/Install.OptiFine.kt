@@ -10,8 +10,12 @@ import com.movtery.zalithlauncher.game.download.jvm_server.runJvmRetryRuntimes
 import com.movtery.zalithlauncher.game.version.download.parseTo
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.path.LibPath
+import com.movtery.zalithlauncher.utils.file.extractEntryToFile
+import com.movtery.zalithlauncher.utils.file.readText
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import java.io.File
 import java.time.format.DateTimeFormatter
+import java.util.zip.ZipFile
 
 const val OPTIFINE_INSTALL_ID = "Install.OptiFine"
 
@@ -23,6 +27,7 @@ fun getOptiFineInstallTask(
     optifineVersion: OptiFineVersion
 ): Task {
     val tempVersionFolder = File(tempMinecraftDir, "versions")
+    val tempLibrariesFolder = File(tempMinecraftDir, "libraries")
 
     return Task.runTask(
         id = OPTIFINE_INSTALL_ID,
@@ -52,6 +57,16 @@ fun getOptiFineInstallTask(
                     jre = Jre.JRE_8,
                     userHome = tempGameDir.absolutePath.trimEnd('\\')
                 )
+
+                //检查 launchwrapper 是否正常安装
+                ZipFile(tempInstallerJar).use { zip ->
+                    zip.getEntry("launchwrapper-of.txt")
+                        ?.readText(zip)
+                        ?.takeIf { it.matches("[0-9.]+".toRegex()) }
+                        ?.let { version ->
+                            checkOFLaunchWrapper(version, zip, tempLibrariesFolder)
+                        }
+                }
             } else {
                 val tempMcFolder = File(tempVersionFolder, optifineVersion.inherit)
                 val tempMcJar = File(tempMcFolder, "${optifineVersion.inherit}.jar")
@@ -73,6 +88,21 @@ fun getOptiFineInstallTask(
             }
         }
     )
+}
+
+/**
+ * 确保 launchwrapper-of 库被正常安装，如果未正常安装，则自行尝试解压
+ */
+private fun checkOFLaunchWrapper(version: String, installer: ZipFile, libFolder: File) {
+    val fileName = "launchwrapper-of-$version.jar"
+    val lwTargetFolder = File(libFolder, "optifine/launchwrapper-of/$version")
+    val lwTargetFile = File(lwTargetFolder, fileName)
+
+    if (!lwTargetFile.exists()) {
+        //安装出现神秘问题导致该文件未解压，自行尝试解压
+        lInfo("$fileName is not exists! try extract it by self.")
+        installer.extractEntryToFile(fileName, lwTargetFile)
+    }
 }
 
 private fun createOldOptiFineJson(

@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
     id("kotlinx-serialization")
     id("stringfog")
 }
@@ -13,12 +14,13 @@ apply(plugin = "stringfog")
 val zalithPackageName = "com.movtery.zalithlauncher"
 val launcherAPPName = project.findProperty("launcher_app_name") as? String ?: error("The \"launcher_app_name\" property is not set in gradle.properties.")
 val launcherName = project.findProperty("launcher_name") as? String ?: error("The \"launcher_name\" property is not set in gradle.properties.")
+val launcherShortName = project.findProperty("launcher_short_name") as? String ?: error("The \"launcher_short_name\" property is not set in gradle.properties.")
+val launcherUrl = project.findProperty("url_home") as? String ?: error("The \"url_home\" property is not set in gradle.properties.")
 
 val launcherVersionCode = (project.findProperty("launcher_version_code") as? String)?.toIntOrNull() ?: error("The \"launcher_version_code\" property is not set as an integer in gradle.properties.")
 val launcherVersionName = project.findProperty("launcher_version_name") as? String ?: error("The \"launcher_version_name\" property is not set in gradle.properties.")
 
 val defaultOAuthClientID = project.findProperty("oauth_client_id") as? String
-val defaultCryptoKey = project.findProperty("default_crypto_key") as? String ?: error("The \"default_crypto_key\" property is not set in gradle.properties.")
 val defaultStorePassword = project.findProperty("default_store_password") as? String ?: error("The \"default_store_password\" property is not set in gradle.properties.")
 val defaultKeyPassword = project.findProperty("default_key_password") as? String ?: error("The \"default_key_password\" property is not set in gradle.properties.")
 
@@ -168,22 +170,18 @@ fun generateJavaClass(
     sourceOutputDir: File,
     packageName: String,
     className: String,
-    importList: List<String> = emptyList(),
     constantList: List<String>
 ) {
     val outputDir = File(sourceOutputDir, packageName.replace(".", "/"))
     outputDir.mkdirs()
     val javaFile = File(outputDir, "$className.java")
-    val imports = importList.takeIf { it.isNotEmpty() }?.joinToString("\n") { import ->
-        "import $import;"
-    }
     javaFile.writeText(
         """
         |/**
         | * Automatically generated file. DO NOT MODIFY
         | */
         |package $packageName;
-        |${imports?.let { "\n$imports\n" }}
+        |
         |public class $className {
         |${constantList.joinToString("\n") { "\t$it" }}
         |}
@@ -192,49 +190,23 @@ fun generateJavaClass(
     println("Generated Java file: ${javaFile.absolutePath}")
 }
 
-fun copyFile(
-    sourceFile: File,
-    targetDir: File
-) {
-    if (sourceFile.exists()) {
-        targetDir.mkdirs()
-        copy {
-            from(sourceFile)
-            into(targetDir)
-        }
-        println("${sourceFile.name} copied to ${targetDir.path}")
-    } else {
-        println("can't find file ${sourceFile.name}")
-    }
-}
-
 tasks.register("generateInfoDistributor") {
     doLast {
         fun String.toStatement(type: String = "String", variable: String) = "public static final $type $variable = $this;"
 
-        val importList = listOf("com.movtery.zalithlauncher.utils.CryptoManager")
         val constantList = listOf(
             "\"${getKeyFromLocal("OAUTH_CLIENT_ID", ".oauth_client_id.txt", defaultOAuthClientID)}\"".toStatement(variable = "OAUTH_CLIENT_ID"),
-            "\"${getKeyFromLocal("CRYPTO_KEY", ".crypto_key.txt", defaultCryptoKey)}\"".toStatement(variable = "CRYPTO_KEY"),
             "\"$launcherAPPName\"".toStatement(variable = "LAUNCHER_NAME"),
-            "\"$launcherName\"".toStatement(variable = "LAUNCHER_IDENTIFIER")
+            "\"$launcherName\"".toStatement(variable = "LAUNCHER_IDENTIFIER"),
+            "\"$launcherShortName\"".toStatement(variable = "LAUNCHER_SHORT_NAME"),
+            "\"$launcherUrl\"".toStatement(variable = "URL_HOME")
         )
-        generateJavaClass(generatedZalithDir, "$zalithPackageName.info", "InfoDistributor", importList, constantList)
-    }
-}
-
-tasks.register("copyEulaFile") {
-    val targetDir = file("src/main/assets")
-
-    doLast {
-        copyFile(File(rootDir, "eula.txt"), targetDir)
-        copyFile(File(rootDir, "eula_zh-cn.txt"), targetDir)
+        generateJavaClass(generatedZalithDir, "$zalithPackageName.info", "InfoDistributor", constantList)
     }
 }
 
 tasks.named("preBuild") {
     dependsOn("generateInfoDistributor")
-    dependsOn("copyEulaFile")
 }
 
 dependencies {
@@ -274,6 +246,10 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     //Safe
     implementation(libs.stringfog.xor)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.sqlcipher.android)
+    ksp(libs.androidx.room.compiler)
     //Support
     implementation(libs.proxy.client.android)
 }

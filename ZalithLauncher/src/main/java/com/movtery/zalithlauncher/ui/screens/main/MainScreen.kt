@@ -11,11 +11,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,6 +72,7 @@ import androidx.navigation.navArgument
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
+import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
@@ -174,7 +176,7 @@ fun MainScreen() {
                 modifier = Modifier
                     .fillMaxHeight()
                     .align(Alignment.CenterStart)
-                    .padding(all = 8.dp)
+                    .padding(all = 6.dp)
             ) {
                 changeTasksExpandedState()
             }
@@ -191,7 +193,7 @@ private fun TopBar(
     color: Color,
     changeExpandedState: () -> Unit = {}
 ) {
-    var appTitle by rememberSaveable { mutableStateOf("ZalithLauncher") }
+    var appTitle by rememberSaveable { mutableStateOf(InfoDistributor.LAUNCHER_IDENTIFIER) }
     val currentTag = MutableStates.mainScreenTag
 
     val inLauncherScreen = currentTag == null || currentTag == LAUNCHER_SCREEN_TAG
@@ -269,10 +271,10 @@ private fun TopBar(
                     .clip(shape = MaterialTheme.shapes.large)
                     .clickable { changeExpandedState() }
                     .padding(all = 8.dp)
-                    .width(120.dp)
+                    .width(120.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 LinearProgressIndicator(modifier = Modifier.weight(1f).align(Alignment.CenterVertically))
-                Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     modifier = Modifier.size(22.dp),
                     imageVector = Icons.Filled.Task,
@@ -443,9 +445,10 @@ private fun TaskMenu(
         modifier = modifier
             .offset { IntOffset(x = surfaceX.roundToPx(), y = 0) }
             .alpha(surfaceAlpha)
-            .padding(all = 4.dp)
+            .padding(all = 6.dp)
             .width(240.dp),
-        shape = MaterialTheme.shapes.extraLarge
+        shape = MaterialTheme.shapes.extraLarge,
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
     ) {
         Column {
             Box(
@@ -520,7 +523,8 @@ fun TaskItem(
         shadowElevation = 1.dp
     ) {
         Row(
-            modifier = Modifier.padding(all = 8.dp)
+            modifier = Modifier.padding(all = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             IconButton(
                 modifier = Modifier
@@ -534,8 +538,6 @@ fun TaskItem(
                     contentDescription = stringResource(R.string.generic_cancel)
                 )
             }
-
-            Spacer(modifier = Modifier.width(8.dp))
 
             Column(
                 modifier = Modifier
@@ -558,14 +560,16 @@ fun TaskItem(
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
-                    Row(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         LinearProgressIndicator(
                             progress = { taskProgress },
                             modifier = Modifier
                                 .weight(1f)
                                 .align(Alignment.CenterVertically)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "${(taskProgress * 100).toInt()}%",
                             modifier = Modifier.align(Alignment.CenterVertically),

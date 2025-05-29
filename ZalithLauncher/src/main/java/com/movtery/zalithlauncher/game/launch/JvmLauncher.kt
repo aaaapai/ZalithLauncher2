@@ -3,7 +3,6 @@ package com.movtery.zalithlauncher.game.launch
 import android.app.Activity
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.ui.unit.IntSize
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.movtery.zalithlauncher.R
@@ -15,6 +14,8 @@ import com.movtery.zalithlauncher.game.path.getGameHome
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.activities.runJar
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.splitPreservingQuotes
 import java.io.File
@@ -72,11 +73,11 @@ open class JvmLauncher(
                         if (parentFile?.exists() == false) parentFile?.mkdirs()
                         if (!createNewFile()) throw IOException("Failed to create launcher_profiles.json file!")
                         writeText(DEFAULT_LAUNCHER_PROFILES)
-                        Log.i("JvmLauncher", "The content has already been written! File Location: $absolutePath")
+                        lInfo("The content has already been written! File Location: $absolutePath")
                     }
                 }
             }.onFailure {
-                Log.w("JvmLauncher", "Unable to generate launcher_profiles.json file!", it)
+                lWarning("Unable to generate launcher_profiles.json file!", it)
             }
         }
     }
@@ -85,13 +86,15 @@ open class JvmLauncher(
         generateLauncherProfiles(jvmLaunchInfo.userHome)
         val (runtime, argList) = getStartupNeeded()
 
+        this.runtime = runtime
+        this.relocateLibPath()
+
         return launchJvm(
             context = context,
             jvmArgs = argList,
             userHome = jvmLaunchInfo.userHome,
             userArgs = AllSettings.jvmArgs.getValue(),
-            getWindowSize = getWindowSize,
-            runtime = runtime
+            getWindowSize = getWindowSize
         )
     }
 

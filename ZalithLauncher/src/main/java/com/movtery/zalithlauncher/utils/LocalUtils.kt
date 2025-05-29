@@ -7,9 +7,9 @@ import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.GLES20
 import android.os.Process
-import android.util.Log
 import com.google.gson.GsonBuilder
-import com.movtery.zalithlauncher.info.InfoDistributor
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import java.text.SimpleDateFormat
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -84,12 +84,12 @@ fun getDisplayFriendlyRes(displaySideRes: Int, scaling: Float): Int {
 fun isAdrenoGPU(): Boolean {
     val eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
     if (eglDisplay == EGL14.EGL_NO_DISPLAY) {
-        Log.e("CheckVendor", "Failed to get EGL display")
+        lError("Failed to get EGL display")
         return false
     }
 
     if (!EGL14.eglInitialize(eglDisplay, null, 0, null, 0)) {
-        Log.e("CheckVendor", "Failed to initialize EGL")
+        lError("Failed to initialize EGL")
         return false
     }
 
@@ -112,7 +112,7 @@ fun isAdrenoGPU(): Boolean {
         ) || numConfigs[0] == 0
     ) {
         EGL14.eglTerminate(eglDisplay)
-        Log.e("CheckVendor", "Failed to choose an EGL config")
+        lError("Failed to choose an EGL config")
         return false
     }
 
@@ -130,7 +130,7 @@ fun isAdrenoGPU(): Boolean {
     )
     if (context == EGL14.EGL_NO_CONTEXT) {
         EGL14.eglTerminate(eglDisplay)
-        Log.e("CheckVendor", "Failed to create EGL context")
+        lError("Failed to create EGL context")
         return false
     }
 
@@ -143,7 +143,7 @@ fun isAdrenoGPU(): Boolean {
     ) {
         EGL14.eglDestroyContext(eglDisplay, context)
         EGL14.eglTerminate(eglDisplay)
-        Log.e("CheckVendor", "Failed to make EGL context current")
+        lError("Failed to make EGL context current")
         return false
     }
 
@@ -163,7 +163,7 @@ fun isAdrenoGPU(): Boolean {
     EGL14.eglDestroyContext(eglDisplay, context)
     EGL14.eglTerminate(eglDisplay)
 
-    Log.d("CheckVendor", "Running on Adreno GPU: $isAdreno")
+    lDebug("Running on Adreno GPU: $isAdreno")
     return isAdreno
 }
 
@@ -171,6 +171,6 @@ fun killProgress() {
     runCatching {
         Process.killProcess(Process.myPid())
     }.onFailure {
-        Log.e(InfoDistributor.LAUNCHER_IDENTIFIER, "Could not enable System.exit() method!", it)
+        lError("Could not enable System.exit() method!", it)
     }
 }

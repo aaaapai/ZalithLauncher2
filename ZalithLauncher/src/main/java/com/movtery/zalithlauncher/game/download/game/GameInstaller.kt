@@ -2,7 +2,6 @@ package com.movtery.zalithlauncher.game.download.game
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.context.GlobalContext
 import com.movtery.zalithlauncher.coroutine.Task
@@ -30,6 +29,9 @@ import com.movtery.zalithlauncher.game.version.download.MinecraftDownloader
 import com.movtery.zalithlauncher.game.version.installed.VersionConfig
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.path.PathManager
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -53,8 +55,6 @@ class GameInstaller(
     private val context: Context,
     private val info: GameDownloadInfo
 ) {
-    private val TAG: String = "GameInstaller"
-
     private val scope = CoroutineScope(Dispatchers.Default)
     private val _tasksFlow: MutableStateFlow<List<GameInstallTask>> = MutableStateFlow(emptyList())
     val tasksFlow: StateFlow<List<GameInstallTask>> = _tasksFlow
@@ -96,7 +96,7 @@ class GameInstaller(
 
         //目标版本已经安装的情况
         if (targetVersionJson.exists()) {
-            Log.d(TAG, "The game has already been installed!")
+            lDebug("The game has already been installed!")
             return
         }
 
@@ -249,7 +249,7 @@ class GameInstaller(
                     targetClientDir = null
                 },
                 onError = { th ->
-                    Log.w(TAG, "Failed to install game!", th)
+                    lWarning("Failed to install game!", th)
                     clearTargetClient()
                     onError(th)
                 }
@@ -307,7 +307,7 @@ class GameInstaller(
     private suspend fun clearTempGameDir() = withContext(Dispatchers.IO) {
         PathManager.DIR_CACHE_GAME_DOWNLOADER.takeIf { it.exists() }?.let { folder ->
             FileUtils.deleteQuietly(folder)
-            Log.i(TAG, "Temporary game directory cleared.")
+            lInfo("Temporary game directory cleared.")
         }
     }
 
@@ -323,7 +323,7 @@ class GameInstaller(
             dirToDelete?.let {
                 //直接清除上一次安装的目标目录
                 FileUtils.deleteQuietly(it)
-                Log.i(TAG, "Successfully deleted version directory: ${it.name} at path: ${it.absolutePath}")
+                lInfo("Successfully deleted version directory: ${it.name} at path: ${it.absolutePath}")
             }
         }
     }
@@ -546,7 +546,7 @@ class GameInstaller(
 
     private fun File.createDirAndLog(): File {
         this.mkdirs()
-        Log.d(TAG, "Created directory: $this")
+        lDebug("Created directory: $this")
         return this
     }
 }

@@ -1,13 +1,12 @@
 package com.movtery.zalithlauncher.setting
 
-import android.util.Log
 import androidx.annotation.CheckResult
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.unit.AbstractSettingUnit
-import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import org.apache.commons.io.FileUtils
 import java.lang.reflect.Type
 import java.util.concurrent.ConcurrentHashMap
@@ -27,7 +26,7 @@ class Settings {
                     GSON.fromJson<List<SettingAttribute>>(jsonString, listType)
                         .associateBy { it.key }
                 } catch (e: Exception) {
-                    Log.e("Settings", "Failed to refresh settings: ${StringUtils.throwableToString(e)}")
+                    lError("Failed to refresh settings", e)
                     emptyMap()
                 }
             } ?: emptyMap()
@@ -109,7 +108,7 @@ class Settings {
                         FileUtils.write(settingsFile, json, Charsets.UTF_8)
                         refreshSettings()
                     }.onFailure { e ->
-                        Log.e("SettingBuilder", "Save failed!", e)
+                        lError("Failed to save launcher settings!", e)
                     }
                 }
             }

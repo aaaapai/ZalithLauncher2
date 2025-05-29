@@ -1,6 +1,5 @@
 package com.movtery.zalithlauncher.ui.screens.content
 
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -27,7 +26,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,19 +47,19 @@ import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.account.addOtherServer
+import com.movtery.zalithlauncher.game.account.auth_server.AuthServerHelper
+import com.movtery.zalithlauncher.game.account.auth_server.ResponseException
 import com.movtery.zalithlauncher.game.account.isLocalAccount
 import com.movtery.zalithlauncher.game.account.isMicrosoftAccount
 import com.movtery.zalithlauncher.game.account.isMicrosoftLogging
 import com.movtery.zalithlauncher.game.account.localLogin
+import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileException
 import com.movtery.zalithlauncher.game.account.microsoft.NotPurchasedMinecraftException
+import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException
+import com.movtery.zalithlauncher.game.account.microsoft.toLocal
 import com.movtery.zalithlauncher.game.account.microsoftLogin
-import com.movtery.zalithlauncher.game.account.otherserver.OtherLoginHelper
-import com.movtery.zalithlauncher.game.account.otherserver.ResponseException
-import com.movtery.zalithlauncher.game.account.otherserver.models.Servers
-import com.movtery.zalithlauncher.game.account.saveAccount
 import com.movtery.zalithlauncher.game.skin.SkinModelType
 import com.movtery.zalithlauncher.game.skin.getLocalUUIDWithSkinModel
-import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.path.UrlManager
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
@@ -85,32 +83,19 @@ import com.movtery.zalithlauncher.ui.screens.content.elements.OtherServerLoginDi
 import com.movtery.zalithlauncher.ui.screens.content.elements.SelectSkinModelDialog
 import com.movtery.zalithlauncher.ui.screens.content.elements.ServerItem
 import com.movtery.zalithlauncher.ui.screens.content.elements.ServerOperation
-import com.movtery.zalithlauncher.utils.CryptoManager
-import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import org.apache.commons.io.FileUtils
-import java.io.File
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 
 const val ACCOUNT_MANAGE_SCREEN_TAG = "AccountManageScreen"
-
-private val otherServerConfig = MutableStateFlow(Servers(ArrayList()))
-private val otherServerConfigFile = File(PathManager.DIR_GAME, "other_servers.json")
-
-private fun refreshOtherServer() {
-    val text: String = otherServerConfigFile.takeIf { it.exists() }?.readText() ?: return
-    val config = CryptoManager.decrypt(text)
-    otherServerConfig.value = GSON.fromJson(text, Servers::class.java)
-}
 
 @Composable
 fun AccountManageScreen() {
@@ -191,14 +176,6 @@ private fun ServerTypeMenu(
         isHorizontal = true
     )
 
-    LaunchedEffect(true) {
-        runCatching {
-            refreshOtherServer()
-        }.onFailure {
-            Log.w("ServerTypeTab", "Failed to refresh other server", it)
-        }
-    }
-
     Card(
         modifier = modifier
             .offset {
@@ -232,12 +209,12 @@ private fun ServerTypeMenu(
                     updateLocalLoginOperation(LocalLoginOperation.Edit)
                 }
 
-                val servers by otherServerConfig.collectAsState()
-                servers.server.forEachIndexed { index, server ->
+                val authServers by AccountsManager.authServersFlow.collectAsState()
+                authServers.forEach { server ->
                     ServerItem(
                         server = server,
                         onClick = { updateOtherLoginOperation(OtherLoginOperation.OnLogin(server)) },
-                        onDeleteClick = { updateServerOperation(ServerOperation.Delete(server.serverName, index)) }
+                        onDeleteClick = { updateServerOperation(ServerOperation.Delete(server)) }
                     )
                 }
             }
@@ -361,12 +338,12 @@ private fun OtherLoginOperation(
                 onDismissRequest = { updateOperation(OtherLoginOperation.None) },
                 onConfirm = { email, password ->
                     updateOperation(OtherLoginOperation.None)
-                    OtherLoginHelper(
+                    AuthServerHelper(
                         otherLoginOperation.server, email, password,
                         onSuccess = { account, task ->
                             task.updateMessage(R.string.account_logging_in_saving)
                             account.downloadSkin()
-                            saveAccount(account)
+                            AccountsManager.suspendSaveAccount(account)
                         },
                         onFailed = { th ->
                             updateOperation(OtherLoginOperation.OnFailed(th))
@@ -398,7 +375,7 @@ private fun OtherLoginOperation(
                     stringResource(res, statusCode)
                 }
                 else -> {
-                    Log.e("OtherLoginOperation", "An unknown exception was caught!", th)
+                    lError("An unknown exception was caught!", th)
                     val errorMessage = th.localizedMessage ?: th.message ?: th::class.qualifiedName ?: "Unknown error"
                     stringResource(R.string.error_unknown, errorMessage)
                 }
@@ -449,32 +426,21 @@ private fun ServerTypeOperation(
         is ServerOperation.Add -> {
             addOtherServer(
                 serverUrl = serverOperation.serverUrl,
-                serverConfig = { otherServerConfig },
-                serverConfigFile = otherServerConfigFile,
                 onThrowable = { updateServerOperation(ServerOperation.OnThrowable(it)) }
             )
             updateServerOperation(ServerOperation.None)
         }
         is ServerOperation.Delete -> {
+            val server = serverOperation.server
             SimpleAlertDialog(
                 title = stringResource(R.string.account_other_login_delete_server_title),
                 text = stringResource(
                     R.string.account_other_login_delete_server_message,
-                    serverOperation.serverName
+                    server.serverName
                 ),
                 onDismiss = { updateServerOperation(ServerOperation.None) },
                 onConfirm = {
-                    otherServerConfig.update { currentConfig ->
-                        currentConfig.server.removeAt(serverOperation.serverIndex)
-                        val configString = GSON.toJson(currentConfig, Servers::class.java)
-                        val text = CryptoManager.encrypt(configString)
-                        runCatching {
-                            otherServerConfigFile.writeText(configString)
-                        }.onFailure {
-                            Log.e("ServerTypeTab", "Failed to save other server config", it)
-                        }
-                        currentConfig.copy()
-                    }
+                    AccountsManager.deleteAuthServer(server)
                     updateServerOperation(ServerOperation.None)
                 }
             )
@@ -552,8 +518,8 @@ private fun AccountsLayout(
                             .padding(vertical = 6.dp),
                         currentAccount = currentAccount,
                         account = account,
-                        onSelected = { uniqueUUID ->
-                            AccountsManager.setCurrentAccount(uniqueUUID)
+                        onSelected = { acc ->
+                            AccountsManager.setCurrentAccount(acc)
                         },
                         onChangeSkin = {
                             if (account.isMicrosoftAccount()) {
@@ -600,7 +566,7 @@ private fun AccountSkinOperation(
                     dispatcher = Dispatchers.IO,
                     task = {
                         context.copyLocalFile(accountSkinOperation.uri, skinFile)
-                        saveAccount(account)
+                        AccountsManager.suspendSaveAccount(account)
                         //警告用户关于自定义皮肤的一些注意事项
                         updateOperation(AccountSkinOperation.AlertModel)
                     },
@@ -701,7 +667,7 @@ private fun AccountSkinOperation(
                             FileUtils.deleteQuietly(getSkinFile())
                             skinModelType = SkinModelType.NONE
                             profileId = getLocalUUIDWithSkinModel(username, skinModelType)
-                            saveAccount(this)
+                            AccountsManager.suspendSaveAccount(this)
                         }
                     }
                 )
@@ -739,7 +705,7 @@ private fun AccountOperation(
                     onSuccess = { account, task ->
                         task.updateMessage(R.string.account_logging_in_saving)
                         account.downloadSkin()
-                        saveAccount(account)
+                        AccountsManager.suspendSaveAccount(account)
                     },
                     onFailed = { updateAccountOperation(AccountOperation.OnFailed(it)) }
                 )
@@ -748,7 +714,9 @@ private fun AccountOperation(
         }
         is AccountOperation.OnFailed -> {
             val message: String = when (val th = accountOperation.th) {
-                is NotPurchasedMinecraftException -> stringResource(R.string.account_logging_not_purchased_minecraft)
+                is NotPurchasedMinecraftException -> toLocal(context)
+                is MinecraftProfileException -> th.toLocal(context)
+                is XboxLoginException -> th.toLocal(context)
                 is ResponseException -> th.responseMessage
                 is HttpRequestTimeoutException -> stringResource(R.string.error_timeout)
                 is UnknownHostException, is UnresolvedAddressException -> stringResource(R.string.error_network_unreachable)
@@ -763,7 +731,7 @@ private fun AccountOperation(
                     stringResource(res, statusCode)
                 }
                 else -> {
-                    Log.e("AccountOperation", "An unknown exception was caught!", th)
+                    lError("An unknown exception was caught!", th)
                     val errorMessage = th.localizedMessage ?: th.message ?: th::class.qualifiedName ?: "Unknown error"
                     stringResource(R.string.error_unknown, errorMessage)
                 }

@@ -41,6 +41,8 @@
     <string name="generic_go_it">我明白了</string>
     <string name="generic_file_name">文件名：%s</string>
     <string name="generic_file_size">文件大小：%s</string>
+    <!--  单位  -->
+    <string name="unit_day">天</string>
     <!--  启动器版本  -->
     <string name="launcher_version_label_alpha">内测版本：%s，仅供演示</string>
     <string name="launcher_version_label_beta">公测版本：%s，仅供演示</string>
@@ -167,6 +169,17 @@
     <string name="account_logging_in_failed">登录失败</string>
     <string name="account_logging_in_saving">获取玩家皮肤、保存账号信息</string>
     <string name="account_logging_time_out">网络访问超时，请检查网络环境</string>
+    <string name="account_logging_xbox_banned">您的账号因违反 Xbox 社区规范已被封禁，无法使用！</string>
+    <string name="account_logging_xbox_restricted">您的账号目前受到限制，监护人尚未授权您进行在线游戏</string>
+    <string name="account_logging_xbox_unregistered">您的账号尚未创建 Xbox 个人资料，请前往 https://signup.live.com/signup 注册</string>
+    <string name="account_logging_xbox_not_accepted_service">您的账号尚未接受 Xbox 的服务条款</string>
+    <string name="account_logging_xbox_blocked_region">您的账号所在的地区未被 Xbox 授权使用，登录尝试已被拦截</string>
+    <string name="account_logging_xbox_requires_proof_of_age">您的账号需要提供年龄证明，请登录 https://login.live.com/login.srf 提供相关信息</string>
+    <string name="account_logging_xbox_reached_playtime_limit">您的账号已达到游戏时间限制，已被禁止登录</string>
+    <string name="account_logging_xbox_underage">账号的出生日期显示未满 18 岁，必须由成年人添加到家庭中才能继续使用</string>
+    <string name="account_logging_frequent">登录过于频繁，请稍后再试</string>
+    <string name="account_logging_blocked_ip">当前 IP 地址已被禁止登陆</string>
+    <string name="account_logging_profile_not_exists">请先创建 Minecraft 玩家档案，然后再重新登陆！</string>
     <string name="account_logging_not_purchased_minecraft">未检查到 Minecraft 配置信息，请前往 Minecraft 的官方网站购买</string>
     <string name="account_type_microsoft">微软账号</string>
     <string name="account_type_local">离线账号</string>
@@ -451,6 +464,11 @@
     <string name="settings_launcher_animate_extent_summary">调整启动器动画的幅度大小</string>
     <string name="settings_launcher_swap_animate_type_title">页面切换动画</string>
     <string name="settings_launcher_swap_animate_type_summary">根据您的需求，选择最适合自己的页面切换动画</string>
+    <string name="settings_launcher_log_retention_days_title">日志保留天数</string>
+    <string name="settings_launcher_log_retention_days_summary">设置启动器的日志保留天数，超过此天数的日志将被自动删除</string>
+    <string name="settings_launcher_log_share_title">分享启动器日志</string>
+    <string name="settings_launcher_log_share_summary">点击以分享启动器的日志文件，以供开发者定位并修复启动器的问题</string>
+    <string name="settings_launcher_log_share_packing">打包启动器日志文件</string>
     <!--  关于  -->
     <string name="about_plugin_title">已加载的插件</string>
     <string name="about_library_title">额外引入的依赖项目</string>

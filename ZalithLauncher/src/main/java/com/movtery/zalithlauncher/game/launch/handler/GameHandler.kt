@@ -2,7 +2,6 @@ package com.movtery.zalithlauncher.game.launch.handler
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import android.view.KeyEvent
 import android.view.Surface
 import androidx.compose.runtime.Composable
@@ -23,6 +22,7 @@ import com.movtery.zalithlauncher.ui.screens.game.GameScreen
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.zipDirRecursive
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -167,7 +167,7 @@ class GameHandler(
                     )
                 }
             } ?: run {
-                Log.w("GameHandler", "Version is too old to use the resource pack.")
+                lWarning("Version is too old to use the resource pack.")
             }
         }
     }
@@ -181,6 +181,8 @@ class GameHandler(
         skinFile: File,
         modelType: SkinModelType
     ): File? = withContext(Dispatchers.IO) {
+        if (!skinFile.exists()) return@withContext null
+
         runCatching {
             val resourcePackFile = File(
                 File(version.getGameDir(), "resourcepacks").ensureDirectory(),
@@ -226,7 +228,7 @@ class GameHandler(
                 FileUtils.deleteDirectory(tempDir)
             }
         }.onFailure {
-            Log.w("PackSkinResourcePack", "Failed to pack a skin resource pack!", it)
+            lWarning("Failed to pack a skin resource pack!", it)
         }.getOrNull()
     }
 }

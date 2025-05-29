@@ -1,6 +1,5 @@
 package com.movtery.zalithlauncher.ui.screens.content.versions
 
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -56,7 +54,7 @@ import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionSet
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.shareFile
-import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
 import kotlinx.coroutines.Dispatchers
 import org.apache.commons.io.FileUtils
@@ -121,7 +119,8 @@ fun VersionOverViewScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(state = rememberScrollState())
-                .padding(all = 12.dp)
+                .padding(all = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val yOffset1 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
@@ -135,7 +134,6 @@ fun VersionOverViewScreen() {
                 resetIcon = { versionsOperation = VersionsOperation.ResetIconAlert }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
             val yOffset2 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
                 swapIn = isVisible,
@@ -149,7 +147,6 @@ fun VersionOverViewScreen() {
                 onDelete = { versionsOperation = VersionsOperation.Delete(version) }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
             val yOffset3 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
                 swapIn = isVisible,
@@ -194,7 +191,7 @@ private fun PickIcon(version: Version, onDone: () -> Unit) {
                         context.copyLocalFile(result, iconFile)
                     },
                     onError = { e ->
-                        Log.e(VERSION_OVERVIEW_SCREEN_TAG, "Failed to import icon!", e)
+                        lError("Failed to import icon!", e)
                         FileUtils.deleteQuietly(iconFile)
                         ObjectStates.updateThrowable(
                             ObjectStates.ThrowableMessage(
@@ -231,7 +228,7 @@ private fun VersionInfoLayout(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(all = 8.dp),
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             VersionOverviewItem(
                 modifier = Modifier.padding(start = 4.dp).weight(1f),
@@ -240,7 +237,6 @@ private fun VersionInfoLayout(
                 versionSummary = versionSummary,
                 refreshKey = refreshKey
             )
-            Spacer(modifier = Modifier.width(12.dp))
             Row {
                 IconTextButton(
                     onClick = pickIcon,
@@ -495,7 +491,7 @@ private fun VersionsOperation(
                 context = Dispatchers.IO,
                 onDismiss = { updateOperation(VersionsOperation.None) },
                 onError = { e ->
-                    Log.e("VersionsOperation.RunTask", "Failed to run task. ${StringUtils.throwableToString(e)}")
+                    lError("Failed to run task.", e)
                     ObjectStates.updateThrowable(
                         ObjectStates.ThrowableMessage(
                             title = errorMessage,

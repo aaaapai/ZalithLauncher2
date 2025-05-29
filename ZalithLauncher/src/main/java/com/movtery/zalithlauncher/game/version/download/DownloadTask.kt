@@ -1,7 +1,7 @@
 package com.movtery.zalithlauncher.game.version.download
 
-import android.util.Log
 import com.movtery.zalithlauncher.utils.file.compareSHA1
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runInterruptible
@@ -42,7 +42,7 @@ class DownloadTask(
             downloadedFile()
         }.onFailure { e ->
             if (e is CancellationException) return@onFailure
-            Log.e(DOWNLOADER_TAG, "Download failed: ${targetFile.absolutePath}, url: $url", e)
+            lError("Download failed: ${targetFile.absolutePath}, url: $url", e)
             if (!isDownloadable && e is FileNotFoundException) throw e
             onDownloadFailed(this)
         }
@@ -62,7 +62,7 @@ class DownloadTask(
      */
     private fun verifySha1(): Boolean {
         if (targetFile.exists()) {
-            sha1 ?: return !verifyIntegrity
+            sha1 ?: return true //sha1 不存在，可能目标无法被下载
             if (!verifyIntegrity || compareSHA1(targetFile, sha1)) {
                 return true
             } else {

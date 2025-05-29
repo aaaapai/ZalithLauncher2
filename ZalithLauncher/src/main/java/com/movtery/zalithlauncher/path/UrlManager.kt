@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.path
 
 import com.movtery.zalithlauncher.BuildConfig
+import com.movtery.zalithlauncher.info.InfoDistributor
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -21,17 +22,15 @@ import java.util.concurrent.TimeUnit
 
 class UrlManager {
     companion object {
-        const val URL_USER_AGENT: String = "ZL2/${BuildConfig.VERSION_NAME}"
+        const val URL_USER_AGENT: String = "${InfoDistributor.LAUNCHER_SHORT_NAME}/${BuildConfig.VERSION_NAME}"
         @JvmField
         val TIME_OUT = Pair(10000, TimeUnit.MILLISECONDS)
-        const val URL_GITHUB_HOME: String = "https://api.github.com/repos/ZalithLauncher/Zalith-Info/contents/"
         const val URL_MCMOD: String = "https://www.mcmod.cn/"
         const val URL_MINECRAFT: String = "https://www.minecraft.net/"
         const val URL_MINECRAFT_VERSION_REPOS: String = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
         const val URL_MINECRAFT_CHANGE_SKIN = "https://www.minecraft.net/msaprofile/mygames/editskin"
         const val URL_MINECRAFT_PURCHASE = "https://www.xbox.com/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj"
         const val URL_SUPPORT: String = "https://afdian.com/a/MovTery"
-        const val URL_HOME: String = "https://github.com/ZalithLauncher/ZalithLauncher2"
         const val URL_FCL_RENDERER_PLUGIN: String = "https://github.com/ShirosakiMio/FCLRendererPlugin/releases/tag/Renderer"
         const val URL_FCL_DRIVER_PLUGIN: String = "https://github.com/FCL-Team/FCLDriverPlugin/releases/tag/Turnip"
 

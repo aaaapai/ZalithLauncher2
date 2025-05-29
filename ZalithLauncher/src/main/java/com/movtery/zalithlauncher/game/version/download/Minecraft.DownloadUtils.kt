@@ -1,9 +1,11 @@
 package com.movtery.zalithlauncher.game.version.download
 
-import android.util.Log
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.file.compareSHA1
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import com.movtery.zalithlauncher.utils.network.withRetry
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +24,7 @@ private suspend fun downloadStringAndSave(
             NetWorkUtils.fetchStringFromUrl(url)
         }
         if (string.isBlank()) {
-            Log.e(UTILS_LOG_TAG, "Downloaded string is empty, aborting.")
+            lError("Downloaded string is empty, aborting.")
             throw IllegalStateException("Downloaded string is empty.")
         }
         targetFile.writeText(string)
@@ -33,7 +35,7 @@ fun <T> String.parseTo(classOfT: Class<T>): T {
     return runCatching {
         GSON.fromJson(this, classOfT)
     }.getOrElse { e ->
-        Log.e(UTILS_LOG_TAG, "Failed to parse JSON", e)
+        lError("Failed to parse JSON", e)
         throw e
     }
 }
@@ -55,7 +57,7 @@ suspend fun <T> downloadAndParseJson(
             return runCatching {
                 targetFile.readText().parseTo(classOfT)
             }.getOrElse {
-                Log.w(UTILS_LOG_TAG, "Failed to parse existing JSON, re-downloading...")
+                lWarning("Failed to parse existing JSON, re-downloading...")
                 downloadAndParse()
             }
         } else {
@@ -71,7 +73,7 @@ fun artifactToPath(library: GameManifest.Library): String? {
 
     val libInfos = library.name.split(":")
     if (libInfos.size < 3) {
-        Log.e("Minecraft.DownloadUtils.artifactToPath", "Invalid library name format: ${library.name}")
+        lError("Invalid library name format: ${library.name}")
         return null
     }
 
@@ -94,7 +96,7 @@ private fun processLibrary(library: GameManifest.Library) {
     val versionParts = versionSegment.split(".")
 
     fun logChange(libraryName: String, newVersion: String) {
-        Log.d("Minecraft.DownloadUtils.processLibraries", "Library $libraryName has been changed to version $newVersion")
+        lDebug("Library $libraryName has been changed to version $newVersion")
     }
 
     when {

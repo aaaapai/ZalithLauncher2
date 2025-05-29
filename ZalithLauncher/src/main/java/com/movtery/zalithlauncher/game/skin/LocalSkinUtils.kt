@@ -2,26 +2,28 @@ package com.movtery.zalithlauncher.game.skin
 
 import com.movtery.zalithlauncher.game.version.installed.VersionInfo
 
-private fun getLocalUuid(name: String): String {
-    val lengthPart = name.length
-        .toString(16)
-        .padStart(16, '0')
-        .takeLast(16)  //确保超长时取最后16位
+fun legacyStrFill(str: String, code: Char, length: Int): String {
+    return if (str.length > length) {
+        str.take(length)
+    } else {
+        str.padEnd(length, code).drop(str.length) + str
+    }
+}
 
-    //无符号32位 → 8位十六进制 → 右侧补零到16位
-    val hashCode = (name.hashCode().toLong() and 0xFFFFFFFFL)
-    val hashPart = hashCode.toString(16)
-        .padStart(8, '0')
-        .padEnd(16, '0')
-        .takeLast(16) //确保最长16位
+private fun getLocalUuid(name: String): String {
+    val lenHex = name.length.toString(16)
+    val lengthPart = legacyStrFill(lenHex, '0', 16)
+
+    val hashCode = name.hashCode().toLong() and 0xFFFFFFFFL
+    val hashHex = hashCode.toString(16)
+    val hashPart = legacyStrFill(hashHex, '0', 16) //确保最长16位
 
     return buildString(34) {
         append(lengthPart.substring(0, 12))
         append('3')
-        append(lengthPart[12])
-        append(hashPart.substring(0, 3))
+        append(lengthPart.substring(13, 16))
         append('9')
-        append(hashPart.substring(3))
+        append(hashPart.substring(0, 15))
     }
 }
 

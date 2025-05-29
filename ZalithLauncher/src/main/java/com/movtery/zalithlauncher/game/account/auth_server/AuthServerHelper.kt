@@ -1,21 +1,21 @@
-package com.movtery.zalithlauncher.game.account.otherserver
+package com.movtery.zalithlauncher.game.account.auth_server
 
 import android.content.Context
-import android.util.Log
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.AccountsManager
-import com.movtery.zalithlauncher.game.account.otherserver.models.AuthResult
-import com.movtery.zalithlauncher.game.account.otherserver.models.Servers.Server
+import com.movtery.zalithlauncher.game.account.auth_server.data.AuthServer
+import com.movtery.zalithlauncher.game.account.auth_server.models.AuthResult
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import kotlinx.coroutines.Dispatchers
 import java.util.Objects
 
 /**
  * 帮助登录外置账号（创建新的外置账号、仅登录当前外置账号）
  */
-class OtherLoginHelper(
+class AuthServerHelper(
     private val baseUrl: String,
     private val serverName: String,
     private val email: String,
@@ -25,7 +25,7 @@ class OtherLoginHelper(
     private val onFinally: () -> Unit = {}
 ) {
     constructor(
-        server: Server,
+        server: AuthServer,
         email: String,
         password: String,
         onSuccess: suspend (Account, Task) -> Unit = { _, _ -> },
@@ -44,8 +44,8 @@ class OtherLoginHelper(
             id = taskId,
             dispatcher = Dispatchers.IO,
             task = { task ->
-                OtherLoginApi.setBaseUrl(baseUrl)
-                OtherLoginApi.login(
+                AuthServerApi.setBaseUrl(baseUrl)
+                AuthServerApi.login(
                     context, email, password,
                     onSuccess = { authResult ->
                         if (!Objects.isNull(authResult.selectedProfile)) {
@@ -58,7 +58,7 @@ class OtherLoginHelper(
                 )
             },
             onError = { e ->
-                Log.e("OtherLogin", "An exception was encountered while performing the login task.", e)
+                lError("An exception was encountered while performing the login task.", e)
                 onFailed(e)
             },
             onFinally = onFinally
@@ -150,8 +150,8 @@ class OtherLoginHelper(
     private fun refresh(context: Context, account: Account) {
         val task = Task.runTask(
             task = { task ->
-                OtherLoginApi.setBaseUrl(baseUrl)
-                OtherLoginApi.refresh(context, account, true,
+                AuthServerApi.setBaseUrl(baseUrl)
+                AuthServerApi.refresh(context, account, true,
                     onSuccess = { authResult ->
                         account.accessToken = authResult.accessToken
                         onSuccess(account, task)
@@ -160,7 +160,7 @@ class OtherLoginHelper(
                 )
             },
             onError = { e ->
-                Log.e("Other Login", "An exception was encountered while performing the refresh task.", e)
+                lError("An exception was encountered while performing the refresh task.", e)
                 onFailed(e)
             }
         ).apply { updateMessage(R.string.account_other_login_select_role_logging, account.username) }

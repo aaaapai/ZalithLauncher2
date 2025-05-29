@@ -1,7 +1,7 @@
 package com.movtery.zalithlauncher.ui.screens.content.versions.elements
 
-import android.util.Log
 import com.movtery.zalithlauncher.utils.json.parseToJson
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.stripColorCodes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -142,6 +142,6 @@ suspend fun parseResourcePack(file: File): ResourcePackInfo? = withContext(Dispa
             icon = iconBytes
         )
     }.onFailure {
-        Log.w("ParseResourcePack", "Failed to parse the resource package: ${file.absolutePath}", it)
+        lWarning("Failed to parse the resource package: ${file.absolutePath}", it)
     }.getOrNull()
 }

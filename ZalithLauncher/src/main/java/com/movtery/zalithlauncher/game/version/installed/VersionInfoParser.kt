@@ -1,11 +1,12 @@
 package com.movtery.zalithlauncher.game.version.installed
 
-import android.util.Log
 import com.movtery.zalithlauncher.game.version.download.processLibraries
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest.Library
 import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.file.child
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import java.io.File
 
 fun getGameManifest(version: Version): GameManifest {
@@ -41,8 +42,7 @@ fun getGameManifest(version: Version, skipInheriting: Boolean): GameManifest {
                     inheritLibrary.name.substring(0, inheritLibrary.name.lastIndexOf(":"))
 
                 if (libName == inheritLibName) {
-                    Log.d(
-                        "VersionInfoParser",
+                    lDebug(
                         "Library " + libName + ": Replaced version " +
                                 libName.substring(libName.lastIndexOf(":") + 1) + " with " +
                                 inheritLibName.substring(inheritLibName.lastIndexOf(":") + 1)
@@ -128,7 +128,7 @@ private fun insertSafety(
                 fieldB.set(target, value)
             }
         }.onFailure {
-            Log.w("VersionInfoParser", "Unable to insert $key = $value", it)
+            lWarning("Unable to insert $key = $value", it)
         }
     }
 }

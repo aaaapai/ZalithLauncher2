@@ -1,8 +1,9 @@
 package com.movtery.zalithlauncher.game.addons.modloader.optifine
 
-import android.util.Log
 import com.movtery.zalithlauncher.game.addons.modloader.ResponseTooShortException
 import com.movtery.zalithlauncher.path.UrlManager.Companion.GLOBAL_CLIENT
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
@@ -53,7 +54,7 @@ object OptiFineVersions {
             val jars  = jarPattern.findAll(html).map { it.groupValues[1].trim() }.toList()
 
             if (names.size != dates.size || names.size != forges.size || names.size != jars.size) {
-                Log.w("OptiFineVersions", "The number of parsed fields is inconsistent.")
+                lWarning("The number of parsed fields is inconsistent.")
                 return@withContext emptyList()
             }
 
@@ -107,10 +108,10 @@ object OptiFineVersions {
             }
             versions
         } catch(e: CancellationException) {
-            Log.d("OptiFineVersions", "Client cancelled.")
+            lDebug("Client cancelled.")
             null
         } catch (e: Exception) {
-            Log.w("OptiFineVersions", "Failed to fetch OptiFine list!", e)
+            lWarning("Failed to fetch OptiFine list!", e)
             throw e
         }
     }.also { result ->
@@ -141,7 +142,7 @@ object OptiFineVersions {
             }
 
         } catch (e: Exception) {
-            Log.w("OptiFineVersions", "Failed to fetch $fileName download url!", e)
+            lWarning("Failed to fetch $fileName download url!", e)
             return@withContext null
         }
     }

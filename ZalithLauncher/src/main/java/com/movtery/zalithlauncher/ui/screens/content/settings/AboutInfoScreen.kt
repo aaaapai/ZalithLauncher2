@@ -199,7 +199,8 @@ private fun PluginInfoItem(
         Row(
             modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val iconFile = appCacheIcon(apkPlugin.packageName)
             if (iconFile.exists()) {
@@ -222,8 +223,6 @@ private fun PluginInfoItem(
                     contentScale = ContentScale.Fit
                 )
             }
-
-            Spacer(modifier = Modifier.width(12.dp))
 
             Column(
                 modifier = Modifier.align(Alignment.CenterVertically)

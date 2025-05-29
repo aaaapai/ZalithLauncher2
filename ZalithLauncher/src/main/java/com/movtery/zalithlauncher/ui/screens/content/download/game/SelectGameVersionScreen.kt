@@ -1,8 +1,8 @@
 package com.movtery.zalithlauncher.ui.screens.content.download.game
 
-import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,7 +64,10 @@ import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCRE
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.formatDate
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
+import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.isEmptyOrBlank
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
@@ -201,7 +204,7 @@ fun SelectGameVersionScreen(
                 allVersions = MinecraftVersions.getVersionManifest(forceReload).versions
                 null
             }.getOrElse { e ->
-                Log.w(SELECT_GAME_VERSION_SCREEN_TAG, "Failed to get version manifest!", e)
+                lWarning("Failed to get version manifest!", e)
                 val message: Pair<Int, Array<Any>?> = when(e) {
                     is HttpRequestTimeoutException -> R.string.error_timeout to null
                     is UnknownHostException, is UnresolvedAddressException -> R.string.error_network_unreachable to null
@@ -216,7 +219,7 @@ fun SelectGameVersionScreen(
                         res to arrayOf(statusCode)
                     }
                     else -> {
-                        Log.e(SELECT_GAME_VERSION_SCREEN_TAG, "An unknown exception was caught!", e)
+                        lError("An unknown exception was caught!", e)
                         val errorMessage = e.localizedMessage ?: e.message ?: e::class.qualifiedName ?: "Unknown error"
                         R.string.error_unknown to arrayOf(errorMessage)
                     }
@@ -239,7 +242,7 @@ private fun List<VersionManifest.Version>.filterVersions(
         else -> versionFilter.old && it.type.startsWith("old")
     }
     val versionId = versionFilter.id
-    val id = (versionId.isEmpty() || versionId.isBlank()) || it.id.contains(versionId)
+    val id = (versionId.isEmptyOrBlank()) || it.id.contains(versionId)
     (type && id)
 }
 
@@ -256,7 +259,8 @@ private fun VersionHeader(
         modifier = modifier.padding(horizontal = 12.dp)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Row {
                 ContentCheckBox(
@@ -288,11 +292,10 @@ private fun VersionHeader(
                 }
             }
 
-            Spacer(modifier = Modifier.width(24.dp))
-
             Row(
                 modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 SimpleTextInputField(
                     modifier = Modifier.weight(1f),
@@ -308,8 +311,6 @@ private fun VersionHeader(
                         )
                     }
                 )
-
-                Spacer(modifier = Modifier.width(12.dp))
 
                 IconButton(
                     onClick = onRefreshClick
@@ -403,22 +404,22 @@ private fun VersionItemLayout(
             }
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         text = version.id,
                         style = MaterialTheme.typography.labelLarge
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
                     LittleTextLabel(
                         text = versionType
                     )
                 }
-
-                Spacer(modifier = Modifier.width(4.dp))
 
                 Text(
                     text = formatDate(input = version.releaseTime),

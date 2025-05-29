@@ -1,6 +1,6 @@
 package com.movtery.zalithlauncher.utils.network
 
-import android.util.Log
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
 import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.delay
 import java.io.IOException
@@ -20,7 +20,7 @@ suspend fun <T> withRetry(
         try {
             return block()
         } catch (e: Exception) {
-            Log.d(logTag, "Attempt ${retryCount + 1} failed: ${e.message}")
+            lDebug("$logTag: Attempt ${retryCount + 1} failed: ${e.message}")
             lastError = e
             if (canRetry(e)) {
                 delay(currentDelay)

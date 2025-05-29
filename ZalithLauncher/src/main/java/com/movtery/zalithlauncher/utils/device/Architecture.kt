@@ -37,8 +37,8 @@ object Architecture {
         return ABIs.any { archAsInt(it) == comparedArch }
     }
 
-    fun archAsInt(arch: String): Int {
-        val normalizedArch = arch.lowercase().trim().replace(" ", "")
+    fun archAsInt(arch: String?): Int {
+        val normalizedArch = arch?.lowercase()?.trim()?.replace(" ", "") ?: return UNSUPPORTED_ARCH
         return when {
             normalizedArch.contains("arm64") || normalizedArch == "aarch64" -> ARCH_ARM64
             normalizedArch.contains("arm") || normalizedArch == "aarch32" -> ARCH_ARM

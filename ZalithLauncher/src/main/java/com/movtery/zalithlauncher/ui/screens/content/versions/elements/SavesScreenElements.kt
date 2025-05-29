@@ -1,7 +1,7 @@
 package com.movtery.zalithlauncher.ui.screens.content.versions.elements
 
-import android.util.Log
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.nbt.asBoolean
 import com.movtery.zalithlauncher.utils.nbt.asCompoundTag
 import com.movtery.zalithlauncher.utils.nbt.asInt
@@ -184,7 +184,7 @@ suspend fun parseLevelDatFile(saveFile: File, levelDatFile: File): SaveData = wi
             worldSeed = worldSeed
         )
     }.onFailure {
-        Log.w("ParseLevelDatFile", "An exception occurred while reading and parsing the level.dat file (${levelDatFile.absolutePath}).", it)
+        lWarning("An exception occurred while reading and parsing the level.dat file (${levelDatFile.absolutePath}).", it)
     }.getOrElse {
         //读取出现异常，返回一个无效数据
         SaveData(

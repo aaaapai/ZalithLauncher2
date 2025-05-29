@@ -2,13 +2,12 @@ package com.movtery.zalithlauncher.components.jre
 
 import android.content.Context
 import android.content.res.AssetManager
-import android.util.Log
 import com.movtery.zalithlauncher.ZLApplication
 import com.movtery.zalithlauncher.components.AbstractUnpackTask
 import com.movtery.zalithlauncher.game.multirt.RuntimesManager
 import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.file.readString
-import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 
 class UnpackJreTask(
     private val context: Context,
@@ -36,7 +35,7 @@ class UnpackJreTask(
             val installedRuntimeVersion = RuntimesManager.loadInternalRuntimeVersion(jre.jreName)
             return launcherRuntimeVersion != installedRuntimeVersion
         }.onFailure { e ->
-            Log.e("CheckInternalRuntime", StringUtils.throwableToString(e))
+            lError("An exception occurred while detecting the Java Runtime.", e)
         }.getOrElse { false }
     }
 
@@ -55,7 +54,7 @@ class UnpackJreTask(
             )
             RuntimesManager.postPrepare(jre.jreName)
         }.onFailure {
-            Log.e("UnpackJREAuto", "Internal JRE unpack failed", it)
+            lError("Internal JRE unpack failed", it)
         }.getOrThrow()
     }
 }

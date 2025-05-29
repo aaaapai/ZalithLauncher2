@@ -5,7 +5,6 @@ import android.os.Build
 import android.system.ErrnoException
 import android.system.Os
 import android.util.ArrayMap
-import android.util.Log
 import androidx.annotation.CallSuper
 import androidx.compose.ui.unit.IntSize
 import com.movtery.zalithlauncher.bridge.LoggerBridge
@@ -27,8 +26,10 @@ import com.movtery.zalithlauncher.utils.device.Architecture.ARCH_X86
 import com.movtery.zalithlauncher.utils.device.Architecture.is64BitsDevice
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.getDisplayFriendlyRes
-import com.movtery.zalithlauncher.utils.string.StringUtils
-import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.oracle.dalvik.VMLauncher
 import org.lwjgl.glfw.CallbackBridge
 import java.io.File
@@ -37,8 +38,17 @@ import java.util.TimeZone
 abstract class Launcher(
     val onExit: (code: Int, isSignal: Boolean) -> Unit
 ) {
+    lateinit var runtime: Runtime
+        protected set
+
+    private val runtimeHome: String by lazy {
+        RuntimesManager.getRuntimeHome(runtime.name).absolutePath
+    }
+
+    var libraryPath: String = ""
+        private set
+
     private var dirNameHomeJre: String = "lib"
-    private var ldLibraryPath: String = ""
     private var jvmLibraryPath: String = ""
 
     abstract suspend fun launch(): Int
@@ -50,13 +60,10 @@ abstract class Launcher(
         jvmArgs: List<String>,
         userHome: String? = null,
         userArgs: String,
-        getWindowSize: () -> IntSize,
-        runtime: Runtime
+        getWindowSize: () -> IntSize
     ): Int {
         ZLNativeInvoker.staticLauncher = this
 
-        val runtimeHome = RuntimesManager.getRuntimeHome(runtime.name).absolutePath
-        relocateLibPath(runtime, runtimeHome)
         initLdLibraryPath(runtimeHome)
 
         LoggerBridge.appendTitle("Env Map")
@@ -97,6 +104,8 @@ abstract class Launcher(
             val arg = iterator.next()
             if (arg.startsWith("--accessToken") && iterator.hasNext()) {
                 iterator.next()
+                LoggerBridge.append("JVMArgs: $arg")
+                LoggerBridge.append("JVMArgs: ********************")
                 continue
             }
             LoggerBridge.append("JVMArgs: $arg")
@@ -154,57 +163,52 @@ abstract class Launcher(
         removeIf { arg: String -> arg.startsWith(argStart) }
     }
 
-    private fun relocateLibPath(runtime: Runtime, jreHome: String) {
+    protected fun relocateLibPath() {
         var jreArchitecture = runtime.arch
         if (Architecture.archAsInt(jreArchitecture) == ARCH_X86) {
             jreArchitecture = "i386/i486/i586"
         }
 
         for (arch in jreArchitecture.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
-            val f = File(jreHome, "lib/$arch")
+            val f = File(runtimeHome, "lib/$arch")
             if (f.exists() && f.isDirectory) {
                 dirNameHomeJre = "lib/$arch"
             }
         }
 
         val libName = if (is64BitsDevice) "lib64" else "lib"
-        val ldLibraryPath = java.lang.StringBuilder()
-        if (FFmpegPluginManager.isAvailable) {
-            ldLibraryPath.append(FFmpegPluginManager.libraryPath!!).append(":")
-        }
-        val customRenderer = RendererPluginManager.selectedRendererPlugin
-        if (customRenderer != null) {
-            ldLibraryPath.append(customRenderer.path).append(":")
-        }
-        ldLibraryPath.append(jreHome)
-            .append("/").append(dirNameHomeJre)
-            .append("/jli:").append(jreHome).append("/").append(dirNameHomeJre)
-            .append(":")
-        ldLibraryPath.append("/system/").append(libName).append(":")
-            .append("/vendor/").append(libName).append(":")
-            .append("/vendor/").append(libName).append("/hw:")
-            .append(PathManager.DIR_NATIVE_LIB)
-        this.ldLibraryPath = ldLibraryPath.toString()
+        val path = listOfNotNull(
+            FFmpegPluginManager.takeIf { it.isAvailable }?.libraryPath,
+            RendererPluginManager.selectedRendererPlugin?.path,
+            "$runtimeHome/$dirNameHomeJre/jli",
+            "$runtimeHome/$dirNameHomeJre",
+            "/system/$libName",
+            "/vendor/$libName",
+            "/vendor/$libName/hw",
+            LibPath.JNA.absolutePath,
+            PathManager.DIR_NATIVE_LIB
+        )
+        this.libraryPath = path.joinToString(":")
     }
 
     private fun initLdLibraryPath(jreHome: String) {
         val serverFile = File(jreHome).child(dirNameHomeJre, "server", "libjvm.so")
         jvmLibraryPath = "$jreHome/$dirNameHomeJre/" + (if (serverFile.exists()) "server" else "client")
-        Log.d("DynamicLoader", "Base ldLibraryPath: $ldLibraryPath")
-        Log.d("DynamicLoader", "Internal ldLibraryPath: $jvmLibraryPath:$ldLibraryPath")
-        ZLBridge.setLdLibraryPath("$jvmLibraryPath:$ldLibraryPath")
+        lDebug("Base libraryPath: $libraryPath")
+        lDebug("Internal libraryPath: $jvmLibraryPath:$libraryPath")
+        ZLBridge.setLdLibraryPath("$jvmLibraryPath:$libraryPath")
     }
 
     protected fun findInLdLibPath(libName: String): String {
         val path = Os.getenv("LD_LIBRARY_PATH") ?: run {
             try {
-                if (ldLibraryPath.isNotEmpty()) {
-                    Os.setenv("LD_LIBRARY_PATH", ldLibraryPath, true)
+                if (libraryPath.isNotEmpty()) {
+                    Os.setenv("LD_LIBRARY_PATH", libraryPath, true)
                 }
             } catch (e: ErrnoException) {
-                Log.e("Launcher", StringUtils.throwableToString(e))
+                lError("Failed to locate lib path", e)
             }
-            ldLibraryPath
+            libraryPath
         }
         return path.split(":").find { libPath ->
             val file = File(libPath, libName)
@@ -232,7 +236,7 @@ abstract class Launcher(
             runCatching {
                 Os.setenv(key, value, true)
             }.onFailure {
-                Log.e("Launcher", it.getMessageOrToString())
+                lError("Unable to set environment variable.", it)
             }
         }
     }
@@ -250,7 +254,7 @@ abstract class Launcher(
             map["JAVA_HOME"] = jreHome
             map["HOME"] = PathManager.DIR_FILES_EXTERNAL.absolutePath
             map["TMPDIR"] = PathManager.DIR_CACHE.absolutePath
-            map["LD_LIBRARY_PATH"] = ldLibraryPath
+            map["LD_LIBRARY_PATH"] = libraryPath
             map["PATH"] = "$jreHome/bin:${Os.getenv("PATH")}"
             map["AWTSTUB_WIDTH"] = (CallbackBridge.windowWidth.takeIf { it > 0 } ?: CallbackBridge.physicalWidth).toString()
             map["AWTSTUB_HEIGHT"] = (CallbackBridge.windowHeight.takeIf { it > 0 } ?: CallbackBridge.physicalHeight).toString()
@@ -267,7 +271,7 @@ abstract class Launcher(
     private fun dlopenJavaRuntime(jreHome: String) {
         ZLBridge.dlopen(findInLdLibPath("libjli.so"))
         if (!ZLBridge.dlopen("libjvm.so")) {
-            Log.w("DynamicLoader", "Failed to load with no path, trying with full path")
+            lWarning("Failed to load with no path, trying with full path")
             ZLBridge.dlopen("$jvmLibraryPath/libjvm.so")
         }
         ZLBridge.dlopen(findInLdLibPath("libverify.so"))
@@ -304,35 +308,49 @@ abstract class Launcher(
 
             val windowSize = getWindowSize()
 
-            val overridableArguments = listOf(
-                "-Djava.home=$runtimeHome",
-                "-Djava.io.tmpdir=${PathManager.DIR_CACHE.absolutePath}",
-                "-Djna.boot.library.path=${PathManager.DIR_NATIVE_LIB}",
-                "-Duser.home=${userHome ?: GamePathManager.getUserHome()}",
-                "-Duser.language=${System.getProperty("user.language")}",
-                "-Dos.name=Linux",
-                "-Dos.version=Android-${Build.VERSION.RELEASE}",
-                "-Dpojav.path.minecraft=${getGameHome()}",
-                "-Dpojav.path.private.account=${PathManager.DIR_ACCOUNT}",
-                "-Duser.timezone=${TimeZone.getDefault().id}",
-                "-Dorg.lwjgl.vulkan.libname=libvulkan.so",
-                "-Dglfwstub.windowWidth=${getDisplayFriendlyRes(windowSize.width, scaleFactor)}",
-                "-Dglfwstub.windowHeight=${getDisplayFriendlyRes(windowSize.height, scaleFactor)}",
-                "-Dglfwstub.initEgl=false",
-                "-Dext.net.resolvPath=$resolvFile",
-                "-Dlog4j2.formatMsgNoLookups=true",
-                "-Dnet.minecraft.clientmodname=${InfoDistributor.LAUNCHER_NAME}",
-                "-Dfml.earlyprogresswindow=false",
-                "-Dloader.disable_forked_guis=true",
-                "-Djdk.lang.Process.launchMechanism=FORK",
-                "-Dsodium.checks.issue2561=false"
-            )
+            val overridableArguments = mutableMapOf<String, String>().apply {
+                put("java.home", runtimeHome)
+                put("java.io.tmpdir", PathManager.DIR_CACHE.absolutePath)
+                put("jna.boot.library.path", PathManager.DIR_NATIVE_LIB)
+                put("user.home", userHome ?: GamePathManager.getUserHome())
+                System.getProperty("user.language")?.let { put("user.language", it) }
+                put("os.name", "Linux")
+                put("os.version", "Android-${Build.VERSION.RELEASE}")
+                put("pojav.path.minecraft", getGameHome())
+                put("pojav.path.private.account", PathManager.DIR_DATA_BASES.absolutePath)
+                put("user.timezone", TimeZone.getDefault().id)
+                put("org.lwjgl.vulkan.libname", "libvulkan.so")
+                put("glfwstub.windowWidth", getDisplayFriendlyRes(windowSize.width, scaleFactor).toString())
+                put("glfwstub.windowHeight", getDisplayFriendlyRes(windowSize.height, scaleFactor).toString())
+                put("glfwstub.initEgl", "false")
+                put("ext.net.resolvPath", resolvFile)
+
+                put("log4j2.formatMsgNoLookups", "true")
+                // Fix RCE vulnerability of log4j2
+                put("java.rmi.server.useCodebaseOnly", "true")
+                put("com.sun.jndi.rmi.object.trustURLCodebase", "false")
+                put("com.sun.jndi.cosnaming.object.trustURLCodebase", "false")
+
+                put("net.minecraft.clientmodname", InfoDistributor.LAUNCHER_NAME)
+
+                // fml
+                put("fml.earlyprogresswindow", "false")
+                put("fml.ignoreInvalidMinecraftCertificates", "true")
+                put("fml.ignorePatchDiscrepancies", "true")
+
+                put("loader.disable_forked_guis", "true")
+                put("jdk.lang.Process.launchMechanism", "FORK")
+
+                put("sodium.checks.issue2561", "false")
+            }.map { entry ->
+                "-D${entry.key}=${entry.value}"
+            }
 
             val additionalArguments = overridableArguments.filter { arg ->
                 val stripped = arg.substringBefore('=')
                 val overridden = userArguments.any { it.startsWith(stripped) }
                 if (overridden) {
-                    Log.i("ArgProcessor", "Arg skipped: $arg")
+                    lInfo("Arg skipped: $arg")
                 }
                 !overridden
             }
@@ -372,7 +390,7 @@ abstract class Launcher(
                             parsedArguments.add(parsedSubstring)
                         }
                     } else {
-                        Log.w("JAVA ARGS PARSER", "Removed improper arguments: $parsedSubstring")
+                        lWarning("Removed improper arguments: $parsedSubstring")
                     }
                 }
             }

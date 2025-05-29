@@ -1,14 +1,12 @@
 package com.movtery.zalithlauncher.game.download.jvm_server
 
-import android.util.Log
 import com.movtery.zalithlauncher.components.jre.Jre
 import com.movtery.zalithlauncher.context.GlobalContext
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-
-const val DOWNLOAD_RUN_JVM_TAG = "Download.Jvm"
 
 /**
  * 运行一个简易的JVM环境，安装ModLoader，同时在jvm退出时，尝试使用其他的Java环境重试
@@ -24,7 +22,7 @@ suspend fun runJvmRetryRuntimes(
     start: () -> Unit = {}
 ): Unit = withContext(Dispatchers.Default) {
     while (!isOnlyMainProcessesRunning(context = GlobalContext)) {
-        Log.i(DOWNLOAD_RUN_JVM_TAG, "Waiting for other processes stop...")
+        lInfo("$logId Waiting for other processes stop...")
         delay(100)
     }
 
@@ -48,7 +46,7 @@ suspend fun runJvmRetryRuntimes(
         }
 
         nextJava?.let { jre ->
-            Log.i(DOWNLOAD_RUN_JVM_TAG, "Retry with jre ${jre.name}...")
+            lInfo("Retry with jre ${jre.name}...")
             runJvmRetryRuntimes(
                 logId,
                 jvmArgs,
@@ -75,7 +73,7 @@ suspend fun startJvmServiceAndWaitExit(
     )
 
     JVMSocketServer.start { receiveMsg ->
-        Log.i(DOWNLOAD_RUN_JVM_TAG, "receive msg: $receiveMsg, stopping server...")
+        lInfo("receive msg: $receiveMsg, stopping server...")
         if (!doneSignal.isCompleted) {
             doneSignal.complete(Unit)
         }
@@ -84,6 +82,6 @@ suspend fun startJvmServiceAndWaitExit(
     doneSignal.await()
 
     val code = JVMSocketServer.receiveMsg?.toIntOrNull()
-    Log.i(DOWNLOAD_RUN_JVM_TAG, "receive exit code: ${code ?: "unknown, default 0"}")
+    lInfo("receive exit code: ${code ?: "unknown, default 0"}")
     code ?: 0
 }

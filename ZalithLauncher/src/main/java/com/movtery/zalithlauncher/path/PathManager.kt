@@ -11,13 +11,15 @@ class PathManager {
         lateinit var DIR_NATIVE_LIB: String
 
         lateinit var DIR_GAME: File
-        lateinit var DIR_ACCOUNT: File
+        lateinit var DIR_DATA_BASES: File
         lateinit var DIR_ACCOUNT_SKIN: File
         lateinit var DIR_MULTIRT: File
+        lateinit var DIR_JNA: File
         lateinit var DIR_COMPONENTS: File
         lateinit var DIR_MOUSE_POINTER: File
         lateinit var DIR_CACHE_GAME_DOWNLOADER: File
         lateinit var DIR_CACHE_APP_ICON: File
+        lateinit var DIR_LAUNCHER_LOGS: File
 
         lateinit var FILE_CRASH_REPORT: File
         lateinit var FILE_SETTINGS: File
@@ -29,16 +31,18 @@ class PathManager {
             DIR_CACHE = context.cacheDir
             DIR_NATIVE_LIB = context.applicationInfo.nativeLibraryDir
 
+            DIR_DATA_BASES = File(DIR_FILES_PRIVATE.parentFile, "databases")
             DIR_GAME = File(DIR_FILES_PRIVATE, "games")
-            DIR_ACCOUNT = File(DIR_GAME, "accounts")
-            DIR_ACCOUNT_SKIN = File(DIR_ACCOUNT, "skins")
+            DIR_ACCOUNT_SKIN = File(DIR_GAME, "account_skins")
             DIR_MULTIRT = File(DIR_GAME, "runtimes")
+            DIR_JNA = File(DIR_GAME, "jna_dir")
             DIR_COMPONENTS = File(DIR_FILES_PRIVATE, "components")
             DIR_MOUSE_POINTER = File(DIR_FILES_PRIVATE, "mouse_pointer")
             DIR_CACHE_GAME_DOWNLOADER = File(DIR_CACHE, "temp_game")
             DIR_CACHE_APP_ICON = File(DIR_CACHE, "app_icons")
+            DIR_LAUNCHER_LOGS = File(DIR_FILES_EXTERNAL, "logs")
 
-            FILE_CRASH_REPORT = File(DIR_FILES_EXTERNAL, "launcher_crash.log")
+            FILE_CRASH_REPORT = File(DIR_LAUNCHER_LOGS, "launcher_crash.log")
             FILE_SETTINGS = File(DIR_FILES_PRIVATE, "settings.json")
             FILE_MINECRAFT_VERSIONS = File(DIR_GAME, "minecraft_versions.json")
 
@@ -47,13 +51,14 @@ class PathManager {
 
         private fun createDirs() {
             DIR_GAME.mkdirs()
-            DIR_ACCOUNT.mkdirs()
             DIR_ACCOUNT_SKIN.mkdirs()
             DIR_MULTIRT.mkdirs()
+            DIR_JNA.mkdirs()
             DIR_COMPONENTS.mkdirs()
             DIR_MOUSE_POINTER.mkdirs()
             DIR_CACHE_GAME_DOWNLOADER.mkdirs()
             DIR_CACHE_APP_ICON.mkdirs()
+            DIR_LAUNCHER_LOGS.mkdirs()
         }
     }
 }

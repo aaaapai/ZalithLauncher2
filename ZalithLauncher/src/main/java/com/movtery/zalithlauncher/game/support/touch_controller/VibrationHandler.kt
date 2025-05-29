@@ -2,7 +2,7 @@ package com.movtery.zalithlauncher.game.support.touch_controller
 
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.util.Log
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import top.fifthlight.touchcontroller.proxy.client.LauncherProxyClient
 import top.fifthlight.touchcontroller.proxy.message.VibrateMessage
 
@@ -19,7 +19,7 @@ class VibrationHandler(
             )
             vibrator.vibrate(effect)
         }.onFailure {
-            Log.e("TouchController_VibrationHandler", "Failed to attempt vibrating the device!", it)
+            lError("Failed to attempt vibrating the device!", it)
         }
     }
 }

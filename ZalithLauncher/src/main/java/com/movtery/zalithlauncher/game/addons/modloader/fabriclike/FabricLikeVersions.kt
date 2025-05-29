@@ -1,9 +1,10 @@
 package com.movtery.zalithlauncher.game.addons.modloader.fabriclike
 
-import android.util.Log
 import com.movtery.zalithlauncher.game.addons.modloader.fabriclike.models.FabricLikeGame
 import com.movtery.zalithlauncher.game.addons.modloader.fabriclike.models.FabricLikeLoader
 import com.movtery.zalithlauncher.path.UrlManager.Companion.GLOBAL_CLIENT
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.network.withRetry
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -34,7 +35,7 @@ abstract class FabricLikeVersions(private val baseUrl: String) {
             }
 
             if (!games.any { it.version == mcVersion }) {
-                Log.w(tag, "The version $mcVersion does not have a corresponding loader.")
+                lWarning("The version $mcVersion does not have a corresponding loader.")
                 return@withContext null
             }
 
@@ -48,10 +49,10 @@ abstract class FabricLikeVersions(private val baseUrl: String) {
                 cacheLoaders = it
             }
         } catch (e: CancellationException) {
-            Log.d(tag, "Client cancelled.")
+            lDebug("Client cancelled.")
             null
         } catch (e: Exception) {
-            Log.w(tag, "Failed to fetch loader list!", e)
+            lDebug("Failed to fetch loader list!", e)
             throw e
         }
     }

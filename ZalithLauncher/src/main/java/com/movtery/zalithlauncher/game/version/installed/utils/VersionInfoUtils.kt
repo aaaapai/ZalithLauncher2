@@ -1,11 +1,12 @@
 package com.movtery.zalithlauncher.game.version.installed.utils
 
-import android.util.Log
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.movtery.zalithlauncher.game.version.installed.VersionInfo
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import java.io.File
 
 class VersionInfoUtils {
@@ -55,7 +56,7 @@ class VersionInfoUtils {
                 val quickPlay = runCatching {
                     ensureQuickPlay(jsonObject)
                 }.getOrElse { e ->
-                    Log.w("VersionInfoUtils", "Failed to parse Quick Play", e)
+                    lWarning("Failed to parse Quick Play", e)
                     VersionInfo.QuickPlay(
                         hasQuickPlaysSupport = false,
                         isQuickPlaySingleplayer = false,
@@ -65,7 +66,7 @@ class VersionInfoUtils {
                 val (versionId, loaderInfo) = detectMinecraftAndLoader(jsonObject)
                 VersionInfo(versionId, quickPlay, loaderInfo)
             }.getOrElse {
-                Log.e("VersionInfoUtils", "Error parsing version json", it)
+                lError("Error parsing version json", it)
                 null
             }
         }
@@ -108,12 +109,8 @@ class VersionInfoUtils {
         }
 
         private fun detectMinecraftAndLoader(versionJson: JsonObject): Pair<String, VersionInfo.LoaderInfo?> {
-            val mcVersion = extractMinecraftVersion(versionJson).also {
-                Log.i("VersionInfoUtils", "Detected Minecraft version: $it")
-            }
-            val loaderInfo = detectModLoader(versionJson)?.also {
-                Log.i("VersionInfoUtils", "Detected ModLoader: $it")
-            }
+            val mcVersion = extractMinecraftVersion(versionJson)
+            val loaderInfo = detectModLoader(versionJson)
             return mcVersion to loaderInfo
         }
 

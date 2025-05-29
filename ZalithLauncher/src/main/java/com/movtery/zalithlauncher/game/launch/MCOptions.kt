@@ -3,10 +3,11 @@ package com.movtery.zalithlauncher.game.launch
 import android.content.Context
 import android.os.Build
 import android.os.FileObserver
-import android.util.Log
 import com.movtery.zalithlauncher.context.copyAssetFile
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.setting.mcOptionsGuiScale
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.splitPreservingQuotes
 import org.lwjgl.glfw.CallbackBridge.windowHeight
 import org.lwjgl.glfw.CallbackBridge.windowWidth
@@ -48,7 +49,7 @@ object MCOptions {
                 false
             )
         }.onFailure {
-            Log.w("MCOptions", "Failed to unpack options.txt!", it)
+            lWarning("Failed to unpack options.txt!", it)
         }
     }
 
@@ -67,7 +68,7 @@ object MCOptions {
 
             mcOptionsGuiScale = mcScale
         }.onFailure {
-            Log.w("MCOptions", "Failed to load options!", it)
+            lWarning("Failed to load options!", it)
         }
     }
 
@@ -116,7 +117,7 @@ object MCOptions {
             )
             tempFile.renameTo(targetFile)
         }.onFailure {
-            Log.e("MCOptions", "Failed to save options.txt!", it)
+            lError("Failed to save options.txt!", it)
             tempFile.delete()
         }
     }

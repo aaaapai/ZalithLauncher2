@@ -7,12 +7,11 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -174,9 +173,11 @@ fun <E> SimpleListLayout(
                     .clickable(enabled = enabled) { expanded = !expanded }
                     .padding(all = 8.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     TitleAndSummary(title, summary)
-                    Spacer(modifier = Modifier.height(height = 4.dp))
                     Text(
                         text = stringResource(R.string.settings_element_selected, getItemText(selectedItem)),
                         style = MaterialTheme.typography.labelSmall
@@ -253,17 +254,14 @@ fun SimpleListItem(
             selected = selected,
             onClick = onClick
         )
-        Column {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
             Text(
                 text = itemName,
                 style = MaterialTheme.typography.labelMedium
             )
-            summary?.let {
-                Spacer(
-                    modifier = Modifier.height(height = 4.dp)
-                )
-                it()
-            }
+            summary?.invoke()
         }
     }
 }
@@ -314,10 +312,10 @@ fun TextInputLayout(
         modifier = modifier
             .fillMaxWidth()
             .padding(all = 8.dp)
-            .padding(bottom = 4.dp)
+            .padding(bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         TitleAndSummary(title = title, summary = summary)
-        Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
             value = value,
@@ -464,18 +462,21 @@ fun SwitchLayout(
 fun TitleAndSummary(
     title: String,
     summary: String? = null,
+    modifier: Modifier = Modifier,
 ) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall
-    )
-    summary?.let { text ->
-        Spacer(
-            modifier = Modifier.height(height = 4.dp)
-        )
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall
+            text = title,
+            style = MaterialTheme.typography.titleSmall
         )
+        summary?.let { text ->
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
     }
 }

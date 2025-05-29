@@ -5,11 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -59,14 +57,14 @@ class VersionSettingsLayoutScope {
     ) {
         Row(
             modifier = modifier,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             VersionIconImage(
                 version = version,
                 modifier = Modifier.size(34.dp),
                 refreshKey = refreshKey
             )
-            Spacer(modifier = Modifier.width(12.dp))
             Column(
                 verticalArrangement = Arrangement.Center
             ) {
@@ -111,24 +109,19 @@ class VersionSettingsLayoutScope {
                 .padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(
+            TitleAndSummary(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = 16.dp)
-            ) {
-                TitleAndSummary(title, summary)
-            }
+                    .padding(end = 16.dp),
+                title = title,
+                summary = summary
+            )
 
-            Row(
+            Text(
                 modifier = Modifier.align(Alignment.CenterVertically),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(value.textRes),
-                    style = MaterialTheme.typography.labelMedium
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
+                text = stringResource(value.textRes),
+                style = MaterialTheme.typography.labelMedium
+            )
 
             Row(
                 modifier = Modifier.align(Alignment.CenterVertically),

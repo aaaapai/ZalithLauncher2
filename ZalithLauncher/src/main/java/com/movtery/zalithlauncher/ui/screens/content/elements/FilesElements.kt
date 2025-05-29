@@ -1,10 +1,9 @@
 package com.movtery.zalithlauncher.ui.screens.content.elements
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Folder
@@ -38,27 +37,28 @@ fun BaseFileItem(
     if (!file.exists()) throw IllegalArgumentException("File is not exists!")
 
     Row(
-        modifier = modifier
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Icon(
             modifier = Modifier.size(24.dp).align(Alignment.CenterVertically),
             imageVector = if (file.isDirectory) Icons.Outlined.Folder else Icons.Outlined.Description,
             contentDescription = null
         )
-        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.align(Alignment.CenterVertically)) {
             Text(
                 text = file.name,
                 style = MaterialTheme.typography.labelMedium
             )
-            Row {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 val date = Date(file.lastModified())
                 Text(
                     text = formatDate(date),
                     style = MaterialTheme.typography.labelSmall
                 )
                 if (file.isFile) {
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = formatFileSize(FileUtils.sizeOf(file)),
                         style = MaterialTheme.typography.labelSmall

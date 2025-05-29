@@ -4,13 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.util.Log
 import androidx.core.net.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.path.UrlManager
 import com.movtery.zalithlauncher.path.UrlManager.Companion.URL_USER_AGENT
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
+import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
@@ -97,7 +97,7 @@ class NetWorkUtils {
                 FileUtils.deleteQuietly(outputFile)
                 when (e) {
                     is CancellationException, is InterruptedIOException -> {
-                        Log.d("NetWorkUtils.downloadFileWithHttp", "download task cancelled. url: $url")
+                        lDebug("download task cancelled. url: $url")
                         return //取消了，不需要抛出异常
                     }
                     is FileNotFoundException -> throw e //目标不存在

@@ -3,13 +3,11 @@ package com.movtery.zalithlauncher.game.plugin
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
-import android.util.Log
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.image.toBitmap
+import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import org.apache.commons.io.FileUtils
 import java.io.File
-
-const val PLUGIN_ICON_CACHE_TAG = "PluginIconCache"
 
 fun appCacheIcon(packageName: String): File = File(PathManager.DIR_CACHE_APP_ICON, "$packageName.png")
 
@@ -33,6 +31,6 @@ fun cacheAppIcon(context: Context, appInfo: ApplicationInfo) {
         }
     }.onFailure {
         FileUtils.deleteQuietly(iconFile)
-        Log.w(PLUGIN_ICON_CACHE_TAG, "Failed to cache icon for $packageName at ${iconFile.absolutePath}", it)
+        lWarning("Failed to cache icon for $packageName at ${iconFile.absolutePath}", it)
     }
 }

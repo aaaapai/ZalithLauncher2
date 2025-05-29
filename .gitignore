@@ -9,7 +9,6 @@
 .externalNativeBuild
 .cxx
 local.properties
-.crypto_key.txt
 .oauth_client_id.txt
 .store_password.txt
 .key_password.txt

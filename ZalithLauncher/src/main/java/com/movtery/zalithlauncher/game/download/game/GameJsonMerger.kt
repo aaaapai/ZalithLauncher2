@@ -1,6 +1,5 @@
 package com.movtery.zalithlauncher.game.download.game
 
-import android.util.Log
 import com.google.gson.JsonObject
 import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
 import com.movtery.zalithlauncher.game.download.game.models.LaunchFor
@@ -8,6 +7,7 @@ import com.movtery.zalithlauncher.game.download.game.models.toLaunchForInfo
 import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.json.merge
 import com.movtery.zalithlauncher.utils.json.safeGetMember
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import com.movtery.zalithlauncher.utils.string.isBiggerTo
 import java.io.File
 
@@ -26,8 +26,7 @@ fun mergeGameJson(
     fabricFolder: File? = null,
     quiltFolder: File? = null
 ) {
-    Log.i(
-        GAME_JSON_MERGER_ID,
+    lInfo(
         "Start merge version json, output: $outputFolder, Minecraft: $clientFolder\n" +
                 (if (optiFineFolder != null) "，${ModLoader.OPTIFINE.displayName}: $optiFineFolder" else "") +
                 (if (forgeFolder != null) "，${ModLoader.FORGE.displayName}: $forgeFolder" else "") +
