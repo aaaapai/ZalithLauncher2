@@ -29,7 +29,7 @@ val defaultStorePassword = project.findProperty("default_store_password") as? St
 val defaultKeyPassword = project.findProperty("default_key_password") as? String ?: error("The \"default_key_password\" property is not set in gradle.properties.")
 val defaultCurseForgeApiKey = project.findProperty("curseforge_api_key") as? String
 
-val generatedZalithDir = layout.buildDirectory.dir("generated/source/zalith/java").get()
+val generatedZalithDir = file("$buildDir/generated/source/zalith/java")
 
 fun getKeyFromLocal(envKey: String, fileName: String? = null, default: String? = null): String {
     val key = System.getenv(envKey)
@@ -151,7 +151,7 @@ android {
     externalNativeBuild {
         ndkBuild {
             path = file("src/main/jni/Android.mk")
-            arguments += listOf("-j4")
+            Argument("-j4")
         }
     }
 
