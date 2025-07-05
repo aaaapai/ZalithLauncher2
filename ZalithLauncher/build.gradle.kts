@@ -49,6 +49,10 @@ android {
     namespace = zalithPackageName
     compileSdk = 36
 
+    tasks.withType<JavaCompile>().configureEach {
+        options.isFork = true
+    }
+
     signingConfigs {
         create("releaseBuild") {
             storeFile = file("../debug-key.jks")
@@ -143,6 +147,7 @@ android {
     externalNativeBuild {
         ndkBuild {
             path = file("src/main/jni/Android.mk")
+            arguments.add("-j4")
         }
     }
 
