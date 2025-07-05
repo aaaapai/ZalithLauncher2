@@ -240,9 +240,7 @@ private fun RuntimeOperation(
         is RuntimeOperation.ExecuteJar -> {
             val context = LocalContext.current
             RuntimesManager.getExactJreName(8) ?: run {
-                Toast.makeText(context, R.string.multirt_no_java_8, Toast.LENGTH_LONG).show()
                 updateOperation(RuntimeOperation.None)
-                return
             }
             (context as? Activity)?.let { activity ->
                 val jreName = AllSettings.javaRuntime.takeIf { AllSettings.autoPickJavaRuntime.getValue() }?.getValue()
