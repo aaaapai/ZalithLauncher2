@@ -151,7 +151,7 @@ android {
     externalNativeBuild {
         ndkBuild {
             path = file("src/main/jni/Android.mk")
-            setArguments(listOf("-j4))
+            setArguments(listOf("-j4"))
         }
     }
 
