@@ -33,7 +33,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.path.GamePathManager
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
@@ -43,31 +44,30 @@ import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
-import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.elements.GamePathItemLayout
 import com.movtery.zalithlauncher.ui.screens.content.elements.GamePathOperation
 import com.movtery.zalithlauncher.ui.screens.content.elements.VersionItemLayout
 import com.movtery.zalithlauncher.ui.screens.content.elements.VersionsOperation
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.ui.screens.navigateTo
-import com.movtery.zalithlauncher.ui.screens.navigateToDownload
-import com.movtery.zalithlauncher.ui.screens.navigateToFileSelector
 import com.movtery.zalithlauncher.utils.StoragePermissionsUtils
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
+import kotlinx.serialization.Serializable
 
-const val VERSIONS_MANAGE_SCREEN_TAG = "VersionsManageScreen"
+@Serializable
+data object VersionsManageScreenKey: NavKey
 
 @Composable
-fun VersionsManageScreen(
-    navController: NavController
-) {
+fun VersionsManageScreen() {
     BaseScreen(
-        screenTag = VERSIONS_MANAGE_SCREEN_TAG,
-        currentTag = MutableStates.mainScreenTag
+        screenKey = VersionsManageScreenKey,
+        currentKey = mainScreenKey
     ) { isVisible ->
         Row {
             GamePathLayout(
                 isVisible = isVisible,
-                navController = navController,
+                backStack = mainScreenBackStack,
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(2.5f)
@@ -75,7 +75,7 @@ fun VersionsManageScreen(
 
             VersionsLayout(
                 isVisible = isVisible,
-                navController = navController,
+                backStack = mainScreenBackStack,
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(7.5f)
@@ -87,7 +87,7 @@ fun VersionsManageScreen(
                     }
                 },
                 onInstall = {
-                    navController.navigateToDownload(DOWNLOAD_GAME_SCREEN_TAG)
+                    mainScreenBackStack.navigateToDownload()
                 }
             )
         }
@@ -97,7 +97,7 @@ fun VersionsManageScreen(
 @Composable
 private fun GamePathLayout(
     isVisible: Boolean,
-    navController: NavController,
+    backStack: NavBackStack,
     modifier: Modifier = Modifier
 ) {
     val surfaceXOffset by swapAnimateDpAsState(
@@ -108,7 +108,7 @@ private fun GamePathLayout(
 
     var gamePathOperation by remember { mutableStateOf<GamePathOperation>(GamePathOperation.None) }
     MutableStates.filePathSelector?.let {
-        if (it.saveTag == VERSIONS_MANAGE_SCREEN_TAG) {
+        if (it.saveKey === VersionsManageScreenKey) {
             gamePathOperation = GamePathOperation.AddNewPath(it.path)
             MutableStates.filePathSelector = null
         }
@@ -141,9 +141,14 @@ private fun GamePathLayout(
                                 GamePathManager.saveDefaultPath()
                             } else {
                                 (context as? MainActivity)?.let { activity ->
-                                    StoragePermissionsUtils.checkPermissions(activity = activity, hasPermission = {
-                                        GamePathManager.saveCurrentPath(pathItem.id)
-                                    })
+                                    StoragePermissionsUtils.checkPermissions(
+                                        activity = activity,
+                                        message = activity.getString(R.string.versions_manage_game_storage_permissions),
+                                        messageSdk30 = activity.getString(R.string.versions_manage_game_storage_permissions_sdk30),
+                                        hasPermission = {
+                                            GamePathManager.saveCurrentPath(pathItem.id)
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -164,13 +169,18 @@ private fun GamePathLayout(
                 .fillMaxWidth(),
             onClick = {
                 (context as? MainActivity)?.let { activity ->
-                    StoragePermissionsUtils.checkPermissions(activity = activity, hasPermission = {
-                        navController.navigateToFileSelector(
-                            startPath = Environment.getExternalStorageDirectory().absolutePath,
-                            selectFile = false,
-                            saveTag = VERSIONS_MANAGE_SCREEN_TAG
-                        )
-                    })
+                    StoragePermissionsUtils.checkPermissions(
+                        activity = activity,
+                        message = activity.getString(R.string.versions_manage_game_path_storage_permissions),
+                        messageSdk30 = activity.getString(R.string.versions_manage_game_path_storage_permissions_sdk30),
+                        hasPermission = {
+                            backStack.navigateToFileSelector(
+                                startPath = Environment.getExternalStorageDirectory().absolutePath,
+                                selectFile = false,
+                                saveKey = VersionsManageScreenKey
+                            )
+                        }
+                    )
                 }
             }
         ) {
@@ -182,7 +192,7 @@ private fun GamePathLayout(
 @Composable
 private fun VersionsLayout(
     isVisible: Boolean,
-    navController: NavController,
+    backStack: NavBackStack,
     modifier: Modifier = Modifier,
     onRefresh: () -> Unit,
     onInstall: () -> Unit
@@ -215,7 +225,9 @@ private fun VersionsLayout(
                     VersionsOperation(versionsOperation) { versionsOperation = it }
 
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Column(modifier = Modifier.fillMaxWidth().padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))) {
+                        Column(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(PaddingValues(horizontal = 12.dp, vertical = 8.dp))) {
                             Row(
                                 modifier = Modifier
                                     .padding(horizontal = 4.dp)
@@ -267,7 +279,7 @@ private fun VersionsLayout(
                                     },
                                     onSettingsClick = {
                                         VersionsManager.versionBeingSet = version
-                                        navController.navigateTo(VERSION_SETTINGS_SCREEN_TAG)
+                                        backStack.navigateTo(VersionSettingsScreenKey)
                                     },
                                     onRenameClick = { versionsOperation = VersionsOperation.Rename(version) },
                                     onCopyClick = { versionsOperation = VersionsOperation.Copy(version) },
@@ -285,7 +297,7 @@ private fun VersionsLayout(
                         modifier = Modifier.align(Alignment.Center),
                         text = stringResource(R.string.versions_manage_no_versions),
                         onClick = {
-                            navController.navigateToDownload()
+                            backStack.navigateToDownload()
                         }
                     )
                 }

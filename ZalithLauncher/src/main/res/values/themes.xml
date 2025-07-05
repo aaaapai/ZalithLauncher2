@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ZalithLauncher" parent="Theme.Material3.Light.NoActionBar">
+    <style name="AppTheme.ZalithLauncher" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
+    </style>
+    <style name="AppTheme.SplashScreen" parent="@style/Theme.SplashScreen">
+        <item name="postSplashScreenTheme">@style/AppTheme.ZalithLauncher</item>
+        <item name="windowSplashScreenAnimationDuration">200</item>
     </style>
 </resources>

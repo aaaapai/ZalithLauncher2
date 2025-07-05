@@ -119,7 +119,10 @@ class SettingsLayoutScope {
                 .padding(all = 8.dp)
                 .padding(bottom = 4.dp)
         ) {
-            TitleAndSummary(title, summary)
+            TitleAndSummary(
+                title = title,
+                summary = summary
+            )
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()

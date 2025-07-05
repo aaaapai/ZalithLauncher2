@@ -3,20 +3,17 @@ package com.movtery.zalithlauncher.ui.control.mouse
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewTreeObserver
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -31,6 +28,7 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalViewConfiguration
 import com.movtery.zalithlauncher.setting.enums.MouseControlMode
+import com.movtery.zalithlauncher.ui.components.FocusableBox
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -62,21 +60,15 @@ fun TouchpadLayout(
     onMouseMove: (Offset) -> Unit = {},
     onMouseScroll: (Offset) -> Unit = {},
     onMouseButton: (button: Int, pressed: Boolean) -> Unit = { _, _ -> },
-    inputChange: Array<out Any> = arrayOf(Unit)
+    inputChange: Array<out Any> = arrayOf(Unit),
+    requestFocusKey: Any? = null
 ) {
-    val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        //请求焦点，否则无法正常处理实体鼠标指针数据
-        focusRequester.requestFocus()
-    }
-
     val viewConfig = LocalViewConfiguration.current
+    val interactionSource = remember { MutableInteractionSource() }
 
-    Box(
+    FocusableBox(
         modifier = modifier
-            .focusable() //能够获得焦点，便于实体鼠标指针捕获
-            .focusRequester(focusRequester)
+            .hoverable(interactionSource)
             .pointerInput(*inputChange) {
                 coroutineScope {
                     awaitEachGesture {
@@ -159,7 +151,8 @@ fun TouchpadLayout(
                     onMouseScroll = onMouseScroll,
                     onMouseButton = onMouseButton
                 )
-            )
+            ),
+        requestKey = requestFocusKey
     )
 
     SimpleMouseCapture(
@@ -187,13 +180,13 @@ fun SimpleMouseCapture(
 
         val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
             if (requestPointerCapture && hasFocus) {
-                view.requestFocus() //虽然可能会比较多余 e...
                 view.requestPointerCapture()
             }
         }
         view.viewTreeObserver.addOnWindowFocusChangeListener(focusListener)
 
         if (requestPointerCapture) {
+            view.requestFocus()
             if (view.hasWindowFocus()) {
                 view.requestPointerCapture()
             }

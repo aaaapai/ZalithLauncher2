@@ -1,9 +1,5 @@
 package com.movtery.zalithlauncher.ui.screens.splash
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,16 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.entry
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import com.movtery.zalithlauncher.components.InstallableItem
 import com.movtery.zalithlauncher.info.InfoDistributor
-import com.movtery.zalithlauncher.state.MutableStates
-import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
-import com.movtery.zalithlauncher.utils.animation.getAnimateTween
-import com.movtery.zalithlauncher.utils.animation.getAnimateType
+import com.movtery.zalithlauncher.ui.screens.splash.elements.splashScreenKey
 
 /**
  * @param startAllTask 开启全部的解压任务
@@ -42,6 +36,8 @@ fun SplashScreen(
     startAllTask: () -> Unit,
     unpackItems: List<InstallableItem>,
 ) {
+    val backStack = rememberNavBackStack(UnpackScreenKey)
+
     Column {
         TopBar(
             modifier = Modifier
@@ -58,6 +54,7 @@ fun SplashScreen(
         ) {
             NavigationUI(
                 startAllTask = startAllTask,
+                backStack = backStack,
                 unpackItems = unpackItems,
                 modifier = Modifier
                     .fillMaxSize()
@@ -91,44 +88,24 @@ private fun TopBar(
 @Composable
 private fun NavigationUI(
     modifier: Modifier = Modifier,
-    startDestination: String = UNPACK_SCREEN_TAG,
+    backStack: NavBackStack,
     startAllTask: () -> Unit,
     unpackItems: List<InstallableItem>,
 ) {
-    val navController = rememberNavController()
-
-    LaunchedEffect(navController) {
-        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            MutableStates.splashScreenTag = destination.route
-        }
-        navController.addOnDestinationChangedListener(listener)
+    val currentKey = backStack.lastOrNull()
+    LaunchedEffect(currentKey) {
+        splashScreenKey = currentKey
     }
 
-    NavHost(
+    NavDisplay(
+        backStack = backStack,
         modifier = modifier,
-        navController = navController,
-        startDestination = startDestination,
-        enterTransition = {
-            if (getAnimateType() != TransitionAnimationType.CLOSE) {
-                fadeIn(animationSpec = getAnimateTween())
-            } else {
-                EnterTransition.None
-            }
-        },
-        exitTransition = {
-            if (getAnimateType() != TransitionAnimationType.CLOSE) {
-                fadeOut(animationSpec = getAnimateTween())
-            } else {
-                ExitTransition.None
+        entryProvider = entryProvider {
+            entry<UnpackScreenKey> {
+                UnpackScreen(unpackItems) {
+                    startAllTask()
+                }
             }
         }
-    ) {
-        composable(
-            route = UNPACK_SCREEN_TAG
-        ) {
-            UnpackScreen(unpackItems) {
-                startAllTask()
-            }
-        }
-    }
+    )
 }

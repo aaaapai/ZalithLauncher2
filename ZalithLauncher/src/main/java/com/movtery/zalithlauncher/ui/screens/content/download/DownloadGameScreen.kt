@@ -4,10 +4,6 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,10 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.entry
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
 import com.google.gson.JsonSyntaxException
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.download.game.GameInstaller
@@ -40,36 +35,36 @@ import com.movtery.zalithlauncher.game.version.download.DownloadFailedException
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.notification.NotificationManager
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
 import com.movtery.zalithlauncher.ui.screens.content.download.common.GameInstallOperation
 import com.movtery.zalithlauncher.ui.screens.content.download.common.GameInstallingDialog
-import com.movtery.zalithlauncher.ui.screens.content.download.game.DOWNLOAD_GAME_WITH_ADDON_SCREEN_TAG
-import com.movtery.zalithlauncher.ui.screens.content.download.game.DownloadGameScreenStates
 import com.movtery.zalithlauncher.ui.screens.content.download.game.DownloadGameWithAddonScreen
-import com.movtery.zalithlauncher.ui.screens.content.download.game.SELECT_GAME_VERSION_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.download.game.DownloadGameWithAddonScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.download.game.SelectGameVersionScreen
+import com.movtery.zalithlauncher.ui.screens.content.download.game.SelectGameVersionScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.download.game.downloadGameBackStack
+import com.movtery.zalithlauncher.ui.screens.content.download.game.downloadGameScreenKey
 import com.movtery.zalithlauncher.ui.screens.navigateTo
-import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
-import com.movtery.zalithlauncher.utils.animation.getAnimateTween
-import com.movtery.zalithlauncher.utils.animation.getAnimateType
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import io.ktor.client.plugins.HttpRequestTimeoutException
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 
-const val DOWNLOAD_GAME_SCREEN_TAG = "DownloadGameScreen"
+@Serializable
+data object DownloadGameScreenKey: NestedNavKey {
+    override fun isLastScreen(): Boolean = downloadGameBackStack.size <= 1
+}
 
 @Composable
 fun DownloadGameScreen() {
-    val navController = rememberNavController()
+    val currentKey = downloadGameBackStack.lastOrNull()
 
-    LaunchedEffect(navController) {
-        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            DownloadGameScreenStates.screenTag = destination.route
-        }
-        navController.addOnDestinationChangedListener(listener)
+    LaunchedEffect(currentKey) {
+        downloadGameScreenKey = currentKey
     }
 
     var gameInstallOperation by remember { mutableStateOf<GameInstallOperation>(GameInstallOperation.None) }
@@ -81,52 +76,37 @@ fun DownloadGameScreen() {
         }
     )
 
-    NavHost(
+    NavDisplay(
+        backStack = downloadGameBackStack,
         modifier = Modifier.fillMaxSize(),
-        navController = navController,
-        startDestination = SELECT_GAME_VERSION_SCREEN_TAG,
-        enterTransition = {
-            if (getAnimateType() != TransitionAnimationType.CLOSE) {
-                fadeIn(animationSpec = getAnimateTween())
-            } else {
-                EnterTransition.None
-            }
+        onBack = {
+            val key = downloadGameBackStack.lastOrNull()
+            if (key is NestedNavKey && !key.isLastScreen()) return@NavDisplay
+            downloadGameBackStack.removeLastOrNull()
         },
-        exitTransition = {
-            if (getAnimateType() != TransitionAnimationType.CLOSE) {
-                fadeOut(animationSpec = getAnimateTween())
-            } else {
-                ExitTransition.None
-            }
-        }
-    ) {
-        composable(
-            route = SELECT_GAME_VERSION_SCREEN_TAG
-        ) {
-            SelectGameVersionScreen { versionString ->
-                //导航至DownloadGameWithAddonScreen
-                navController.navigateTo(DOWNLOAD_GAME_WITH_ADDON_SCREEN_TAG, "$DOWNLOAD_GAME_WITH_ADDON_SCREEN_TAG?gameVersion=$versionString", true)
-            }
-        }
-        composable(
-            route = "${DOWNLOAD_GAME_WITH_ADDON_SCREEN_TAG}?gameVersion={gameVersion}"
-        ) { backStackEntry ->
-            val context = LocalContext.current
-            val gameVersion = backStackEntry.arguments?.getString("gameVersion") ?: throw IllegalArgumentException("The game version is not set!")
-            DownloadGameWithAddonScreen(gameVersion) { info ->
-                if (gameInstallOperation !is GameInstallOperation.None) {
-                    //不是带安装状态，拒绝此次安装
-                    return@DownloadGameWithAddonScreen
+        entryProvider = entryProvider {
+            entry<SelectGameVersionScreenKey> {
+                SelectGameVersionScreen { versionString ->
+                    downloadGameBackStack.navigateTo(DownloadGameWithAddonScreenKey(versionString))
                 }
-                gameInstallOperation = if (!NotificationManager.checkNotificationEnabled(context)) {
-                    //警告通知权限
-                    GameInstallOperation.WarningForNotification(info)
-                } else {
-                    GameInstallOperation.Install(info)
+            }
+            entry<DownloadGameWithAddonScreenKey> {
+                val context = LocalContext.current
+                DownloadGameWithAddonScreen(it) { info ->
+                    if (gameInstallOperation !is GameInstallOperation.None) {
+                        //不是带安装状态，拒绝此次安装
+                        return@DownloadGameWithAddonScreen
+                    }
+                    gameInstallOperation = if (!NotificationManager.checkNotificationEnabled(context)) {
+                        //警告通知权限
+                        GameInstallOperation.WarningForNotification(info)
+                    } else {
+                        GameInstallOperation.Install(info)
+                    }
                 }
             }
         }
-    }
+    )
 }
 
 @Composable

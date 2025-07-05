@@ -25,11 +25,12 @@ import com.movtery.zalithlauncher.game.account.microsoft.models.XSTSRequest
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.path.UrlManager.Companion.GLOBAL_CLIENT
 import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
+import com.movtery.zalithlauncher.utils.network.httpPostJson
+import com.movtery.zalithlauncher.utils.network.submitForm
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
-import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -43,7 +44,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -53,7 +53,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.util.UUID
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 object MicrosoftAuthenticator {
     private val SCOPES = listOf("XboxLive.signin", "offline_access", "openid", "profile", "email")
@@ -64,35 +63,6 @@ object MicrosoftAuthenticator {
     private const val XBL_AUTH_URL = "https://user.auth.xboxlive.com"
     private const val XSTS_AUTH_URL = "https://xsts.auth.xboxlive.com"
     private const val MINECRAFT_SERVICES_URL = "https://api.minecraftservices.com"
-
-    private suspend inline fun <reified T> submitForm(
-        url: String,
-        parameters: Parameters,
-        context: CoroutineContext = EmptyCoroutineContext
-    ): T = withContext(context) {
-        return@withContext GLOBAL_CLIENT.submitForm(
-            url = url,
-            formParameters = parameters
-        ) {
-            contentType(ContentType.Application.FormUrlEncoded)
-        }.body()
-    }
-
-    private suspend inline fun <reified T> httpPostJson(
-        url: String,
-        body: Any,
-        context: CoroutineContext = EmptyCoroutineContext
-    ): T = withContext(context) {
-        val response = GLOBAL_CLIENT.post(url) {
-            contentType(ContentType.Application.Json)
-            setBody(body)
-        }
-        return@withContext try {
-            Json.decodeFromString(response.bodyAsText())
-        } catch (e: Exception) {
-            throw IllegalArgumentException("Failed to parse response: ${e.message}")
-        }
-    }
 
     /**
      * 从 Microsoft 身份验证终端节点获取设备代码响应
@@ -279,8 +249,8 @@ object MicrosoftAuthenticator {
 
         return withRetry {
             val response = httpPostJson<JsonObject>(
-                "$XSTS_AUTH_URL/xsts/authorize",
-                XSTSRequest(
+                url = "$XSTS_AUTH_URL/xsts/authorize",
+                body = XSTSRequest(
                     properties = XSTSProperties(
                         sandboxId = "RETAIL",
                         userTokens = listOf(xblToken)
@@ -288,7 +258,7 @@ object MicrosoftAuthenticator {
                     relyingParty = "rp://api.minecraftservices.com/",
                     tokenType = "JWT"
                 ),
-                context
+                context = context
             )
 
             when (response["XErr"].text()) {
@@ -317,9 +287,9 @@ object MicrosoftAuthenticator {
         return withRetry {
             runCatching {
                 httpPostJson<MinecraftAuthResponse>(
-                    "$MINECRAFT_SERVICES_URL/authentication/login_with_xbox",
-                    mapOf("identityToken" to "XBL3.0 x=${xstsResult.uhs};${xstsResult.token}"),
-                    context
+                    url = "$MINECRAFT_SERVICES_URL/authentication/login_with_xbox",
+                    body = mapOf("identityToken" to "XBL3.0 x=${xstsResult.uhs};${xstsResult.token}"),
+                    context = context
                 )
             }.onFailure { e ->
                 if (e is ResponseException) {

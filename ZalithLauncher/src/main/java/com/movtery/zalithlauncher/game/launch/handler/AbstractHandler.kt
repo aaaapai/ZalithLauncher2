@@ -4,10 +4,13 @@ import android.view.KeyEvent
 import android.view.Surface
 import androidx.annotation.CallSuper
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import com.movtery.zalithlauncher.game.launch.Launcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 abstract class AbstractHandler(
@@ -17,6 +20,7 @@ abstract class AbstractHandler(
     val onExit: (code: Int) -> Unit
 ) {
     var mIsSurfaceDestroyed: Boolean = false
+    open val inputArea: StateFlow<IntRect?> = MutableStateFlow(null)
 
     @CallSuper
     open suspend fun execute(

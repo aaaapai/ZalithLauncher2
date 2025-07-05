@@ -34,46 +34,49 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.context.copyLocalFile
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleTaskDialog
-import com.movtery.zalithlauncher.ui.screens.content.VERSION_SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.VersionSettingsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.DeleteVersionDialog
 import com.movtery.zalithlauncher.ui.screens.content.elements.RenameVersionDialog
+import com.movtery.zalithlauncher.ui.screens.content.versionSettScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionSettingsBackground
+import com.movtery.zalithlauncher.ui.screens.main.elements.backToMainScreen
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.shareFile
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.Serializable
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-const val VERSION_OVERVIEW_SCREEN_TAG = "VersionBasicManagementScreen"
-
+@Serializable
+data object VersionOverViewScreenKey: NavKey
 
 @Composable
 fun VersionOverViewScreen() {
     BaseScreen(
-        parentScreenTag = VERSION_SETTINGS_SCREEN_TAG,
-        parentCurrentTag = MutableStates.mainScreenTag,
-        childScreenTag = VERSION_OVERVIEW_SCREEN_TAG,
-        childCurrentTag = MutableStates.versionSettingsScreenTag
+        Triple(VersionSettingsScreenKey, mainScreenKey, false),
+        Triple(VersionOverViewScreenKey, versionSettScreenKey, false)
     ) { isVisible ->
 
         val version = VersionsManager.versionBeingSet?.takeIf { it.isValid() } ?: run {
-            ObjectStates.backToLauncherScreen()
+            mainScreenBackStack.backToMainScreen()
             return@BaseScreen
         }
 
@@ -111,7 +114,7 @@ fun VersionOverViewScreen() {
                 versionSummary = version.getVersionSummary()
             },
             onVersionDeleted = {
-                ObjectStates.backToLauncherScreen()
+                mainScreenBackStack.backToMainScreen()
             }
         )
 

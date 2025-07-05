@@ -17,6 +17,7 @@ import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
 import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
+import com.movtery.zalithlauncher.utils.network.ServerAddress
 import com.movtery.zalithlauncher.utils.string.StringUtils
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.isNotEmptyOrBlank
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.toUnicodeEscaped
@@ -62,22 +63,16 @@ class LaunchArgs(
                     lWarning("Quick Play for singleplayer is not supported and has been skipped.")
                 }
             } else {
-                version.getServerIp()?.let { serverIp ->
-                    val (ip, port) = serverIp.split(":").run {
-                        first() to getOrElse(1) { "25565" }
-                    }
-                    if (info.quickPlay.isQuickPlayMultiplayer) {
-                        argsList.apply {
-                            add("--quickPlayMultiplayer")
-                            add("$ip:$port")
-                        }
+                version.getServerIp()?.let { address ->
+                    val parsed = ServerAddress.parse(address)
+                    argsList += if (info.quickPlay.isQuickPlayMultiplayer) {
+                        listOf(
+                            "--quickPlayMultiplayer",
+                            if (parsed.port < 0) "$address:25565" else address
+                        )
                     } else {
-                        argsList.apply {
-                            add("--server")
-                            add(ip)
-                            add("--port")
-                            add(port)
-                        }
+                        val port = parsed.port.takeIf { it >= 0 } ?: 25565
+                        listOf("--server", parsed.host, "--port", port.toString())
                     }
                 }
             }

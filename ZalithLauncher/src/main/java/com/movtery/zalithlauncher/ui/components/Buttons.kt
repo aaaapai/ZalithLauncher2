@@ -98,8 +98,8 @@ fun IconTextButton(
     shape: Shape = MaterialTheme.shapes.large,
     iconSize: Dp = 24.dp,
     painter: Painter,
-    contentDescription: String?,
     text: String,
+    contentDescription: String? = text,
     style: TextStyle = MaterialTheme.typography.labelMedium
 ) {
     BaseIconTextButton(
@@ -125,8 +125,8 @@ fun IconTextButton(
     shape: Shape = MaterialTheme.shapes.large,
     iconSize: Dp = 24.dp,
     imageVector: ImageVector,
-    contentDescription: String?,
     text: String,
+    contentDescription: String? = text,
     style: TextStyle = MaterialTheme.typography.labelMedium
 ) {
     BaseIconTextButton(

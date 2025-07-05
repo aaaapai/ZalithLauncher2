@@ -82,7 +82,6 @@
     <!-- Splash Screen -->
     <string name="splash_screen_unpack_desc">Лаунчеру необходимо установить эти файлы для корректной работы Minecraft. Они включены в приложение и должны быть распакованы перед использованием. Нажмите кнопку ниже, чтобы начать распаковку и обновление.</string>
     <string name="splash_screen_installing">Лаунчер распаковывает файлы. После завершения вы автоматически перейдёте на главный экран. Пожалуйста, подождите.</string>
-    <string name="splash_screen_continue">Согласиться</string>
     <string name="splash_screen_agree">Установить</string>
     <!-- Notification -->
     <string name="notification_title">Проверка разрешений на уведомления</string>
@@ -261,9 +260,7 @@
     <string name="multirt_runtime_version_code">Код версии: %s</string>
     <string name="multirt_runtime_version_arch">Архитектура: %s</string>
     <string name="multirt_no_java_8">Java 8 не найдена. Требуется для этой функции.</string>
-    <string name="multirt_no_compatible_multirt">Не найдена совместимая среда Java (требуется Java %d или новее)</string>
     <string name="execute_jar_title">Запустить Jar</string>
-    <string name="execute_jar_incompatible_runtime">Jar несовместим с Java %d</string>
     <!-- Version Management -->
     <string name="versions_manage_game_path_default">Папка игры по умолчанию</string>
     <string name="versions_manage_game_path_add_new">Добавить папку</string>
@@ -422,7 +419,7 @@
     <string name="settings_control_mouse_physical_mouse_mode_summary">При подключении физической мыши отключить виртуальный указатель мыши и использовать системный указатель мыши для управления</string>
     <string name="settings_control_mouse_physical_mouse_warning">Если ваше устройство интерпретирует правый клик физической мыши как «Назад» или средний клик как «Домой», вы можете перейти в Настройки системы > Параметры разработчика и включить «Отключить мониторинг разрешений», это, вероятно, решит проблему.</string>
     <string name="settings_control_mouse_size_title">Размер виртуальной мыши</string>
-    <string name="settings_control_mouse_speed_title">Чувствительность виртуальной мыши</string>
+    <string name="settings_control_mouse_sensitivity_title">Чувствительность виртуальной мыши</string>
     <string name="settings_control_mouse_control_mode_title">Режим управления</string>
     <string name="settings_control_mouse_control_mode_summary">Выберите метод управления виртуальной мышью: проведите по экрану для перемещения курсора или коснитесь экрана, чтобы указать позицию курсора</string>
     <string name="settings_control_mouse_control_mode_slide">Управление смахиванием</string>
@@ -454,8 +451,6 @@
     <!-- About -->
     <string name="about_plugin_title">Загруженные плагины</string>
     <string name="about_library_title">Сторонние библиотеки</string>
-    <!-- Permissions -->
-    <string name="permissions_external_storage">%s требует доступ к файлам для правильной работы</string>
     <!-- Url -->
     <string name="url_wiki_minecraft_game_release">https://minecraft.wiki/w/Java_Edition_%s</string>
     <string name="url_wiki_minecraft_game_snapshot">https://minecraft.wiki/w/Java_Edition_%s</string>

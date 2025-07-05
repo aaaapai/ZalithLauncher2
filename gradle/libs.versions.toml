@@ -7,6 +7,7 @@ commonsCodec = "1.18.0"
 commonsIo = "2.19.0"
 constraintlayoutCompose = "1.1.1"
 colorpicker = "1.1.2"
+coreSplashscreen = "1.0.1"
 gson = "2.13.1"
 kotlin = "2.0.21"
 coreKtx = "1.16.0"
@@ -18,27 +19,39 @@ composeBom = "2025.05.00"
 material = "1.14.0-alpha01"
 materialColorUtilities = "3.0.0-beta01"
 materialIcons = "1.7.8"
+navigation3 = "1.0.0-alpha04"
+navigation3Lifecycle = "1.0.0-alpha02"
+proxyClientAndroid = "0.0.3"
 mavenArtifact = "4.0.0-rc-3"
 navigationCompose = "2.9.0"
 okhttp = "5.0.0-alpha.14"
-proxyClientAndroid = "0.0.2"
 room = "2.7.1"
 ksp = "2.2.0-RC-2.0.1"
 stringfog-gradlePlugin = "5.2.0"
 stringfog-xor = "5.0.0"
+junit = "4.13.2"
+junitVersion = "1.1.5"
+espressoCore = "3.5.1"
 sqlcipher = "4.9.0"
 xz = "1.10"
 
 [libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIcons" }
 androidx-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIcons" }
-androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
+androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
+androidx-lifecycle-viewmodel-nav3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "navigation3Lifecycle" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
@@ -46,10 +59,12 @@ symbol-processing = { module = "com.google.devtools.ksp:symbol-processing", vers
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 bytehook = { module = "com.bytedance:bytehook", version.ref = "bytehook" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilCompose" }
+coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor2", version.ref = "coilCompose" }
 commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "compress" }
 commons-codec = { module = "commons-codec:commons-codec", version.ref = "commonsCodec" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }

@@ -2,13 +2,9 @@ package com.movtery.zalithlauncher.ui.screens.main
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -62,63 +58,46 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.entry
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
-import com.movtery.zalithlauncher.ui.screens.content.ACCOUNT_MANAGE_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.clearWith
 import com.movtery.zalithlauncher.ui.screens.content.AccountManageScreen
-import com.movtery.zalithlauncher.ui.screens.content.DOWNLOAD_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.AccountManageScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.DownloadScreen
-import com.movtery.zalithlauncher.ui.screens.content.FILE_SELECTOR_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.DownloadScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.FileSelectorScreen
-import com.movtery.zalithlauncher.ui.screens.content.LAUNCHER_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.FileSelectorScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.LauncherScreen
-import com.movtery.zalithlauncher.ui.screens.content.SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.LauncherScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.SettingsScreen
-import com.movtery.zalithlauncher.ui.screens.content.VERSIONS_MANAGE_SCREEN_TAG
-import com.movtery.zalithlauncher.ui.screens.content.VERSION_SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.VersionSettingsScreen
+import com.movtery.zalithlauncher.ui.screens.content.VersionSettingsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.VersionsManageScreen
-import com.movtery.zalithlauncher.ui.screens.content.WEB_VIEW_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.VersionsManageScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.WebViewScreen
+import com.movtery.zalithlauncher.ui.screens.content.WebViewScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.navigateToDownload
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.ui.screens.navigateTo
-import com.movtery.zalithlauncher.ui.screens.navigateToDownload
-import com.movtery.zalithlauncher.ui.screens.navigateToWeb
-import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
-import com.movtery.zalithlauncher.utils.animation.getAnimateType
 import com.movtery.zalithlauncher.utils.string.ShiftDirection
 import com.movtery.zalithlauncher.utils.string.StringUtils
 
 @Composable
-private fun ProgressStates(
-    navController: NavHostController
-) {
-    val back by ObjectStates.backToLauncherScreenState.collectAsState()
-    if (back) { //回到主界面
-        navController.popBackStack(LAUNCHER_SCREEN_TAG, inclusive = false)
-        ObjectStates.resetBackToLauncherScreen()
-    }
-
-    val webUrl by ObjectStates.url.collectAsState()
-    if (!webUrl.isNullOrEmpty()) {
-        navController.navigateToWeb(webUrl!!)
-        ObjectStates.clearUrl()
-    }
-
+fun MainScreen() {
     val throwableState by ObjectStates.throwableFlow.collectAsState()
     throwableState?.let { tm ->
         SimpleAlertDialog(
@@ -126,12 +105,6 @@ private fun ProgressStates(
             text = tm.message,
         ) { ObjectStates.updateThrowable(null) }
     }
-}
-
-@Composable
-fun MainScreen() {
-    val navController = rememberNavController()
-    ProgressStates(navController)
 
     Column(
         modifier = Modifier.fillMaxHeight()
@@ -150,9 +123,9 @@ fun MainScreen() {
                 .fillMaxWidth()
                 .height(40.dp)
                 .zIndex(10f),
-            navController = navController,
             taskRunning = tasks.isEmpty(),
             isTasksExpanded = isTaskMenuExpanded,
+            backStack = mainScreenBackStack,
             color = MaterialTheme.colorScheme.surfaceContainer
         ) {
             changeTasksExpandedState()
@@ -164,7 +137,7 @@ fun MainScreen() {
                 .weight(1f)
         ) {
             NavigationUI(
-                navController = navController,
+                backStack = mainScreenBackStack,
                 modifier = Modifier
                     .fillMaxSize()
                     .background(color = MaterialTheme.colorScheme.surface)
@@ -186,17 +159,16 @@ fun MainScreen() {
 
 @Composable
 private fun TopBar(
-    navController: NavHostController,
     taskRunning: Boolean,
     isTasksExpanded: Boolean,
+    backStack: NavBackStack,
     modifier: Modifier = Modifier,
     color: Color,
     changeExpandedState: () -> Unit = {}
 ) {
     var appTitle by rememberSaveable { mutableStateOf(InfoDistributor.LAUNCHER_IDENTIFIER) }
-    val currentTag = MutableStates.mainScreenTag
 
-    val inLauncherScreen = currentTag == null || currentTag == LAUNCHER_SCREEN_TAG
+    val inLauncherScreen = mainScreenKey == null || mainScreenKey is LauncherScreenKey
 
     Surface(
         modifier = modifier,
@@ -225,7 +197,7 @@ private fun TopBar(
                     if (!inLauncherScreen) {
                         //不在主屏幕时才允许返回
                         backDispatcher?.onBackPressed() ?: run {
-                            navController.popBackStack()
+                            backStack.removeFirstOrNull()
                         }
                     }
                 }
@@ -274,7 +246,9 @@ private fun TopBar(
                     .width(120.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LinearProgressIndicator(modifier = Modifier.weight(1f).align(Alignment.CenterVertically))
+                LinearProgressIndicator(modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically))
                 Icon(
                     modifier = Modifier.size(22.dp),
                     imageVector = Icons.Filled.Task,
@@ -290,7 +264,7 @@ private fun TopBar(
                     }
                     .fillMaxHeight(),
                 onClick = {
-                    navController.navigateToDownload()
+                    backStack.navigateToDownload()
                 }
             ) {
                 Icon(
@@ -307,19 +281,19 @@ private fun TopBar(
                     }
                     .fillMaxHeight(),
                 onClick = {
-                    if (currentTag == LAUNCHER_SCREEN_TAG) {
-                        navController.navigateTo(SETTINGS_SCREEN_TAG)
+                    if (inLauncherScreen) {
+                        backStack.navigateTo(SettingsScreenKey)
                     } else {
-                        navController.popBackStack(LAUNCHER_SCREEN_TAG, inclusive = false)
+                        backStack.clearWith(LauncherScreenKey)
                     }
                 }
             ) {
                 Crossfade(
-                    targetState = currentTag,
+                    targetState = mainScreenKey,
                     label = "SettingsIconCrossfade",
                     animationSpec = getAnimateTween()
-                ) { tag ->
-                    val isLauncherScreen = tag == LAUNCHER_SCREEN_TAG
+                ) { key ->
+                    val isLauncherScreen = key === LauncherScreenKey
                     Icon(
                         imageVector = if (isLauncherScreen) {
                             Icons.Filled.Settings
@@ -340,88 +314,38 @@ private fun TopBar(
 
 @Composable
 private fun NavigationUI(
-    navController: NavHostController,
+    backStack: NavBackStack,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(navController) {
-        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            MutableStates.mainScreenTag = destination.route
-        }
-        navController.addOnDestinationChangedListener(listener)
+    val currentKey = backStack.lastOrNull()
+
+    LaunchedEffect(currentKey) {
+        mainScreenKey = currentKey
     }
 
-    NavHost(
+    NavDisplay(
+        backStack = backStack,
         modifier = modifier,
-        navController = navController,
-        startDestination = LAUNCHER_SCREEN_TAG,
-        enterTransition = {
-            if (getAnimateType() != TransitionAnimationType.CLOSE) {
-                fadeIn(animationSpec = getAnimateTween())
-            } else {
-                EnterTransition.None
-            }
+        onBack = {
+            val key = backStack.lastOrNull()
+            if (key is NestedNavKey && !key.isLastScreen()) return@NavDisplay
+            backStack.removeLastOrNull()
         },
-        exitTransition = {
-            if (getAnimateType() != TransitionAnimationType.CLOSE) {
-                fadeOut(animationSpec = getAnimateTween())
-            } else {
-                ExitTransition.None
+        entryProvider = entryProvider {
+            entry<LauncherScreenKey> { LauncherScreen() }
+            entry<SettingsScreenKey> { SettingsScreen() }
+            entry<AccountManageScreenKey> { AccountManageScreen() }
+            entry<WebViewScreenKey> { WebViewScreen(it) }
+            entry<VersionsManageScreenKey> { VersionsManageScreen() }
+            entry<FileSelectorScreenKey> {
+                FileSelectorScreen(it) {
+                    backStack.removeLastOrNull()
+                }
             }
+            entry<VersionSettingsScreenKey> { VersionSettingsScreen() }
+            entry<DownloadScreenKey> { DownloadScreen(it) }
         }
-    ) {
-        composable(
-            route = LAUNCHER_SCREEN_TAG
-        ) {
-            LauncherScreen(navController)
-        }
-        composable(
-            route = SETTINGS_SCREEN_TAG
-        ) {
-            SettingsScreen()
-        }
-        composable(
-            route = ACCOUNT_MANAGE_SCREEN_TAG
-        ) {
-            AccountManageScreen()
-        }
-        composable(
-            route = "$WEB_VIEW_SCREEN_TAG{url}",
-            arguments = listOf(navArgument("url") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val url = backStackEntry.arguments?.getString("url") ?: ""
-            WebViewScreen(url)
-        }
-        composable(
-            route = VERSIONS_MANAGE_SCREEN_TAG
-        ) {
-            VersionsManageScreen(navController)
-        }
-        composable(
-            route = "${FILE_SELECTOR_SCREEN_TAG}startPath={startPath}&saveTag={saveTag}&selectFile={selectFile}"
-        ) { backStackEntry ->
-            val startPath = backStackEntry.arguments?.getString("startPath") ?: throw IllegalArgumentException("The start path is not set!")
-            val saveTag = backStackEntry.arguments?.getString("saveTag") ?: ""
-            val selectFile = backStackEntry.arguments?.getString("selectFile")?.toBoolean() ?: true
-            FileSelectorScreen(
-                startPath = startPath,
-                selectFile = selectFile,
-                saveTag = saveTag
-            ) {
-                navController.popBackStack()
-            }
-        }
-        composable(
-            route = VERSION_SETTINGS_SCREEN_TAG
-        ) {
-            VersionSettingsScreen()
-        }
-        composable(
-            route = "${DOWNLOAD_SCREEN_TAG}?targetScreen={targetScreen}"
-        ) { backStackEntry ->
-            val targetScreen = backStackEntry.arguments?.getString("targetScreen")
-            DownloadScreen(targetScreen)
-        }
-    }
+    )
 }
 
 @Composable
@@ -476,7 +400,9 @@ private fun TaskMenu(
             }
 
             HorizontalDivider(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
                 color = MaterialTheme.colorScheme.onSurface
             )
 

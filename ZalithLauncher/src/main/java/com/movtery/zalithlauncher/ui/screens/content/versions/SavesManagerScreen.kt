@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation3.runtime.NavKey
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.gif.GifDecoder
@@ -72,17 +73,17 @@ import com.movtery.zalithlauncher.game.launch.LaunchGame
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionInfo
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
-import com.movtery.zalithlauncher.state.MutableStates
-import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ContentCheckBox
+import com.movtery.zalithlauncher.ui.components.LittleTextLabel
 import com.movtery.zalithlauncher.ui.components.ProgressDialog
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
 import com.movtery.zalithlauncher.ui.components.TooltipIconButton
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
-import com.movtery.zalithlauncher.ui.screens.content.VERSION_SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.VersionSettingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.versionSettScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.FileNameInputDialog
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.MinecraftColorTextNormal
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.SaveData
@@ -93,31 +94,36 @@ import com.movtery.zalithlauncher.ui.screens.content.versions.elements.filterSav
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.isCompatible
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.parseLevelDatFile
 import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionSettingsBackground
+import com.movtery.zalithlauncher.ui.screens.main.elements.backToMainScreen
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.copyText
 import com.movtery.zalithlauncher.utils.file.formatFileSize
+import com.movtery.zalithlauncher.utils.formatDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.util.Date
 
-const val SAVES_MANAGER_SCREEN_TAG = "SavesManagerScreen"
+@Serializable
+data object SavesManagerScreenKey: NavKey
 
 @Composable
 fun SavesManagerScreen() {
     BaseScreen(
-        parentScreenTag = VERSION_SETTINGS_SCREEN_TAG,
-        parentCurrentTag = MutableStates.mainScreenTag,
-        childScreenTag = SAVES_MANAGER_SCREEN_TAG,
-        childCurrentTag = MutableStates.versionSettingsScreenTag
+        Triple(VersionSettingsScreenKey, mainScreenKey, false),
+        Triple(SavesManagerScreenKey, versionSettScreenKey, false),
     ) { isVisible ->
 
         val version = VersionsManager.versionBeingSet?.takeIf { it.isValid() } ?: run {
-            ObjectStates.backToLauncherScreen()
+            mainScreenBackStack.backToMainScreen()
             return@BaseScreen
         }
         val versionInfo = version.getVersionInfo()!!
@@ -400,7 +406,7 @@ private fun SaveItemLayout(
             //存档的封面图标
             SaveIcon(
                 modifier = Modifier
-                    .size(38.dp)
+                    .size(42.dp)
                     .clip(shape = RoundedCornerShape(10.dp)),
                 saveData = saveData
             )
@@ -409,37 +415,29 @@ private fun SaveItemLayout(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .weight(1f),
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 val levelName = saveData.levelName
-                MinecraftColorTextNormal(
-                    inputText = (levelName ?: saveData.saveFile.name),
-                    style = MaterialTheme.typography.titleSmall
-                )
-
                 FlowRow(
-                    modifier = Modifier.alpha(0.8f),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (saveData.isValid) {
-                        if (levelName != null) {
-                            Text(
-                                text = stringResource(R.string.generic_file_name, saveData.saveFile.name),
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
+                    MinecraftColorTextNormal(
+                        inputText = (levelName ?: saveData.saveFile.name),
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1
+                    )
 
+                    if (saveData.isValid) {
                         saveData.levelMCVersion?.takeIf { it.isNotEmpty() }?.let { levelMCVer ->
                             if (isCompatible) {
-                                Text(
-                                    text = levelMCVer,
-                                    style = MaterialTheme.typography.bodySmall
+                                LittleTextLabel(
+                                    text = levelMCVer
                                 )
                             } else {
-                                Text(
+                                LittleTextLabel(
                                     text = levelMCVer,
                                     color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
+                                    contentColor = MaterialTheme.colorScheme.onError
                                 )
                             }
                         }
@@ -447,18 +445,28 @@ private fun SaveItemLayout(
                         //虽然极限模式与 gameMode 是分离开的
                         //不过它可以算作是一种游戏模式，毕竟创建世界时，极限模式就是在游戏模式里面选择的
                         if (saveData.hardcoreMode == true) {
-                            Text(
-                                text = stringResource(R.string.saves_manage_hardcore),
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            LittleTextLabel(text = stringResource(R.string.saves_manage_hardcore))
                         } else {
                             saveData.gameMode?.let { gameMode ->
-                                Text(
-                                    text = stringResource(gameMode.nameRes),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                                LittleTextLabel(text = stringResource(gameMode.nameRes))
                             }
                         }
+                    }
+                }
+
+                if (saveData.isValid) {
+                    Row(
+                        modifier = Modifier.alpha(0.7f),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        val timeString = formatDate(
+                            date = Date(saveData.lastPlayed),
+                            pattern = stringResource(R.string.date_format)
+                        )
+                        Text(
+                            text = stringResource(R.string.saves_manage_last_played, timeString),
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
@@ -541,7 +549,7 @@ private fun SaveIcon(
     }
 
     val (model, defaultRes) = remember(triggerRefresh, context) {
-        val default = null to R.drawable.ic_unknown_icon
+        val default = null to R.drawable.ic_unknown_save
         val file = iconFile.takeIf { it.exists() && it.isFile }
         when {
             file == null -> default //不存在则使用默认

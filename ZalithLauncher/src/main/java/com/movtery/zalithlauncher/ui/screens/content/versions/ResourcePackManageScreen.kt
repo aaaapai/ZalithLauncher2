@@ -55,14 +55,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation3.runtime.NavKey
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.gif.GifDecoder
 import coil3.request.ImageRequest
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
-import com.movtery.zalithlauncher.state.MutableStates
-import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ContentCheckBox
 import com.movtery.zalithlauncher.ui.components.ProgressDialog
@@ -71,7 +70,8 @@ import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
 import com.movtery.zalithlauncher.ui.components.TooltipIconButton
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
-import com.movtery.zalithlauncher.ui.screens.content.VERSION_SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.VersionSettingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.versionSettScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.FileNameInputDialog
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.MinecraftColorTextNormal
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.ResourcePackFilter
@@ -81,6 +81,9 @@ import com.movtery.zalithlauncher.ui.screens.content.versions.elements.ResourceP
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.filterPacks
 import com.movtery.zalithlauncher.ui.screens.content.versions.elements.parseResourcePack
 import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionSettingsBackground
+import com.movtery.zalithlauncher.ui.screens.main.elements.backToMainScreen
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.file.formatFileSize
@@ -89,22 +92,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-const val RESOURCE_PACK_MANAGE_SCREEN_TAG = "ResourcePackManageScreen"
+@Serializable
+data object ResourcePackManageScreenKey: NavKey
 
 @Composable
 fun ResourcePackManageScreen() {
     BaseScreen(
-        parentScreenTag = VERSION_SETTINGS_SCREEN_TAG,
-        parentCurrentTag = MutableStates.mainScreenTag,
-        childScreenTag = RESOURCE_PACK_MANAGE_SCREEN_TAG,
-        childCurrentTag = MutableStates.versionSettingsScreenTag
+        Triple(VersionSettingsScreenKey, mainScreenKey, false),
+        Triple(ResourcePackManageScreenKey, versionSettScreenKey, false)
     ) { isVisible ->
 
         val version = VersionsManager.versionBeingSet?.takeIf { it.isValid() } ?: run {
-            ObjectStates.backToLauncherScreen()
+            mainScreenBackStack.backToMainScreen()
             return@BaseScreen
         }
         val resourcePackDir = File(version.getGameDir(), "resourcepacks")
@@ -446,7 +449,7 @@ private fun ResourcePackIcon(
     }
 
     val (model, defaultRes) = remember(triggerRefresh, context) {
-        val default = null to R.drawable.ic_unknown_icon
+        val default = null to R.drawable.ic_unknown_pack
         val icon = resourcePackInfo.icon
         when {
             icon == null -> default //不存在则使用默认

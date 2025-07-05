@@ -42,6 +42,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
 import com.movtery.zalithlauncher.game.addons.modloader.ResponseTooShortException
@@ -57,25 +58,30 @@ import com.movtery.zalithlauncher.game.addons.modloader.optifine.OptiFineVersion
 import com.movtery.zalithlauncher.game.addons.modloader.optifine.OptiFineVersions
 import com.movtery.zalithlauncher.game.download.game.GameDownloadInfo
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
-import com.movtery.zalithlauncher.ui.screens.content.DOWNLOAD_SCREEN_TAG
-import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.DownloadScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.download.DownloadGameScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.downloadScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.isFilenameInvalid
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 
-const val DOWNLOAD_GAME_WITH_ADDON_SCREEN_TAG = "DownloadGameWithAddonScreen"
+@Serializable
+data class DownloadGameWithAddonScreenKey(
+    val gameVersion: String
+): NavKey
 
 private class AddonList {
     //版本列表
@@ -118,16 +124,20 @@ private class CurrentAddon {
 
 @Composable
 fun DownloadGameWithAddonScreen(
-    gameVersion: String,
+    key: DownloadGameWithAddonScreenKey,
     onInstall: (GameDownloadInfo) -> Unit = {}
 ) {
+    val gameVersion = key.gameVersion
+
     val addonList = AddonList()
     val currentAddon = CurrentAddon()
 
     BaseScreen(
-        Triple(DOWNLOAD_SCREEN_TAG, MutableStates.mainScreenTag, true),
-        Triple(DOWNLOAD_GAME_SCREEN_TAG, MutableStates.downloadScreenTag, false),
-        Triple(DOWNLOAD_GAME_WITH_ADDON_SCREEN_TAG, DownloadGameScreenStates.screenTag, true),
+        levels1 = listOf(
+            Pair(DownloadScreenKey::class.java, mainScreenKey),
+            Pair(DownloadGameWithAddonScreenKey::class.java, downloadGameScreenKey)
+        ),
+        Triple(DownloadGameScreenKey, downloadScreenKey, false),
     ) { isVisible ->
         val yOffset by swapAnimateDpAsState(
             targetValue = (-40).dp,

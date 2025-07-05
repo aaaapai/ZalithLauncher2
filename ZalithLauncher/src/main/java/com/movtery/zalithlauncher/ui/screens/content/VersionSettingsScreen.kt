@@ -1,9 +1,5 @@
 package com.movtery.zalithlauncher.ui.screens.content
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -31,6 +27,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -38,49 +36,58 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entry
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import com.movtery.zalithlauncher.R
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.CategoryIcon
 import com.movtery.zalithlauncher.ui.screens.content.elements.CategoryItem
-import com.movtery.zalithlauncher.ui.screens.content.versions.RESOURCE_PACK_MANAGE_SCREEN_TAG
 import com.movtery.zalithlauncher.ui.screens.content.versions.ResourcePackManageScreen
-import com.movtery.zalithlauncher.ui.screens.content.versions.SAVES_MANAGER_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.versions.ResourcePackManageScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.versions.SavesManagerScreen
-import com.movtery.zalithlauncher.ui.screens.content.versions.VERSION_CONFIG_SCREEN_TAG
-import com.movtery.zalithlauncher.ui.screens.content.versions.VERSION_OVERVIEW_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.versions.SavesManagerScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.versions.VersionConfigScreen
+import com.movtery.zalithlauncher.ui.screens.content.versions.VersionConfigScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.versions.VersionOverViewScreen
+import com.movtery.zalithlauncher.ui.screens.content.versions.VersionOverViewScreenKey
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.ui.screens.navigateOnce
-import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
-import com.movtery.zalithlauncher.utils.animation.getAnimateTween
-import com.movtery.zalithlauncher.utils.animation.getAnimateType
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
+import kotlinx.serialization.Serializable
 
-const val VERSION_SETTINGS_SCREEN_TAG = "VersionSettingsScreen"
+@Serializable
+data object VersionSettingsScreenKey: NestedNavKey {
+    override fun isLastScreen(): Boolean = true
+}
+
+/**
+ * 状态：版本设置屏幕的标签
+ */
+var versionSettScreenKey by mutableStateOf<NavKey?>(null)
 
 @Composable
 fun VersionSettingsScreen() {
+    val backStack = rememberNavBackStack(VersionOverViewScreenKey)
+
     BaseScreen(
-        screenTag = VERSION_SETTINGS_SCREEN_TAG,
-        currentTag = MutableStates.mainScreenTag
+        screenKey = VersionSettingsScreenKey,
+        currentKey = mainScreenKey
     ) { isVisible ->
-        val navController = rememberNavController()
 
         Row(modifier = Modifier.fillMaxSize()) {
             TabMenu(
                 isVisible = isVisible,
-                navController = navController,
+                backStack = backStack,
                 modifier = Modifier.fillMaxHeight()
             )
 
             NavigationUI(
-                navController = navController,
+                backStack = backStack,
                 modifier = Modifier.fillMaxHeight()
             )
         }
@@ -88,16 +95,16 @@ fun VersionSettingsScreen() {
 }
 
 private val settingItems = listOf(
-    CategoryItem(VERSION_OVERVIEW_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Dashboard, R.string.versions_settings_overview) }, R.string.versions_settings_overview),
-    CategoryItem(VERSION_CONFIG_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Build, R.string.versions_settings_config) }, R.string.versions_settings_config),
-    CategoryItem(SAVES_MANAGER_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Public, R.string.saves_manage) }, R.string.saves_manage, division = true),
-    CategoryItem(RESOURCE_PACK_MANAGE_SCREEN_TAG, { CategoryIcon(Icons.Outlined.Image, R.string.resource_pack_manage) }, R.string.resource_pack_manage)
+    CategoryItem(VersionOverViewScreenKey, { CategoryIcon(Icons.Outlined.Dashboard, R.string.versions_settings_overview) }, R.string.versions_settings_overview),
+    CategoryItem(VersionConfigScreenKey, { CategoryIcon(Icons.Outlined.Build, R.string.versions_settings_config) }, R.string.versions_settings_config),
+    CategoryItem(SavesManagerScreenKey, { CategoryIcon(Icons.Outlined.Public, R.string.saves_manage) }, R.string.saves_manage, division = true),
+    CategoryItem(ResourcePackManageScreenKey, { CategoryIcon(Icons.Outlined.Image, R.string.resource_pack_manage) }, R.string.resource_pack_manage)
 )
 
 @Composable
 private fun TabMenu(
     isVisible: Boolean,
-    navController: NavController,
+    backStack: NavBackStack,
     modifier: Modifier = Modifier
 ) {
     val xOffset by swapAnimateDpAsState(
@@ -128,9 +135,9 @@ private fun TabMenu(
             }
 
             NavigationRailItem(
-                selected = MutableStates.versionSettingsScreenTag == item.tag,
+                selected = versionSettScreenKey === item.key,
                 onClick = {
-                    navController.navigateOnce(item.tag)
+                    backStack.navigateOnce(item.key)
                 },
                 icon = {
                     item.icon()
@@ -153,54 +160,28 @@ private fun TabMenu(
 
 @Composable
 private fun NavigationUI(
-    navController: NavHostController,
+    backStack: NavBackStack,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(navController) {
-        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            MutableStates.versionSettingsScreenTag = destination.route
-        }
-        navController.addOnDestinationChangedListener(listener)
+    val currentKey = backStack.lastOrNull()
+
+    LaunchedEffect(currentKey) {
+        versionSettScreenKey = currentKey
     }
 
-    NavHost(
+    NavDisplay(
+        backStack = backStack,
         modifier = modifier,
-        navController = navController,
-        startDestination = VERSION_OVERVIEW_SCREEN_TAG,
-        enterTransition = {
-            if (getAnimateType() != TransitionAnimationType.CLOSE) {
-                fadeIn(animationSpec = getAnimateTween())
-            } else {
-                EnterTransition.None
-            }
+        onBack = {
+            val key = backStack.lastOrNull()
+            if (key is NestedNavKey && !key.isLastScreen()) return@NavDisplay
+            backStack.removeLastOrNull()
         },
-        exitTransition = {
-            if (getAnimateType() != TransitionAnimationType.CLOSE) {
-                fadeOut(animationSpec = getAnimateTween())
-            } else {
-                ExitTransition.None
-            }
+        entryProvider = entryProvider {
+            entry<VersionOverViewScreenKey> { VersionOverViewScreen() }
+            entry<VersionConfigScreenKey> { VersionConfigScreen() }
+            entry<SavesManagerScreenKey> { SavesManagerScreen() }
+            entry<ResourcePackManageScreenKey> { ResourcePackManageScreen() }
         }
-    ) {
-        composable(
-            route = VERSION_OVERVIEW_SCREEN_TAG
-        ) {
-            VersionOverViewScreen()
-        }
-        composable(
-            route = VERSION_CONFIG_SCREEN_TAG
-        ) {
-            VersionConfigScreen()
-        }
-        composable(
-            route = SAVES_MANAGER_SCREEN_TAG
-        ) {
-            SavesManagerScreen()
-        }
-        composable(
-            route = RESOURCE_PACK_MANAGE_SCREEN_TAG
-        ) {
-            ResourcePackManageScreen()
-        }
-    }
+    )
 }

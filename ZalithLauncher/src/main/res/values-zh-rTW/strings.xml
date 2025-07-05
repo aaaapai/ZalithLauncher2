@@ -38,6 +38,9 @@
     <string name="generic_loading">載入中</string>
     <string name="generic_anyway">仍要使用</string>
     <string name="generic_go_it">我瞭解了</string>
+    <!--  单位  -->
+    <string name="unit_day">天</string>
+    <string name="date_format">yyyy 年 MM 月 dd 日 HH:mm:ss</string>
     <!--  啟動器版本  -->
     <string name="launcher_version_label_alpha">Alpha 版：%s，僅供演示</string>
     <string name="launcher_version_label_beta">Beta 版：%s，僅供演示</string>
@@ -79,7 +82,6 @@
     <!--  啟動頁面  -->
     <string name="splash_screen_unpack_desc">啟動器需要安裝這些內容，才能確保 Minecraft 能夠正常啟動。這些內容已包含在應用程式中，需要解壓縮後才能正常使用，點擊下方按鈕，開始解壓縮並更新這些內容。</string>
     <string name="splash_screen_installing">啟動器正在解壓縮這些內容，解壓縮完成後將自動進入主介面，請耐心等候。</string>
-    <string name="splash_screen_continue">同意並繼續</string>
     <string name="splash_screen_agree">同意並安裝</string>
     <!--  通知  -->
     <string name="notification_title">檢查通知權限</string>
@@ -142,6 +144,107 @@
     <string name="download_install_error_download_failed">部分檔案下載失敗，可能是網路問題導致</string>
     <string name="download_install_success_title">安裝成功</string>
     <string name="download_install_success_message">您的遊戲已順利完成安裝！</string>
+    <string name="download_assets_filter_search_name">搜尋名稱</string>
+    <string name="download_assets_filter_search_platform">目標平台</string>
+    <string name="download_assets_filter_game_version">遊戲版本</string>
+    <string name="download_assets_filter_sort_field">排序方式</string>
+    <string name="download_assets_filter_category">類別</string>
+    <string name="download_assets_filter_modloader">模組載入器</string>
+    <string name="download_assets_filter_none">未選擇</string>
+    <string name="download_assets_filter_sort_by_relevant">相關性</string>
+    <string name="download_assets_filter_sort_by_total_downloads">總下載量</string>
+    <string name="download_assets_filter_sort_by_popularity">人氣</string>
+    <string name="download_assets_filter_sort_by_recently_created">最近建立</string>
+    <string name="download_assets_filter_sort_by_recently_updated">最近更新</string>
+    <string name="download_assets_result_authors">作者：%s</string>
+    <string name="download_assets_result_previous_page">上一頁</string>
+    <string name="download_assets_result_next_page">下一頁</string>
+    <string name="download_assets_failed_to_get_result">取得搜尋結果失敗：%s，點擊重試</string>
+    <!--  資源類別  -->
+    <string name="download_assets_category_worldgen">世界生成</string>
+    <string name="download_assets_category_biomes">生物群系</string>
+    <string name="download_assets_category_dimensions">維度</string>
+    <string name="download_assets_category_ores_resources">礦物與資源</string>
+    <string name="download_assets_category_structures">天然結構</string>
+    <string name="download_assets_category_technology">科技</string>
+    <string name="download_assets_category_item_fluid_energy_transport">管道與物流</string>
+    <string name="download_assets_category_automation">自動化</string>
+    <string name="download_assets_category_energy">能源</string>
+    <string name="download_assets_category_redstone">紅石</string>
+    <string name="download_assets_category_food">食物與烹飪</string>
+    <string name="download_assets_category_farming">農業</string>
+    <string name="download_assets_category_transport">運輸</string>
+    <string name="download_assets_category_storage">倉儲</string>
+    <string name="download_assets_category_magic">魔法</string>
+    <string name="download_assets_category_adventure">冒險</string>
+    <string name="download_assets_category_decoration">裝飾</string>
+    <string name="download_assets_category_mobs">生物</string>
+    <string name="download_assets_category_equipment">裝備</string>
+    <string name="download_assets_category_information">資訊顯示</string>
+    <string name="download_assets_category_social">伺服器</string>
+    <string name="download_assets_category_utility">改良工具</string>
+    <string name="download_assets_category_library">支援庫</string>
+    <string name="download_assets_category_game_mechanics">遊戲機制</string>
+    <string name="download_assets_category_optimization">效能優化</string>
+    <string name="download_assets_category_multiplayer">多人模式</string>
+    <string name="download_assets_category_challenging">高難度</string>
+    <string name="download_assets_category_combat">戰鬥</string>
+    <string name="download_assets_category_quests">任務</string>
+    <string name="download_assets_category_exploration">探險</string>
+    <string name="download_assets_category_mini_game">小遊戲</string>
+    <string name="download_assets_category_sci_fi">科幻</string>
+    <string name="download_assets_category_skyblock">空島</string>
+    <string name="download_assets_category_vanilla">原版改良</string>
+    <string name="download_assets_category_ftb">FTB 團隊</string>
+    <string name="download_assets_category_map_based">地圖型</string>
+    <string name="download_assets_category_lightweight">輕量化</string>
+    <string name="download_assets_category_extra_large">大型模組</string>
+    <string name="download_assets_category_kitchen_sink">大雜燴</string>
+    <string name="download_assets_category_traditional">傳統風格</string>
+    <string name="download_assets_category_steampunk">蒸汽龐克</string>
+    <string name="download_assets_category_modern">現代風格</string>
+    <string name="download_assets_category_photo_realistic">寫實風格</string>
+    <string name="download_assets_category_animated">動畫效果</string>
+    <string name="download_assets_category_mod_support">模組支援</string>
+    <string name="download_assets_category_miscellaneous">其他</string>
+    <string name="download_assets_category_16x">16x16 像素</string>
+    <string name="download_assets_category_32x">32x32 像素</string>
+    <string name="download_assets_category_64x">64x64 像素</string>
+    <string name="download_assets_category_128x">128x128 像素</string>
+    <string name="download_assets_category_256x">256x256 像素</string>
+    <string name="download_assets_category_512x">512x512 像素以上</string>
+    <string name="download_assets_category_game_map">遊戲挑戰</string>
+    <string name="download_assets_category_modded_world">模組世界</string>
+    <string name="download_assets_category_parkour">跑酷</string>
+    <string name="download_assets_category_puzzle">解謎</string>
+    <string name="download_assets_category_cartoon">卡通風格</string>
+    <string name="download_assets_category_cursed">邪門風格</string>
+    <string name="download_assets_category_fantasy">奇幻風格</string>
+    <string name="download_assets_category_semi_realistic">半寫實</string>
+    <string name="download_assets_category_atmosphere">氛圍營造</string>
+    <string name="download_assets_category_bloom">泛光特效</string>
+    <string name="download_assets_category_colored_lighting">彩色光源</string>
+    <string name="download_assets_category_foliage">植被</string>
+    <string name="download_assets_category_path_tracing">路徑追蹤</string>
+    <string name="download_assets_category_pbr">PBR 材質</string>
+    <string name="download_assets_category_reflections">反射</string>
+    <string name="download_assets_category_shadows">陰影</string>
+    <string name="download_assets_category_configuration_potato">超低階配置</string>
+    <string name="download_assets_category_configuration_low">低階配置</string>
+    <string name="download_assets_category_configuration_medium">中階配置</string>
+    <string name="download_assets_category_configuration_high">高階配置</string>
+    <string name="download_assets_category_screenshot">截圖</string>
+    <!-- 資源功能 -->
+    <string name="download_assets_features_audio">音訊</string>
+    <string name="download_assets_features_blocks">方塊</string>
+    <string name="download_assets_features_core_shaders">核心著色器</string>
+    <string name="download_assets_features_entities">實體</string>
+    <string name="download_assets_features_environment">環境</string>
+    <string name="download_assets_features_fonts">字型</string>
+    <string name="download_assets_features_gui">圖形介面</string>
+    <string name="download_assets_features_items">物品</string>
+    <string name="download_assets_features_locale">在地化</string>
+    <string name="download_assets_features_models">模型</string>
     <!--  啟動遊戲  -->
     <string name="game_launch_no_version">未選擇遊戲版本！</string>
     <string name="game_launch_no_account">未登入遊戲帳號！</string>
@@ -258,9 +361,7 @@
     <string name="multirt_runtime_version_code">版本號：%s</string>
     <string name="multirt_runtime_version_arch">架構：%s</string>
     <string name="multirt_no_java_8">找不到 Java 8，要使用此功能，您必須安裝 Java 8</string>
-    <string name="multirt_no_compatible_multirt">找不到任何相容的 Java 執行環境，需要使用 Java %d 或更新版本</string>
     <string name="execute_jar_title">執行 Jar 檔案</string>
-    <string name="execute_jar_incompatible_runtime">此 Jar 檔案與 Java %d 不相容</string>
     <!--  版本  -->
     <string name="versions_manage_game_path_default">預設遊戲目錄</string>
     <string name="versions_manage_game_path_add_new">新增遊戲目錄</string>
@@ -270,6 +371,10 @@
     <string name="versions_manage_game_path_exists_title">遊戲目錄已存在</string>
     <string name="versions_manage_game_path_exists_message">目前選擇的遊戲目錄與現有目錄衝突，您不能同時管理兩個相同的遊戲目錄！</string>
     <string name="versions_manage_game_path_error_title">操作遊戲目錄時發生問題</string>
+    <string name="versions_manage_game_path_storage_permissions">想要將遊戲安裝到外部儲存空間？請先為啟動器開啟外部儲存權限，否則將無法在外部目錄安裝遊戲！</string>
+    <string name="versions_manage_game_path_storage_permissions_sdk30">想要將遊戲安裝到外部儲存空間？請先為啟動器開啟「管理裝置上的所有檔案」權限，否則將無法在外部目錄安裝遊戲！</string>
+    <string name="versions_manage_game_storage_permissions">想要使用外部遊戲路徑？請先為啟動器開啟外部儲存權限，否則將無法使用外部的遊戲檔案！</string>
+    <string name="versions_manage_game_storage_permissions_sdk30">想要使用外部遊戲路徑？請先為啟動器開啟「管理裝置上的所有檔案」權限，否則將無法使用外部的遊戲檔案！</string>
     <string name="versions_manage_no_versions">沒有已安裝的版本</string>
     <string name="versions_manage_install_exists">此名稱的版本已存在！</string>
     <string name="versions_manage_install_cannot_use_mc_name">已選擇附加內容，需確保原版核心的獨立性，請勿使用原版名稱！</string>
@@ -325,6 +430,7 @@
     <string name="saves_manage_info">存檔資訊</string>
     <string name="saves_manage_only_show_compatible">僅顯示相容的存檔</string>
     <string name="saves_manage_invalid">無效的存檔</string>
+    <string name="saves_manage_last_played">上一次遊玩時間：%s</string>
     <string name="saves_manage_gamemode">遊戲模式：%s</string>
     <string name="saves_manage_gamemode_survival">生存模式</string>
     <string name="saves_manage_gamemode_creative">創造模式</string>
@@ -407,7 +513,10 @@
     <string name="settings_control_mouse_physical_mouse_mode_summary">連接實體滑鼠時，是否停用虛擬滑鼠指標，直接使用系統滑鼠指標進行操控</string>
     <string name="settings_control_mouse_physical_mouse_warning">若您的裝置將實體滑鼠右鍵辨識為「返回」，或中鍵辨識為「回到桌面」，可進入系統設定 > 開發人員選項，開啟「停用權限監控」，應能解決</string>
     <string name="settings_control_mouse_size_title">虛擬滑鼠大小</string>
-    <string name="settings_control_mouse_speed_title">虛擬滑鼠靈敏度</string>
+    <string name="settings_control_mouse_sensitivity_title">虛擬滑鼠靈敏度</string>
+    <string name="settings_control_mouse_sensitivity_summary">調整虛擬滑鼠在一般模式下的移動速度</string>
+    <string name="settings_control_mouse_capture_sensitivity_title">抓取滑鼠移動靈敏度</string>
+    <string name="settings_control_mouse_capture_sensitivity_summary">調整滑鼠被抓取時的移動靈敏度，例如遊戲視角移動的靈敏度</string>
     <string name="settings_control_mouse_control_mode_title">虛擬滑鼠控制模式</string>
     <string name="settings_control_mouse_control_mode_summary">選擇虛擬滑鼠的操作方式：滑動螢幕移動游標，或點擊螢幕指定位置</string>
     <string name="settings_control_mouse_control_mode_slide">滑動控制</string>
@@ -437,8 +546,6 @@
     <!--  關於  -->
     <string name="about_plugin_title">已載入的外掛程式</string>
     <string name="about_library_title">額外引入的相依性項目</string>
-    <!--  權限  -->
-    <string name="permissions_external_storage">%s 需要管理裝置所有檔案的權限，否則此功能將無法正常使用</string>
     <!--  Url  -->
     <string name="url_wiki_minecraft_game_release">https://zh.minecraft.wiki/w/Java%%E7%%89%%88%s?variant=zh-tw</string>
     <string name="url_wiki_minecraft_game_snapshot">https://zh.minecraft.wiki/w/%s?variant=zh-tw</string>

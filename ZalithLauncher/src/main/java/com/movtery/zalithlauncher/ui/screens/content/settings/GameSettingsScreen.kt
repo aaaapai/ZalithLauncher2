@@ -14,25 +14,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.multirt.RuntimesManager
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
-import com.movtery.zalithlauncher.ui.screens.content.SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
+import com.movtery.zalithlauncher.ui.screens.content.settingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.platform.MemoryUtils.getMaxMemoryForSettings
+import kotlinx.serialization.Serializable
 
-const val GAME_SETTINGS_TAG = "GameSettingsScreen"
+@Serializable
+data object GameSettingsScreenKey: NavKey
 
 @Composable
 fun GameSettingsScreen() {
     BaseScreen(
-        parentScreenTag = SETTINGS_SCREEN_TAG,
-        parentCurrentTag = MutableStates.mainScreenTag,
-        childScreenTag = GAME_SETTINGS_TAG,
-        childCurrentTag = MutableStates.settingsScreenTag
+        Triple(SettingsScreenKey, mainScreenKey, false),
+        Triple(GameSettingsScreenKey, settingsScreenKey, false)
     ) { isVisible ->
         Column(
             modifier = Modifier

@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.AccountsManager
@@ -41,9 +40,6 @@ import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.TooltipIconButton
-import com.movtery.zalithlauncher.ui.screens.content.ACCOUNT_MANAGE_SCREEN_TAG
-import com.movtery.zalithlauncher.ui.screens.content.VERSIONS_MANAGE_SCREEN_TAG
-import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import com.movtery.zalithlauncher.utils.string.isBiggerTo
 import com.movtery.zalithlauncher.utils.string.isLowerTo
@@ -164,19 +160,20 @@ fun getLocalSkinWarningButton(
 fun LaunchGameOperation(
     launchGameOperation: LaunchGameOperation,
     updateOperation: (LaunchGameOperation) -> Unit,
-    navController: NavController
+    toAccountManageScreen: () -> Unit = {},
+    toVersionManageScreen: () -> Unit = {}
 ) {
     val context = LocalContext.current
     when (launchGameOperation) {
         is LaunchGameOperation.None -> {}
         is LaunchGameOperation.NoVersion -> {
             Toast.makeText(context, R.string.game_launch_no_version, Toast.LENGTH_SHORT).show()
-            navController.navigateTo(VERSIONS_MANAGE_SCREEN_TAG)
+            toVersionManageScreen()
             updateOperation(LaunchGameOperation.None)
         }
         is LaunchGameOperation.NoAccount -> {
             Toast.makeText(context, R.string.game_launch_no_account, Toast.LENGTH_SHORT).show()
-            navController.navigateTo(ACCOUNT_MANAGE_SCREEN_TAG)
+            toAccountManageScreen()
             updateOperation(LaunchGameOperation.None)
         }
         is LaunchGameOperation.UnsupportedRenderer -> {

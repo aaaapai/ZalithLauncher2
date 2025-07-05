@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -49,18 +50,20 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.versioninfo.MinecraftVersions
 import com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ContentCheckBox
 import com.movtery.zalithlauncher.ui.components.LittleTextLabel
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
-import com.movtery.zalithlauncher.ui.screens.content.DOWNLOAD_SCREEN_TAG
-import com.movtery.zalithlauncher.ui.screens.content.download.DOWNLOAD_GAME_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.DownloadScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.download.DownloadGameScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.downloadScreenKey
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.formatDate
@@ -71,11 +74,13 @@ import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.isEmptyOrBl
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
+import kotlinx.serialization.Serializable
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 
-const val SELECT_GAME_VERSION_SCREEN_TAG = "SelectGameVersionScreen"
+@Serializable
+data object SelectGameVersionScreenKey: NavKey
 
 /** 版本列表加载状态 */
 private sealed interface VersionState {
@@ -113,9 +118,11 @@ fun SelectGameVersionScreen(
     onVersionSelect: (String) -> Unit = {}
 ) {
     BaseScreen(
-        Triple(DOWNLOAD_SCREEN_TAG, MutableStates.mainScreenTag, true),
-        Triple(DOWNLOAD_GAME_SCREEN_TAG, MutableStates.downloadScreenTag, false),
-        Triple(SELECT_GAME_VERSION_SCREEN_TAG, DownloadGameScreenStates.screenTag, false),
+        levels1 = listOf(
+            Pair(DownloadScreenKey::class.java, mainScreenKey)
+        ),
+        Triple(DownloadGameScreenKey, downloadScreenKey, false),
+        Triple(SelectGameVersionScreenKey, downloadGameScreenKey, false)
     ) { isVisible ->
         val yOffset by swapAnimateDpAsState(
             targetValue = (-40).dp,
@@ -422,7 +429,11 @@ private fun VersionItemLayout(
                 }
 
                 Text(
-                    text = formatDate(input = version.releaseTime),
+                    modifier = Modifier.alpha(0.7f),
+                    text = formatDate(
+                        input = version.releaseTime,
+                        pattern = stringResource(R.string.date_format)
+                    ),
                     style = MaterialTheme.typography.labelMedium
                 )
             }

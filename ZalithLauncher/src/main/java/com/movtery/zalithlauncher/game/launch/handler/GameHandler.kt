@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.KeyEvent
 import android.view.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import com.movtery.zalithlauncher.bridge.ZLBridge
 import com.movtery.zalithlauncher.game.account.AccountsManager
@@ -25,6 +26,8 @@ import com.movtery.zalithlauncher.utils.file.zipDirRecursive
 import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import org.apache.commons.io.FileUtils
 import org.lwjgl.glfw.CallbackBridge
@@ -43,6 +46,8 @@ class GameHandler(
     onExit: (code: Int) -> Unit
 ) : AbstractHandler(HandlerType.GAME, getWindowSize, gameLauncher, onExit) {
     private val isTouchProxyEnabled = version.isTouchProxyEnabled()
+    private val _inputArea = MutableStateFlow<IntRect?>(null)
+    override val inputArea = _inputArea.asStateFlow()
 
     override suspend fun execute(surface: Surface?, scope: CoroutineScope) {
         ZLBridge.setupBridgeWindow(surface)
@@ -106,7 +111,10 @@ class GameHandler(
     @SuppressLint("ClickableViewAccessibility")
     @Composable
     override fun getComposableLayout() = @Composable {
-        GameScreen(isTouchProxyEnabled, getWindowSize)
+        GameScreen(
+            isTouchProxyEnabled = isTouchProxyEnabled,
+            onInputAreaRectUpdated = { _inputArea.value = it },
+        )
     }
 
     private suspend fun localSkinResourcePack() {

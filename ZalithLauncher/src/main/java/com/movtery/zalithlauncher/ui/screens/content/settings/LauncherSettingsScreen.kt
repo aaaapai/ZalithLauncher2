@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
@@ -34,17 +35,21 @@ import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.base.FullScreenComponentActivity
 import com.movtery.zalithlauncher.ui.components.ColorPickerDialog
 import com.movtery.zalithlauncher.ui.components.TitleAndSummary
-import com.movtery.zalithlauncher.ui.screens.content.SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
+import com.movtery.zalithlauncher.ui.screens.content.settingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.ui.theme.ColorThemeType
 import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.file.shareFile
 import com.movtery.zalithlauncher.utils.file.zipDirectory
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import kotlinx.serialization.Serializable
 import java.io.File
 
-const val LAUNCHER_SETTINGS_TAG = "LauncherSettingsScreen"
+@Serializable
+data object LauncherSettingsScreenKey: NavKey
 
 private sealed interface CustomColorOperation {
     data object None : CustomColorOperation
@@ -57,10 +62,8 @@ fun LauncherSettingsScreen() {
     val context = LocalContext.current
 
     BaseScreen(
-        parentScreenTag = SETTINGS_SCREEN_TAG,
-        parentCurrentTag = MutableStates.mainScreenTag,
-        childScreenTag = LAUNCHER_SETTINGS_TAG,
-        childCurrentTag = MutableStates.settingsScreenTag
+        Triple(SettingsScreenKey, mainScreenKey, false),
+        Triple(LauncherSettingsScreenKey, settingsScreenKey, false)
     ) { isVisible ->
         Column(
             modifier = Modifier

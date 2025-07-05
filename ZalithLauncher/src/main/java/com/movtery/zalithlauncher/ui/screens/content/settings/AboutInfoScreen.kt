@@ -33,21 +33,25 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.plugin.ApkPlugin
 import com.movtery.zalithlauncher.game.plugin.PluginLoader
 import com.movtery.zalithlauncher.game.plugin.appCacheIcon
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
-import com.movtery.zalithlauncher.ui.screens.content.SETTINGS_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
+import com.movtery.zalithlauncher.ui.screens.content.settingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
+import kotlinx.serialization.Serializable
 
-const val ABOUT_INFO_SCREEN_TAG = "AboutInfoScreen"
+@Serializable
+data object AboutInfoScreenKey: NavKey
 
 private const val COPYRIGHT_AOSP = "Copyright © The Android Open Source Project"
 private const val COPYRIGHT_KTOR = "Copyright © 2000-2023 JetBrains s.r.o."
@@ -60,7 +64,6 @@ private val libraryData = listOf(
     LibraryInfo("androidx-constraintlayout-compose", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/develop/ui/compose/layouts/constraintlayout"),
     LibraryInfo("androidx-material-icons-core", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/jetpack/androidx/releases/compose-material"),
     LibraryInfo("androidx-material-icons-extended", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/jetpack/androidx/releases/compose-material"),
-    LibraryInfo("androidx-navigation-compose", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/jetpack/compose/navigation"),
     LibraryInfo("Apache Commons Codec", null, LICENSE_APACHE_2, "https://commons.apache.org/proper/commons-codec"),
     LibraryInfo("Apache Commons Compress", null, LICENSE_APACHE_2, "https://commons.apache.org/proper/commons-compress"),
     LibraryInfo("Apache Commons IO", null, LICENSE_APACHE_2, "https://commons.apache.org/proper/commons-io"),
@@ -77,6 +80,7 @@ private val libraryData = listOf(
     LibraryInfo("ktor-serialization-kotlinx-json", COPYRIGHT_KTOR, LICENSE_APACHE_2, URL_KTOR),
     LibraryInfo("material-color-utilities", "Copyright 2021 Google LLC", LICENSE_APACHE_2, "https://github.com/material-foundation/material-color-utilities"),
     LibraryInfo("Maven Artifact", "Copyright © The Apache Software Foundation", LICENSE_APACHE_2, "https://github.com/apache/maven/tree/maven-3.9.9/maven-artifact"),
+    LibraryInfo("Navigation 3", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/jetpack/androidx/releases/navigation3"),
     LibraryInfo("NBT", "Copyright © 2016 - 2020 Querz", LICENSE_MIT, "https://github.com/Querz/NBT"),
     LibraryInfo("OkHttp", "Copyright © 2019 Square, Inc.", LICENSE_APACHE_2, "https://github.com/square/okhttp"),
     LibraryInfo("proxy-client-android", null, LICENSE_LGPL_3, "https://github.com/TouchController/TouchController"),
@@ -94,30 +98,29 @@ private data class LibraryInfo(
 @Composable
 fun AboutInfoScreen() {
     BaseScreen(
-        parentScreenTag = SETTINGS_SCREEN_TAG,
-        parentCurrentTag = MutableStates.mainScreenTag,
-        childScreenTag = "AboutInfoScreen",
-        childCurrentTag = MutableStates.settingsScreenTag
+        Triple(SettingsScreenKey, mainScreenKey, false),
+        Triple(AboutInfoScreenKey, settingsScreenKey, false)
     ) { isVisible ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(all = 12.dp)
         ) {
-            item {
-                val yOffset by swapAnimateDpAsState(
-                    targetValue = (-40).dp,
-                    swapIn = isVisible
-                )
-                //已加载插件板块
-                ChunkLayout(
-                    modifier = Modifier.offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
-                    title = stringResource(R.string.about_plugin_title)
-                ) {
-                    val allPlugins = PluginLoader.allPlugins
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        allPlugins.forEach { apkPlugin ->
-                            PluginInfoItem(apkPlugin = apkPlugin)
+            PluginLoader.allPlugins.takeIf { it.isNotEmpty() }?.let { allPlugins ->
+                item {
+                    val yOffset by swapAnimateDpAsState(
+                        targetValue = (-40).dp,
+                        swapIn = isVisible
+                    )
+                    //已加载插件板块
+                    ChunkLayout(
+                        modifier = Modifier.offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
+                        title = stringResource(R.string.about_plugin_title)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            allPlugins.forEach { apkPlugin ->
+                                PluginInfoItem(apkPlugin = apkPlugin)
+                            }
                         }
                     }
                 }

@@ -6,7 +6,9 @@ import android.content.Intent
 import androidx.core.content.FileProvider
 import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import com.movtery.zalithlauncher.utils.string.compareChar
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
@@ -168,7 +170,7 @@ fun ZipEntry.readText(zip: ZipFile): String =
  * @throws IllegalArgumentException 如果路径不存在或参数无效
  * @throws SecurityException 如果检测到路径穿越攻击
  */
-fun ZipFile.extractFromZip(internalPath: String, outputDir: File) {
+suspend fun ZipFile.extractFromZip(internalPath: String, outputDir: File) {
     require(outputDir.isDirectory || outputDir.mkdirs()) { "The output directory does not exist and cannot be created: $outputDir" }
 
     val prefix = when {
@@ -178,27 +180,34 @@ fun ZipFile.extractFromZip(internalPath: String, outputDir: File) {
     }
     val outputDirCanonical = outputDir.canonicalFile
 
-    entries()
-        .asSequence()
-        .filter { it.name.startsWith(prefix) }
-        .forEach { entry ->
-            val relativePath = entry.name.removePrefix(prefix)
-            val targetFile = File(outputDir, relativePath).canonicalFile
+    withContext(Dispatchers.IO) {
+        try {
+            entries()
+                .asSequence()
+                .filter { it.name.startsWith(prefix) }
+                .forEach { entry ->
+                    ensureActive()
+                    val relativePath = entry.name.removePrefix(prefix)
+                    val targetFile = File(outputDir, relativePath).canonicalFile
 
-            if (!targetFile.toPath().startsWith(outputDirCanonical.toPath())) {
-                throw SecurityException("Illegal path traversal detected: ${entry.name}")
-            }
+                    if (!targetFile.toPath().startsWith(outputDirCanonical.toPath())) {
+                        throw SecurityException("Illegal path traversal detected: ${entry.name}")
+                    }
 
-            when {
-                entry.isDirectory -> targetFile.mkdirs()
-                else -> {
-                    getInputStream(entry).use { input ->
-                        targetFile.ensureParentDirectory()
-                        input.copyTo(targetFile.outputStream())
+                    when {
+                        entry.isDirectory -> targetFile.mkdirs()
+                        else -> {
+                            getInputStream(entry).use { input ->
+                                targetFile.ensureParentDirectory()
+                                input.copyTo(targetFile.outputStream())
+                            }
+                        }
                     }
                 }
-            }
+        } catch (_: CancellationException) {
+            lInfo("Task cancelled.")
         }
+    }
 }
 
 /**

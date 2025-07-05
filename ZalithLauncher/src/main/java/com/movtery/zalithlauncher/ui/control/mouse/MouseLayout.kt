@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -16,9 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -50,6 +49,7 @@ fun getMousePointerFileAvailable(): File? = mousePointerFile.takeIf { it.exists(
  * @param controlMode               控制模式：SLIDE（滑动控制）、CLICK（点击控制）
  * @param longPressTimeoutMillis    长按触发检测时长
  * @param requestPointerCapture     是否使用鼠标抓取方案
+ * @param lastMousePosition         上次虚拟鼠标指针位置
  * @param onTap                     点击回调，参数是触摸点在控件内的绝对坐标
  * @param onLongPress               长按开始回调
  * @param onLongPressEnd            长按结束回调
@@ -57,7 +57,7 @@ fun getMousePointerFileAvailable(): File? = mousePointerFile.takeIf { it.exists(
  * @param onMouseScroll             实体鼠标指针滚轮滑动
  * @param onMouseButton             实体鼠标指针按钮按下反馈
  * @param mouseSize                 指针大小
- * @param mouseSpeed                指针移动速度（滑动模式生效）
+ * @param cursorSensitivity         指针灵敏度（滑动模式生效）
  */
 @SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
@@ -66,6 +66,7 @@ fun VirtualPointerLayout(
     controlMode: MouseControlMode = AllSettings.mouseControlMode.toMouseControlMode(),
     longPressTimeoutMillis: Long = -1L,
     requestPointerCapture: Boolean = true,
+    lastMousePosition: Offset? = null,
     onTap: (Offset) -> Unit = {},
     onLongPress: () -> Unit = {},
     onLongPressEnd: () -> Unit = {},
@@ -73,14 +74,10 @@ fun VirtualPointerLayout(
     onMouseScroll: (Offset) -> Unit = {},
     onMouseButton: (button: Int, pressed: Boolean) -> Unit = { _, _ -> },
     mouseSize: Dp = AllSettings.mouseSize.getValue().dp,
-    mouseSpeed: Int = AllSettings.mouseSpeed.getValue(),
+    cursorSensitivity: Int = AllSettings.cursorSensitivity.getValue(),
+    requestFocusKey: Any? = null
 ) {
-    var screenWidth by remember { mutableFloatStateOf(0f) }
-    var screenHeight by remember { mutableFloatStateOf(0f) }
-    var pointerPosition by remember { mutableStateOf(Offset(0f, 0f)) }
-
-    val speedFactor = mouseSpeed / 100f
-
+    val speedFactor = cursorSensitivity / 100f
     var showMousePointer by remember {
         mutableStateOf(
             if (PhysicalMouseChecker.physicalMouseConnected) { //物理鼠标已连接
@@ -91,15 +88,21 @@ fun VirtualPointerLayout(
         )
     }
 
-    Box(
-        modifier = modifier
-            .onSizeChanged { size ->
-                screenWidth = size.width.toFloat()
-                screenHeight = size.height.toFloat()
-                pointerPosition = Offset(screenWidth / 2, screenHeight / 2)
-                onPointerMove(pointerPosition)
-            }
-    ) {
+    val windowSize = LocalWindowInfo.current.containerSize
+    val screenWidth: Float = windowSize.width.toFloat()
+    val screenHeight: Float = windowSize.height.toFloat()
+
+    var pointerPosition by remember {
+        val pos = lastMousePosition?.takeIf {
+            //如果当前正在使用物理鼠标，则使用上次虚拟鼠标的位置
+            //否则默认将鼠标放到屏幕正中心
+            !showMousePointer
+        } ?: Offset(screenWidth / 2f, screenHeight / 2f)
+        onPointerMove(pos)
+        mutableStateOf(pos)
+    }
+
+    Box(modifier = modifier) {
         if (showMousePointer) {
             MousePointer(
                 modifier = Modifier.offset(
@@ -131,7 +134,7 @@ fun VirtualPointerLayout(
             onLongPressEnd = onLongPressEnd,
             onPointerMove = { offset ->
                 if (!showMousePointer) showMousePointer = true
-                pointerPosition =  if (controlMode == MouseControlMode.SLIDE) {
+                pointerPosition = if (controlMode == MouseControlMode.SLIDE) {
                     Offset(
                         x = (pointerPosition.x + offset.x * speedFactor).coerceIn(0f, screenWidth),
                         y = (pointerPosition.y + offset.y * speedFactor).coerceIn(0f, screenHeight)
@@ -158,7 +161,8 @@ fun VirtualPointerLayout(
             },
             onMouseScroll = onMouseScroll,
             onMouseButton = onMouseButton,
-            inputChange = arrayOf(speedFactor, controlMode)
+            inputChange = arrayOf<Any>(speedFactor, controlMode),
+            requestFocusKey = requestFocusKey
         )
     }
 }

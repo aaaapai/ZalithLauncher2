@@ -9,22 +9,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.navigation3.runtime.NavKey
 
 /**
- * 单层级基础屏幕，根据 `currentTag` 判断当前屏幕是否可见
- * @param screenTag 当前屏幕的标签
- * @param currentTag 当前屏幕正在展示的标签，通过导航提供
- * @param tagStartWith 是否启用标签 startsWith 进行判断
+ * 单层级基础屏幕，根据 `currentKey` 判断当前屏幕是否可见
+ * @param screenKey 当前屏幕的Key
+ * @param currentKey 当前屏幕正在展示的Key
+ * @param useClassEquality 是否使用类相等判断
  */
 @Composable
 fun BaseScreen(
-    screenTag: String,
-    currentTag: String?,
-    tagStartWith: Boolean = false,
+    screenKey: NavKey,
+    currentKey: NavKey?,
+    useClassEquality: Boolean = false,
     content: @Composable (isVisible: Boolean) -> Unit,
 ) {
-    val targetVisible = remember(currentTag, screenTag, tagStartWith) {
-        isTagVisible(screenTag, currentTag, tagStartWith)
+    val targetVisible = remember(currentKey, screenKey, useClassEquality) {
+        isTagVisible(screenKey, currentKey, useClassEquality)
     }
 
     //初始不可见，用于触发首次的 false -> true 动画
@@ -42,57 +43,51 @@ fun BaseScreen(
 }
 
 /**
- * 双层级基础屏幕，根据父屏幕标签与子屏幕标签，判断当前屏幕是否可见
- * @param parentScreenTag 当前子屏幕归属的父屏幕标签
- * @param parentCurrentTag 当前子屏幕归属的父屏幕正在展示的标签，通过导航提供
- * @param childScreenTag 当前屏幕的标签
- * @param childCurrentTag 当前屏幕正在展示的标签，通过导航提供
- * @param parentTagStartWith 父屏幕标签是否启用标签 startsWith 进行判断
- * @param childTagStartWith 子屏幕标签是否启用标签 startsWith 进行判断
+ * 多层级基础屏幕，根据层级列表中的每个层级Key判断当前屏幕是否可见
+ * @param levels 层级列表，每个层级包含（Key、当前Key、是否启用引用相等）
  */
 @Composable
 fun BaseScreen(
-    parentScreenTag: String,
-    parentCurrentTag: String?,
-    childScreenTag: String,
-    childCurrentTag: String?,
-    parentTagStartWith: Boolean = false,
-    childTagStartWith: Boolean = false,
-    content: @Composable (isVisible: Boolean) -> Unit,
-) {
-    val targetVisible = remember(parentScreenTag, parentCurrentTag, childScreenTag, childCurrentTag) {
-        val parentVisible = isTagVisible(parentScreenTag, parentCurrentTag, parentTagStartWith)
-        val childVisible = isTagVisible(childScreenTag, childCurrentTag, childTagStartWith)
-        parentVisible && childVisible
-    }
-
-    //初始不可见，用于触发首次的 false -> true 动画
-    val visibleState = remember { mutableStateOf(false) }
-
-    //仅在 composition 完成后，才允许更新可见状态
-    LaunchedEffect(targetVisible) {
-        visibleState.value = targetVisible
-    }
-
-    BaseScreen(
-        content = content,
-        visible = visibleState.value
-    )
-}
-
-/**
- * 多层级基础屏幕，根据层级列表中的每个层级标签判断当前屏幕是否可见
- * @param levels 层级列表，每个层级包含（标签、当前标签、是否启用startWith）
- */
-@Composable
-fun BaseScreen(
-    vararg levels: Triple<String, String?, Boolean>,
+    vararg levels: Triple<NavKey, NavKey?, Boolean>,
     content: @Composable (isVisible: Boolean) -> Unit,
 ) {
     val targetVisible = remember(levels) {
-        levels.all { (tag, currentTag, startWith) ->
-            isTagVisible(tag, currentTag, startWith)
+        levels.all { (tag, currentKey, useReferenceEquality) ->
+            isTagVisible(tag, currentKey, useReferenceEquality)
         }
+    }
+
+    //初始不可见，用于触发首次的 false -> true 动画
+    val visibleState = remember { mutableStateOf(false) }
+
+    //仅在 composition 完成后，才允许更新可见状态
+    LaunchedEffect(targetVisible) {
+        visibleState.value = targetVisible
+    }
+
+    BaseScreen(
+        content = content,
+        visible = visibleState.value
+    )
+}
+
+/**
+ * 多层级基础屏幕，根据层级列表中的每个层级Key判断当前屏幕是否可见
+ */
+@Composable
+fun BaseScreen(
+    levels1: List<Pair<Class<out NavKey>, NavKey?>>,
+    vararg levels2: Triple<NavKey, NavKey?, Boolean>,
+    content: @Composable (isVisible: Boolean) -> Unit,
+) {
+    val targetVisible = remember(levels1, levels2) {
+        val v1 = levels1.all { (key, currentKey) ->
+            isTagVisible(key, currentKey)
+        }
+        val v2 = levels2.all { (key, currentKey, useClassEquality) ->
+            isTagVisible(key, currentKey, useClassEquality)
+        }
+        v1 && v2
     }
 
     //初始不可见，用于触发首次的 false -> true 动画
@@ -128,6 +123,17 @@ private fun BaseScreen(
     }
 }
 
-private fun isTagVisible(tag: String, current: String?, startsWith: Boolean): Boolean {
-    return if (startsWith) current?.startsWith(tag) == true else current == tag
+private fun isTagVisible(key: Class<out NavKey>, current: NavKey?): Boolean {
+    return key.isInstance(current)
+}
+
+/**
+ * @param useClassEquality 是否使用类相等判断
+ */
+private fun isTagVisible(key: NavKey, current: NavKey?, useClassEquality: Boolean): Boolean {
+    return when {
+        current == null -> false
+        useClassEquality -> key::class == current::class
+        else -> key == current
+    }
 }

@@ -24,9 +24,14 @@ var physicalMouseMode by mutableStateOf(AllSettings.physicalMouseMode.getValue()
 var mouseSize by mutableIntStateOf(AllSettings.mouseSize.getValue())
 
 /**
- * 鼠标速度
+ * 虚拟鼠标灵敏度
  */
-var mouseSpeed by mutableIntStateOf(AllSettings.mouseSpeed.getValue())
+var cursorSensitivity by mutableIntStateOf(AllSettings.cursorSensitivity.getValue())
+
+/**
+ * 被抓获指针移动灵敏度
+ */
+var mouseCaptureSensitivity by mutableIntStateOf(AllSettings.mouseCaptureSensitivity.getValue())
 
 /**
  * 鼠标控制模式

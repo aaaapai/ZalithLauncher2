@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.movtery.zalithlauncher.SplashException
 import com.movtery.zalithlauncher.components.Components
@@ -34,6 +35,7 @@ class SplashActivity : BaseComponentActivity(refreshData = false) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen()
 
         initUnpackItems()
         checkAllTask()

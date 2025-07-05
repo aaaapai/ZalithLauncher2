@@ -7,7 +7,9 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,6 +39,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -177,8 +181,12 @@ fun <E> SimpleListLayout(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    TitleAndSummary(title, summary)
+                    TitleAndSummary(
+                        title = title,
+                        summary = summary
+                    )
                     Text(
+                        modifier = Modifier.alpha(0.7f),
                         text = stringResource(R.string.settings_element_selected, getItemText(selectedItem)),
                         style = MaterialTheme.typography.labelSmall
                     )
@@ -358,7 +366,10 @@ fun SimpleIntSliderLayout(
         Column(
             modifier = Modifier.alpha(alpha = if (enabled) 1f else 0.5f)
         ) {
-            TitleAndSummary(title, summary)
+            TitleAndSummary(
+                title = title,
+                summary = summary
+            )
         }
         SimpleTextSlider(
             modifier = Modifier.fillMaxWidth(),
@@ -445,7 +456,10 @@ fun SwitchLayout(
                 .weight(1f)
                 .padding(end = 16.dp)
         ) {
-            TitleAndSummary(title, summary)
+            TitleAndSummary(
+                title = title,
+                summary = summary
+            )
         }
 
         trailingIcon?.invoke()
@@ -460,9 +474,9 @@ fun SwitchLayout(
 
 @Composable
 fun TitleAndSummary(
-    title: String,
-    summary: String? = null,
     modifier: Modifier = Modifier,
+    title: String,
+    summary: String? = null
 ) {
     Column(
         modifier = modifier,
@@ -474,9 +488,28 @@ fun TitleAndSummary(
         )
         summary?.let { text ->
             Text(
+                modifier = Modifier.alpha(0.7f),
                 text = text,
                 style = MaterialTheme.typography.labelSmall
             )
         }
+    }
+}
+
+@Composable
+fun FocusableBox(
+    modifier: Modifier = Modifier,
+    requestKey: Any? = null
+) {
+    val focusRequester = remember { FocusRequester() }
+
+    Box(
+        modifier = modifier
+            .focusable(enabled = true)
+            .focusRequester(focusRequester)
+    )
+
+    LaunchedEffect(requestKey) {
+        focusRequester.requestFocus()
     }
 }

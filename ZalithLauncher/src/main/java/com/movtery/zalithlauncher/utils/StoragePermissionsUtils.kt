@@ -14,7 +14,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.movtery.zalithlauncher.R
-import com.movtery.zalithlauncher.info.InfoDistributor
 
 class StoragePermissionsUtils {
     companion object {
@@ -47,12 +46,13 @@ class StoragePermissionsUtils {
         fun checkPermissions(
             activity: Activity,
             title: Int = R.string.generic_warning,
-            message: String = activity.getString(R.string.permissions_external_storage, InfoDistributor.LAUNCHER_NAME),
+            message: String,
+            messageSdk30: String = message,
             hasPermission: () -> Unit = {},
             onDialogCancel: () -> Unit = {}
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                handlePermissionsForAndroid11AndAbove(activity, title, message, hasPermission, onDialogCancel)
+                handlePermissionsForAndroid11AndAbove(activity, title, messageSdk30, hasPermission, onDialogCancel)
             } else {
                 handlePermissionsForAndroid10AndBelow(activity, title, message, hasPermission, onDialogCancel)
             }
@@ -82,7 +82,7 @@ class StoragePermissionsUtils {
                     override fun onRequest() {
                         val intent =
                             Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                        intent.setData(("package:${activity.packageName}").toUri())
+                        intent.data = ("package:${activity.packageName}").toUri()
                         activity.startActivityForResult(intent, REQUEST_CODE_PERMISSIONS)
                     }
 

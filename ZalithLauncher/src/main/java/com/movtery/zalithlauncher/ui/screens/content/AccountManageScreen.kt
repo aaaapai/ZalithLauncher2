@@ -40,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.context.copyLocalFile
 import com.movtery.zalithlauncher.coroutine.Task
@@ -61,7 +62,6 @@ import com.movtery.zalithlauncher.game.account.microsoftLogin
 import com.movtery.zalithlauncher.game.skin.SkinModelType
 import com.movtery.zalithlauncher.game.skin.getLocalUUIDWithSkinModel
 import com.movtery.zalithlauncher.path.UrlManager
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.IconTextButton
@@ -83,6 +83,7 @@ import com.movtery.zalithlauncher.ui.screens.content.elements.OtherServerLoginDi
 import com.movtery.zalithlauncher.ui.screens.content.elements.SelectSkinModelDialog
 import com.movtery.zalithlauncher.ui.screens.content.elements.ServerItem
 import com.movtery.zalithlauncher.ui.screens.content.elements.ServerOperation
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
@@ -90,12 +91,14 @@ import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageO
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.Serializable
 import org.apache.commons.io.FileUtils
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 
-const val ACCOUNT_MANAGE_SCREEN_TAG = "AccountManageScreen"
+@Serializable
+data object AccountManageScreenKey: NavKey
 
 @Composable
 fun AccountManageScreen() {
@@ -105,8 +108,8 @@ fun AccountManageScreen() {
     var serverOperation by remember { mutableStateOf<ServerOperation>(ServerOperation.None) }
 
     BaseScreen(
-        screenTag = ACCOUNT_MANAGE_SCREEN_TAG,
-        currentTag = MutableStates.mainScreenTag
+        screenKey = AccountManageScreenKey,
+        currentKey = mainScreenKey
     ) { isVisible ->
         Row(
             modifier = Modifier.fillMaxSize()
@@ -495,12 +498,14 @@ private fun AccountsLayout(
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 items(accounts) { account ->
+                    var refreshAvatar by remember { mutableStateOf(false) }
                     var accountSkinOperation by remember { mutableStateOf<AccountSkinOperation>(AccountSkinOperation.None) }
                     AccountSkinOperation(
                         account = account,
                         accountSkinOperation = accountSkinOperation,
                         updateOperation = { accountSkinOperation = it },
-                        onAddAuthClicked = onAddAuthClicked
+                        onAddAuthClicked = onAddAuthClicked,
+                        onRefreshAvatar = { refreshAvatar = !refreshAvatar }
                     )
 
                     val skinPicker = rememberLauncherForActivityResult(
@@ -518,6 +523,7 @@ private fun AccountsLayout(
                             .padding(vertical = 6.dp),
                         currentAccount = currentAccount,
                         account = account,
+                        refreshKey = refreshAvatar,
                         onSelected = { acc ->
                             AccountsManager.setCurrentAccount(acc)
                         },
@@ -554,7 +560,8 @@ private fun AccountSkinOperation(
     account: Account,
     accountSkinOperation: AccountSkinOperation,
     updateOperation: (AccountSkinOperation) -> Unit,
-    onAddAuthClicked: () -> Unit = {}
+    onAddAuthClicked: () -> Unit = {},
+    onRefreshAvatar: () -> Unit = {}
 ) {
     val context = LocalContext.current
     when (accountSkinOperation) {
@@ -567,6 +574,7 @@ private fun AccountSkinOperation(
                     task = {
                         context.copyLocalFile(accountSkinOperation.uri, skinFile)
                         AccountsManager.suspendSaveAccount(account)
+                        onRefreshAvatar()
                         //警告用户关于自定义皮肤的一些注意事项
                         updateOperation(AccountSkinOperation.AlertModel)
                     },
@@ -578,6 +586,7 @@ private fun AccountSkinOperation(
                                 message = th.getMessageOrToString()
                             )
                         )
+                        onRefreshAvatar()
                         updateOperation(AccountSkinOperation.None)
                     }
                 )
@@ -668,6 +677,7 @@ private fun AccountSkinOperation(
                             skinModelType = SkinModelType.NONE
                             profileId = getLocalUUIDWithSkinModel(username, skinModelType)
                             AccountsManager.suspendSaveAccount(this)
+                            onRefreshAvatar()
                         }
                     }
                 )

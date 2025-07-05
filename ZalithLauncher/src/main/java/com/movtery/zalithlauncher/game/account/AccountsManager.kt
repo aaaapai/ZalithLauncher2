@@ -51,24 +51,28 @@ object AccountsManager {
      */
     fun reloadAccounts() {
         scope.launch {
-            val loadedAccounts = accountDao.getAllAccounts()
-            _accounts.clear()
-            _accounts.addAll(loadedAccounts)
-
-            _accounts.sortWith(compareBy<Account>(
-                { it.accountTypePriority() },
-                { it.username },
-            ))
-            _accountsFlow.value = _accounts.toList()
-
-            if (_accounts.isNotEmpty() && !isAccountExists(AllSettings.currentAccount.getValue())) {
-                setCurrentAccount(_accounts[0])
-            }
-
-            refreshCurrentAccountState()
-
-            lInfo("Loaded ${_accounts.size} accounts")
+            suspendReloadAccounts()
         }
+    }
+
+    private suspend fun suspendReloadAccounts() {
+        val loadedAccounts = accountDao.getAllAccounts()
+        _accounts.clear()
+        _accounts.addAll(loadedAccounts)
+
+        _accounts.sortWith(compareBy<Account>(
+            { it.accountTypePriority() },
+            { it.username },
+        ))
+        _accountsFlow.value = _accounts.toList()
+
+        if (_accounts.isNotEmpty() && !isAccountExists(AllSettings.currentAccount.getValue())) {
+            setCurrentAccount(_accounts[0])
+        }
+
+        refreshCurrentAccountState()
+
+        lInfo("Loaded ${_accounts.size} accounts")
     }
 
     /**
@@ -161,7 +165,7 @@ object AccountsManager {
         }.onFailure { e ->
             lError("Failed to save account: ${account.username}", e)
         }
-        reloadAccounts()
+        suspendReloadAccounts()
     }
 
     /**
@@ -172,7 +176,7 @@ object AccountsManager {
             accountDao.deleteAccount(account)
             val skinFile = account.getSkinFile()
             FileUtils.deleteQuietly(skinFile)
-            reloadAccounts()
+            suspendReloadAccounts()
         }
     }
 

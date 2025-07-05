@@ -76,7 +76,6 @@
     <!-- Splash Screen -->
     <string name="splash_screen_unpack_desc">Minecraft düzgün çalışsın diye bu dosyaları kur. Uygulama içinde mevcut, önce çıkar.</string>
     <string name="splash_screen_installing">Kurulum yapılıyor. Tamamlanınca ana ekrana geçiş yapılır. Lütfen bekle.</string>
-    <string name="splash_screen_continue">Onayla</string>
     <string name="splash_screen_agree">Kur</string>
     <!--  Notification  -->
     <string name="notification_title">Bildirim İzni Kontrolü</string>
@@ -254,9 +253,7 @@
     <string name="multirt_runtime_version_code">Sürüm kodu: %s</string>
     <string name="multirt_runtime_version_arch">Mimari: %s</string>
     <string name="multirt_no_java_8">Java 8 bulunamadı. Bu özellik için gerekli.</string>
-    <string name="multirt_no_compatible_multirt">Uygun Java çalışma zamanı yok (Java %d veya üstü gerek)</string>
     <string name="execute_jar_title">Jar Çalıştır</string>
-    <string name="execute_jar_incompatible_runtime">Jar, Java %d ile uyumsuz</string>
     <!-- Version Management -->
     <string name="versions_manage_game_path_default">Varsayılan Oyun Klasörü</string>
     <string name="versions_manage_game_path_add_new">Klasör Ekle</string>
@@ -375,7 +372,7 @@
     <string name="settings_control_mouse_physical_mouse_mode_title">Fiziksel Mouse</string>
     <string name="settings_control_mouse_physical_mouse_mode_summary">Fiziksel mouse bağlıysa sanal mouse devre dışı olur, sistem mouse\'u kullanılır</string>
     <string name="settings_control_mouse_size_title">Sanal Mouse Boyutu</string>
-    <string name="settings_control_mouse_speed_title">Sanal Mouse Hassasiyeti</string>
+    <string name="settings_control_mouse_sensitivity_title">Sanal Mouse Hassasiyeti</string>
     <string name="settings_control_mouse_control_mode_title">Kontrol Modu</string>
     <string name="settings_control_mouse_control_mode_summary">Sanal mouse\'u kontrol etme şeklini seç: kaydırarak veya tıklayarak</string>
     <string name="settings_control_mouse_control_mode_slide">Kaydırma Kontrolü</string>
@@ -404,8 +401,6 @@
     <string name="settings_launcher_swap_animate_type_summary">Sayfa geçiş animasyonunu seç</string>
     <!-- About -->
     <string name="about_library_title">Üçüncü Parti Kütüphaneler</string>
-    <!-- Permissions -->
-    <string name="permissions_external_storage">%s için dosya erişim izni gerekli</string>
     <!--  Url  -->
     <string name="url_wiki_minecraft_game_release">https://minecraft.wiki/w/Java_Edition_%s</string>
     <string name="url_wiki_minecraft_game_snapshot">https://minecraft.wiki/w/Java_Edition_%s</string>

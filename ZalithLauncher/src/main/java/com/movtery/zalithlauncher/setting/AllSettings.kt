@@ -119,9 +119,14 @@ class AllSettings {
         val mouseSize = IntSettingUnit("mouseSize", 24)
 
         /**
-         * 虚拟鼠标速度
+         * 虚拟鼠标灵敏度
          */
-        val mouseSpeed = IntSettingUnit("mouseSpeed", 100)
+        val cursorSensitivity = IntSettingUnit("cursorSensitivity", 100)
+
+        /**
+         * 被抓获指针移动灵敏度
+         */
+        val mouseCaptureSensitivity = IntSettingUnit("mouseCaptureSensitivity", 100)
 
         /**
          * 虚拟鼠标控制模式

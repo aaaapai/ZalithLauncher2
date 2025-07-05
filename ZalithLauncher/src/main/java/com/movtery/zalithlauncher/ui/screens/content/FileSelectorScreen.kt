@@ -31,6 +31,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.state.FilePathSelectorData
 import com.movtery.zalithlauncher.state.MutableStates
@@ -40,27 +42,42 @@ import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.elements.BaseFileItem
 import com.movtery.zalithlauncher.ui.screens.content.elements.CreateNewDirDialog
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
+import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.file.sortWithFileName
+import kotlinx.serialization.Serializable
 import java.io.File
 
-const val FILE_SELECTOR_SCREEN_TAG = "FileSelectorScreen?"
+@Serializable
+data class FileSelectorScreenKey(
+    val startPath: String,
+    val selectFile: Boolean,
+    val saveKey: NavKey
+): NavKey
+
+/**
+ * 导航至FileSelectorScreen
+ */
+fun NavBackStack.navigateToFileSelector(
+    startPath: String,
+    selectFile: Boolean,
+    saveKey: NavKey
+) = this.navigateTo(FileSelectorScreenKey(startPath, selectFile, saveKey), true)
 
 @Composable
 fun FileSelectorScreen(
-    startPath: String,
-    selectFile: Boolean,
-    saveTag: String,
+    key: FileSelectorScreenKey,
     back: () -> Unit
 ) {
-    val startPath1 = File(startPath)
+    val startPath1 = File(key.startPath)
     var currentPath by rememberSaveable { mutableStateOf(startPath1) }
 
     BaseScreen(
-        screenTag = FILE_SELECTOR_SCREEN_TAG,
-        currentTag = MutableStates.mainScreenTag,
-        tagStartWith = true
+        screenKey = key,
+        currentKey = mainScreenKey,
+        useClassEquality = true
     ) { isVisible ->
         Column(
             modifier = Modifier.fillMaxSize()
@@ -100,7 +117,7 @@ fun FileSelectorScreen(
                     },
                     createDir = { createDir = true },
                     selectDir = {
-                        MutableStates.filePathSelector = FilePathSelectorData(saveTag, currentPath.absolutePath)
+                        MutableStates.filePathSelector = FilePathSelectorData(key.saveKey, currentPath.absolutePath)
                         back()
                     },
                     modifier = Modifier
@@ -112,7 +129,7 @@ fun FileSelectorScreen(
                     isVisible = isVisible,
                     currentPath = currentPath,
                     updatePath = { currentPath = it },
-                    selectFile = selectFile,
+                    selectFile = key.selectFile,
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(7.5f)

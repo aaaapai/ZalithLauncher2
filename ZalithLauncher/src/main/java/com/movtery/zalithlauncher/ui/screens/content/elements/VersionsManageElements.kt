@@ -509,67 +509,10 @@ fun VersionItemLayout(
                     onSelected()
                 }
             )
-            VersionIconImage(
-                version = version,
-                modifier = Modifier.size(34.dp)
+            CommonVersionInfoLayout(
+                modifier = Modifier.weight(1f),
+                version = version
             )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                //版本名称
-                Text(
-                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                    overflow = TextOverflow.Clip,
-                    maxLines = 1,
-                    text = version.getVersionName(),
-                    style = MaterialTheme.typography.labelLarge
-                )
-                //版本描述
-                if (version.isValid() && version.isSummaryValid()) {
-                    Text(
-                        modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                        overflow = TextOverflow.Clip,
-                        maxLines = 1,
-                        text = version.getVersionSummary(),
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
-                //版本详细信息
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (!version.isValid()) {
-                        Text(
-                            text = stringResource(R.string.versions_manage_invalid),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                    if (version.getVersionConfig().isIsolation()) {
-                        Text(
-                            text = stringResource(R.string.versions_manage_isolation_enabled),
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                    version.getVersionInfo()?.let { versionInfo ->
-                        Text(
-                            text = versionInfo.minecraftVersion,
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                        versionInfo.loaderInfo?.let { loaderInfo ->
-                            Text(
-                                text = loaderInfo.name,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                            Text(
-                                text = loaderInfo.version,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
-                }
-            }
             if (version.isValid()) {
                 IconButton(
                     onClick = onSettingsClick
@@ -647,6 +590,78 @@ fun VersionItemLayout(
 }
 
 @Composable
+fun CommonVersionInfoLayout(
+    modifier: Modifier = Modifier,
+    version: Version
+) {
+    Row(modifier = modifier) {
+        VersionIconImage(
+            modifier = Modifier
+                .size(34.dp)
+                .align(Alignment.CenterVertically),
+            version = version
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            //版本名称
+            Text(
+                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
+                overflow = TextOverflow.Clip,
+                maxLines = 1,
+                text = version.getVersionName(),
+                style = MaterialTheme.typography.labelLarge
+            )
+            //版本描述
+            if (version.isValid() && version.isSummaryValid()) {
+                Text(
+                    modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
+                    overflow = TextOverflow.Clip,
+                    maxLines = 1,
+                    text = version.getVersionSummary(),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+            //版本详细信息
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (!version.isValid()) {
+                    Text(
+                        text = stringResource(R.string.versions_manage_invalid),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                if (version.getVersionConfig().isIsolation()) {
+                    Text(
+                        text = stringResource(R.string.versions_manage_isolation_enabled),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                version.getVersionInfo()?.let { versionInfo ->
+                    Text(
+                        text = versionInfo.minecraftVersion,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    versionInfo.loaderInfo?.let { loaderInfo ->
+                        Text(
+                            text = loaderInfo.name,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        Text(
+                            text = loaderInfo.version,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun VersionIconImage(
     version: Version?,
     modifier: Modifier = Modifier,
@@ -654,13 +669,13 @@ fun VersionIconImage(
 ) {
     val context = LocalContext.current
 
-    val imageLoader = remember(refreshKey, context) {
+    val imageLoader = remember(version, refreshKey, context) {
         ImageLoader.Builder(context)
             .components { add(GifDecoder.Factory()) }
             .build()
     }
 
-    val (model, fallbackRes) = remember(refreshKey, context) {
+    val (model, fallbackRes) = remember(version, refreshKey, context) {
         when {
             version == null -> null to R.drawable.ic_minecraft
             else -> {

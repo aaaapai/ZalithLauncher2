@@ -3,7 +3,6 @@ package com.movtery.zalithlauncher.components
 import android.content.Context
 import android.content.res.AssetManager
 import com.movtery.zalithlauncher.context.copyAssetFile
-import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.readString
 import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import org.apache.commons.io.FileUtils
@@ -56,11 +55,12 @@ abstract class UnpackSingleTask(
     }
 
     override suspend fun run() {
-        FileUtils.deleteDirectory(rootDir)
+        val dir = File(rootDir, fileDirName)
+        FileUtils.deleteDirectory(dir)
 
         val fileList = am.list("$assetsDirName/$fileDirName")
         for (fileName in fileList!!) {
-            val file = rootDir.child(fileDirName, fileName)
+            val file = File(dir, fileName)
             context.copyAssetFile(
                 "$assetsDirName/$fileDirName/$fileName",
                 file,

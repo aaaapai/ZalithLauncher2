@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 
 @Composable
 fun CategoryIcon(iconRes: Int, textRes: Int, iconPadding: PaddingValues = PaddingValues()) {
@@ -32,7 +33,7 @@ fun CategoryIcon(image: ImageVector, textRes: Int) {
 }
 
 data class CategoryItem(
-    val tag: String,
+    val key: NavKey,
     val icon: @Composable () -> Unit,
     val textRes: Int,
     val division: Boolean = false

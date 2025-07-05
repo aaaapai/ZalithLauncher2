@@ -34,16 +34,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.components.InstallableItem
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
+import com.movtery.zalithlauncher.ui.screens.splash.elements.splashScreenKey
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
+import kotlinx.serialization.Serializable
 
-const val UNPACK_SCREEN_TAG = "UnpackScreen"
+@Serializable
+data object UnpackScreenKey: NavKey
 
 @Composable
 fun UnpackScreen(
@@ -51,8 +54,8 @@ fun UnpackScreen(
     onAgreeClick: () -> Unit = {}
 ) {
     BaseScreen(
-        screenTag = UNPACK_SCREEN_TAG,
-        currentTag = MutableStates.splashScreenTag
+        screenKey = UnpackScreenKey,
+        currentKey = splashScreenKey
     ) { isVisible ->
         Row(modifier = Modifier.fillMaxSize()) {
             UnpackTaskList(

@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.R
@@ -55,7 +56,11 @@ fun BaseFileItem(
             ) {
                 val date = Date(file.lastModified())
                 Text(
-                    text = formatDate(date),
+                    modifier = Modifier.alpha(0.7f),
+                    text = formatDate(
+                        date = date,
+                        pattern = stringResource(R.string.date_format)
+                    ),
                     style = MaterialTheme.typography.labelSmall
                 )
                 if (file.isFile) {

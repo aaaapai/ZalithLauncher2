@@ -24,6 +24,10 @@ Here’s the current roadmap of features and development status:
 * [x] Core launcher framework (themes, animations, settings, etc.)
 * [x] Game launching and rendering
 * [x] Game version download and installation
+* [x] Mod download and automatic installation
+* [x] Resource pack download and automatic installation
+* [x] World save download and installation
+* [x] Shader pack download and automatic installation
 * [x] Control support: virtual mouse pointer / physical mouse & keyboard / gesture control
 * [x] Version management: list, overview, and configuration
 * [x] Customizable game installation directory
@@ -39,10 +43,6 @@ Here’s the current roadmap of features and development status:
     * [ ] Install Fabric with the Fabric API mod
     * [ ] Install Quilt with the Quilted Fabric API mod
 * [ ] Modpack download and automatic installation
-* [ ] Mod download and automatic installation
-* [ ] Resource pack download and automatic installation
-* [ ] World save download and installation
-* [ ] Shader pack download and automatic installation
 * [ ] Content managers: UI for managing mods / shaders
 * [ ] Gamepad control support
 
@@ -72,34 +72,8 @@ We welcome the community to contribute translations for other languages!
 
 ### ✍️ How to Contribute Translations?
 
-If you would like to see your native language supported in the project, feel free to submit translation files via Pull Requests. Please follow these steps:
-
-1. **Copy the Default Language Files**
-
-   * Since the English content was translated with AI assistance, please refer primarily to the most accurate Simplified Chinese description.:  
-     [`values-zh-rCN/strings.xml`](./ZalithLauncher/src/main/res/values-zh-rCN/strings.xml)
-2. **Create Your Language Resource Directory**
-
-   * For example, Traditional Chinese: `values-zh-rTW`, French: `values-fr`, Japanese: `values-ja`, etc.
-3. **Translate the Content**
-
-   * Translate the contents of `strings.xml` into your language, and make sure to keep all `name` attributes unchanged.
-   * It is recommended to refer to the official Simplified Chinese version:
-     [`strings.xml`](./ZalithLauncher/src/main/res/values-zh-rCN/strings.xml)
-4. **Submit a Pull Request**
-
-   * In the PR description, specify which language has been added and clarify the translation method (e.g., "human translation").
-
-### ✅ Translation Guidelines and Notes
-
-* **Do not use machine translation** (e.g., Google Translate, DeepL, etc.) to directly generate translations.
-* Keep professional terminology and follow platform-specific expressions (e.g., Minecraft-related terms).
-* Do not translate punctuation marks or key instructions (e.g., "Shift", "Ctrl", etc.).
-* Ensure string integrity (placeholders like `%1$s`, `\n`, and similar formats must be retained).
-* Please note that special characters in XML need to be escaped, such as `<` should be written as `&lt;`, and `&` should be written as `&amp;`.
-   * For escape rules, refer to the [official XML escape rules](https://www.w3.org/TR/xml/#syntax).
-
-Thank you to all the language contributors for making Zalith Launcher 2 more multilingual and global! 🎉
+We are using the Weblate platform to translate Zalith Launcher 2. You're welcome to join our [Weblate project](https://hosted.weblate.org/projects/zalithlauncher2) and contribute to the translations!  
+Thank you to every language contributor for helping make Zalith Launcher 2 more multilingual and global!
 
 ## 👨‍💻 Developer
 

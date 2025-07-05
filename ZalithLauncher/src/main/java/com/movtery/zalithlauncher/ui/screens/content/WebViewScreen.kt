@@ -22,19 +22,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.movtery.zalithlauncher.state.MutableStates
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
+import com.movtery.zalithlauncher.ui.screens.navigateTo
+import kotlinx.serialization.Serializable
 import org.apache.commons.io.FileUtils
 
-const val WEB_VIEW_SCREEN_TAG = "WebViewScreen?url="
+@Serializable
+data class WebViewScreenKey(val url: String): NavKey
+
+/**
+ * 导航至WebViewScreen并访问特定网址
+ */
+fun NavBackStack.navigateToWeb(webUrl: String) = this.navigateTo(WebViewScreenKey(webUrl), true)
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WebViewScreen(url: String) {
+fun WebViewScreen(key: WebViewScreenKey) {
     BaseScreen(
-        screenTag = WEB_VIEW_SCREEN_TAG,
-        currentTag = MutableStates.mainScreenTag,
-        tagStartWith = true
+        screenKey = key,
+        currentKey = mainScreenKey,
+        useClassEquality = true
     ) { isVisible ->
 
         val context = LocalContext.current
@@ -64,7 +74,7 @@ fun WebViewScreen(url: String) {
 
                             settings.javaScriptEnabled = true
                             settings.cacheMode = WebSettings.LOAD_NO_CACHE
-                            loadUrl(url)
+                            loadUrl(key.url)
                             webViewHolder.value = this
                         }
                     },

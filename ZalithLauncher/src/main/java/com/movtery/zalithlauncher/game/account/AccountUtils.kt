@@ -15,10 +15,13 @@ import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileExcepti
 import com.movtery.zalithlauncher.game.account.microsoft.NotPurchasedMinecraftException
 import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException
 import com.movtery.zalithlauncher.game.account.microsoft.toLocal
-import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.state.ObjectStates
-import com.movtery.zalithlauncher.ui.screens.content.WEB_VIEW_SCREEN_TAG
+import com.movtery.zalithlauncher.ui.screens.content.WebViewScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.MicrosoftLoginOperation
+import com.movtery.zalithlauncher.ui.screens.content.navigateToWeb
+import com.movtery.zalithlauncher.ui.screens.main.elements.backToMainScreen
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
+import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.copyText
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -91,12 +94,12 @@ fun microsoftLogin(
                     Toast.LENGTH_SHORT
                 ).show()
             }
-            ObjectStates.accessUrl(deviceCode.verificationUrl)
+            mainScreenBackStack.navigateToWeb(deviceCode.verificationUrl)
             task.updateProgress(-1f, R.string.account_microsoft_get_token, deviceCode.userCode)
             val tokenResponse = MicrosoftAuthenticator.getTokenResponse(deviceCode, coroutineContext) {
-                MutableStates.mainScreenTag?.startsWith(WEB_VIEW_SCREEN_TAG) == false
+                !WebViewScreenKey::class.java.isInstance(mainScreenKey)
             }
-            ObjectStates.backToLauncherScreen()
+            mainScreenBackStack.backToMainScreen()
             val account = authAsync(
                 AuthType.Access,
                 tokenResponse.refreshToken,
