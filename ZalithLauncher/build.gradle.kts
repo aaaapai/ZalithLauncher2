@@ -245,7 +245,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.material.color.utilities)
     //Utils
-    implementation(libs.bytehook)
     implementation(libs.gson)
     implementation(libs.commons.io)
     implementation(libs.commons.codec)
