@@ -1,14 +1,14 @@
 package com.movtery.zalithlauncher.utils.nbt
 
-import net.querz.nbt.tag.ByteTag
-import net.querz.nbt.tag.CompoundTag
-import net.querz.nbt.tag.DoubleTag
-import net.querz.nbt.tag.FloatTag
-import net.querz.nbt.tag.IntTag
-import net.querz.nbt.tag.LongTag
-import net.querz.nbt.tag.ShortTag
-import net.querz.nbt.tag.StringTag
-import net.querz.nbt.tag.Tag
+import io.github.ensgijs.nbt.tag.ByteTag
+import io.github.ensgijs.nbt.tag.CompoundTag
+import io.github.ensgijs.nbt.tag.DoubleTag
+import io.github.ensgijs.nbt.tag.FloatTag
+import io.github.ensgijs.nbt.tag.IntTag
+import io.github.ensgijs.nbt.tag.LongTag
+import io.github.ensgijs.nbt.tag.ShortTag
+import io.github.ensgijs.nbt.tag.StringTag
+import io.github.ensgijs.nbt.tag
 
 private inline fun <reified T : Tag<*>, R> CompoundTag.getAs(key: String, crossinline mapper: (T) -> R, defaultValue: R): R {
     return (this.get(key) as? T)?.let(mapper) ?: defaultValue
