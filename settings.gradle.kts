@@ -18,6 +18,11 @@ dependencyResolutionManagement {
         google()
     }
 }
+pluginManagement {
+    plugins {
+        id("com.google.devtools.ksp") version "2.2.0-2.0.2"
+    }
+}
 
 rootProject.name = "ZalithLauncher"
 include(":ZalithLauncher")
