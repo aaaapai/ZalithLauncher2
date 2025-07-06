@@ -11,6 +11,7 @@ import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.stripColorC
 import com.movtery.zalithlauncher.utils.string.isBiggerOrEqualTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import io.github.ensgijs.nbt.tag
 import io.github.ensgijs.nbt.tag.CompoundTag
 import io.github.ensgijs.nbt.io.BinaryNbtHelpers
 import org.apache.commons.io.FileUtils
