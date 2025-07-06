@@ -140,7 +140,7 @@ suspend fun parseLevelDatFile(saveFile: File, levelDatFile: File): SaveData = wi
 
         val compound: CompoundTag = BinaryNbtHelpers.read(levelDatFile, true).tag as? CompoundTag
             ?: error("Failed to read the level.dat file as a CompoundTag.")
-        val data: CompoundTag = CompoundTag.getCompoundTag("Data")
+        val data: CompoundTag = compound.asCompoundTag("Data")
             ?: error("Data entry not found in the NBT structure tree.")
 
         //存档名称，不存在则为空
