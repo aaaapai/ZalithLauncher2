@@ -264,6 +264,12 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.sqlcipher.android)
     ksp(libs.androidx.room.compiler)
+    configurations.ksp {
+        resolutionStrategy {
+            force("com.google.devtools.ksp:symbol-processing:2.2.0-2.0.2")
+        }
+    }
+
     //Support
     implementation(libs.proxy.client.android)
 }
