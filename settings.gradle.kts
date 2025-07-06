@@ -20,7 +20,11 @@ dependencyResolutionManagement {
 }
 pluginManagement {
     plugins {
-        id("com.google.devtools.ksp") version "2.2.0-2.0.2"
+        id("com.google.devtools.ksp") version "2.2.0-2.0.2" apply false
+        id("com.android.application") version "8.12.0-alpha08" apply false
+        id("org.jetbrains.kotlin.android") version "2.2.0" apply false
+        id("kotlinx-serialization") version "3.2.0" apply false
+        id("stringfog") version "5.2.0" apply false
     }
 }
 
