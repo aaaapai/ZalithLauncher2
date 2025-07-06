@@ -5,6 +5,14 @@ import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import java.io.File
 
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
+    id("kotlinx-serialization")
+    id("stringfog")
+}
 apply(plugin = "stringfog")
 
 val zalithPackageName = "com.movtery.zalithlauncher"
