@@ -263,11 +263,10 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.sqlcipher.android)
-    ksp(libs.androidx.room.compiler)
-    configurations.ksp {
-        resolutionStrategy {
-            force("com.google.devtools.ksp:symbol-processing:2.2.0-2.0.2")
-        }
+    // 显式声明所需版本
+    ksp(libs.ksp)
+    ksp(libs.room.compiler) {
+        exclude(group = "com.google.devtools.ksp")
     }
 
     //Support
