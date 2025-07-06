@@ -264,10 +264,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.sqlcipher.android)
     // 显式声明所需版本
-    ksp(libs.ksp)
-    ksp(libs.room.compiler) {
-        exclude(group = "com.google.devtools.ksp")
-    }
+    ksp(libs.androidx.room.compiler)
 
     //Support
     implementation(libs.proxy.client.android)
