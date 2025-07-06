@@ -25,8 +25,7 @@ jobs:
       - name: Build apk
         run: |
           chmod +x gradlew
-          ./gradlew :app:dependencies --configuration ksp
-          ./gradlew assemblerelease -Darch=arm64
+          ./gradlew assemblerelease -Darch=arm64 --configuration ksp
 
       - name: Upload apk
         uses: actions/upload-artifact@main
