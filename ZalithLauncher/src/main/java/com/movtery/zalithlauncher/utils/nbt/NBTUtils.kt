@@ -8,7 +8,8 @@ import io.github.ensgijs.nbt.tag.IntTag
 import io.github.ensgijs.nbt.tag.LongTag
 import io.github.ensgijs.nbt.tag.ShortTag
 import io.github.ensgijs.nbt.tag.StringTag
-import io.github.ensgijs.nbt.tag
+import io.github.ensgijs.nbt.tag.Tag
+import io.github.ensgijs.nbt.tag.*
 
 private inline fun <reified T : Tag<*>, R> CompoundTag.getAs(key: String, crossinline mapper: (T) -> R, defaultValue: R): R {
     return (this.get(key) as? T)?.let(mapper) ?: defaultValue
