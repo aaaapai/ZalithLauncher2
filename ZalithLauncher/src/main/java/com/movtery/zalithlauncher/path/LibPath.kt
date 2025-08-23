@@ -25,6 +25,6 @@ class LibPath {
         @JvmField val AUTHLIB_INJECTOR = File(AUTH_LIBS_DIR, "authlib-injector.jar")
         @JvmField val NIDE_8_AUTH = File(AUTH_LIBS_DIR, "nide8auth.jar")
 
-        @JvmField val CACIO = File(CACIO_17, "cacio-tta-1.19-SNAPSHOT.jar")
+        @JvmField val CACIO = File(CACIO_17, "cacio-tta-1.19.1-SNAPSHOT.jar")
     }
 }
