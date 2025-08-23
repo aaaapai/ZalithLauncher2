@@ -352,19 +352,16 @@ fun runJar(
     jreName: String? = null,
     customArgs: String? = null
 ) {
-    val finalJreName = jreName ?: RuntimesManager.getAvailableJreVersions()
-        .firstOrNull()
-        ?.let { RuntimesManager.getExactJreName(it) }
-        ?: run {
-            Toast.makeText(context, R.string.multirt_no_java, Toast.LENGTH_SHORT).show()
-            return
+    RuntimesManager.getExactJreName(26) ?: run {
+        Toast.makeText(context, R.string.multirt_no_java_8, Toast.LENGTH_SHORT).show()
+        return
     }
     val jvmArgsPrefix = customArgs?.let { "$it " } ?: ""
     val jvmArgs = "$jvmArgsPrefix-jar ${jarFile.absolutePath}"
 
     val jvmLaunchInfo = JvmLaunchInfo(
         jvmArgs = jvmArgs,
-        jreName = finalJreName
+        jreName = jreName
     )
 
     val intent = Intent(context, VMActivity::class.java).apply {
