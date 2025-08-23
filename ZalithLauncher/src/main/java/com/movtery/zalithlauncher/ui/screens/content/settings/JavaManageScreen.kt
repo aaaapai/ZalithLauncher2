@@ -242,31 +242,19 @@ private fun RuntimeOperation(
         }
         is RuntimeOperation.ExecuteJar -> {
             val context = LocalContext.current
-            (context as? Activity)?.let { activity ->
-                val jreName = if (AllSettings.autoPickJavaRuntime.getValue()) {
-                // 获取第一个可用的JRE版本
-                    RuntimesManager.getAvailableJreVersions()
-                        .firstOrNull()
-                        ?.let { RuntimesManager.getExactJreName(it) }
-                } else {
-                        AllSettings.javaRuntime.takeIf { AllSettings.autoPickJavaRuntime.getValue() }?.getValue()
-                }
-        
-                jreName?.let {
-                    JvmLauncher.executeJarWithUri(activity, runtimeOperation.uri, it)
-                }
+            RuntimesManager.getExactJreName(26) ?: run {
+                Toast.makeText(context, R.string.multirt_no_java_8, Toast.LENGTH_LONG).show()
+                updateOperation(RuntimeOperation.None)
+                return
             }
+            (context as? Activity)?.let { activity ->
+            val jreName = AllSettings.javaRuntime.takeIf { AllSettings.autoPickJavaRuntime.getValue() }?.getValue()
+                JvmLauncher.executeJarWithUri(activity, runtimeOperation.uri, jreName)
             updateOperation(RuntimeOperation.None)
+            }
         }
     }
 }
-
-
-
-
-
-
-
 
 private fun progressRuntimeUri(
     context: Context,
