@@ -144,6 +144,7 @@ abstract class Launcher(
         args.purgeArg("-XX:ActiveProcessorCount")
 
         args.add("-javaagent:${LibPath.MIO_LIB_PATCHER.absolutePath}")
+        args.add("-javaagent:${LibPath.CACIO.absolutePath}")
 
         //Add automatically generated args
         val ramAllocationString = ramAllocation.toString()
@@ -417,7 +418,6 @@ abstract class Launcher(
             } else {
                 argsList.add("-Dawt.toolkit=com.github.caciocavallosilano.cacio.ctc.CTCToolkit")
                 argsList.add("-Djava.awt.graphicsenv=com.github.caciocavallosilano.cacio.ctc.CTCGraphicsEnvironment")
-                argsList.add("-Djava.system.class.loader=com.github.caciocavallosilano.cacio.ctc.CTCPreloadClassLoader")
                 argsList.add("--add-exports=java.desktop/java.awt=ALL-UNNAMED")
                 argsList.add("--add-exports=java.desktop/java.awt.peer=ALL-UNNAMED")
                 argsList.add("--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED")
