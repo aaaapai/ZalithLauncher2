@@ -242,7 +242,7 @@ private fun RuntimeOperation(
         }
         is RuntimeOperation.ExecuteJar -> {
             val context = LocalContext.current
-            RuntimesManager.getExactJreName(26) ?: run {
+            RuntimesManager.getExactJreName(8) ?: run {
                 Toast.makeText(context, R.string.multirt_no_java_8, Toast.LENGTH_LONG).show()
                 updateOperation(RuntimeOperation.None)
                 return
