@@ -14,21 +14,20 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.ui.base.BaseScreen
-import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
-import com.movtery.zalithlauncher.ui.screens.content.settingsScreenKey
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object ControlManageScreenKey: NavKey
 
 @Composable
-fun ControlManageScreen() {
+fun ControlManageScreen(
+    key: NestedNavKey.Settings,
+    settingsScreenKey: NavKey?,
+    mainScreenKey: NavKey?
+) {
     BaseScreen(
-        Triple(SettingsScreenKey, mainScreenKey, false),
-        Triple(ControlManageScreenKey, settingsScreenKey, false)
+        Triple(key, mainScreenKey, false),
+        Triple(NormalNavKey.Settings.ControlManager, settingsScreenKey, false)
     ) { isVisible ->
         Column(
             modifier = Modifier

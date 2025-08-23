@@ -3,6 +3,7 @@ package com.movtery.zalithlauncher.game.download.game.forge
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import com.movtery.zalithlauncher.coroutine.Task
+import com.movtery.zalithlauncher.game.addons.mirror.mapMirrorableUrls
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.ForgeLikeVersion
 import com.movtery.zalithlauncher.game.download.game.GameLibDownloader
 import com.movtery.zalithlauncher.game.download.game.copyVanillaFiles
@@ -139,9 +140,9 @@ private suspend fun analyseNewForge(
         tempMinecraftDir = tempMinecraftFolder,
         tempVanillaJar = File(tempMinecraftFolder, "versions/$inherit/$inherit.jar"),
         tempInstaller = installer
-    ) { url, sha1, targetFile, size ->
+    ) { urls, sha1, targetFile, size ->
         libDownloader.scheduleDownload(
-            url = url,
+            urls = urls,
             sha1 = sha1,
             targetFile = targetFile,
             size = size
@@ -159,7 +160,7 @@ private suspend fun analyseNewForge(
                 if (it) {
                     lInfo(
                         "The download task has been removed from the scheduled downloads: \n" +
-                                "url: ${lib.url}\n" +
+                                "url: \n${lib.urls.joinToString("\n")}\n" +
                                 "target path: ${lib.targetFile.absolutePath}"
                     )
                 }
@@ -181,7 +182,7 @@ private suspend fun scheduleMojangMappings(
     tempMinecraftDir: File,
     tempVanillaJar: File,
     tempInstaller: File,
-    schedule: (url: String, sha1: String?, targetFile: File, size: Long) -> Unit
+    schedule: (urls: List<String>, sha1: String?, targetFile: File, size: Long) -> Unit
 ) = withContext(Dispatchers.IO) {
     val tempDir = File(tempMinecraftDir, ".temp/forge_installer_cache").ensureDirectory()
     val vars = mutableMapOf<String, String>()
@@ -237,7 +238,7 @@ private suspend fun parseProcessors(
     baseDir: File,
     jsonObject: JsonObject,
     vars: Map<String, String>,
-    schedule: (url: String, sha1: String?, targetFile: File, size: Long) -> Unit
+    schedule: (urls: List<String>, sha1: String?, targetFile: File, size: Long) -> Unit
 ) = withContext(Dispatchers.IO) {
     val processors: List<ForgeLikeInstallProcessor> = jsonObject["processors"]?.asJsonArray?.let { processors ->
         val type = object : TypeToken<List<ForgeLikeInstallProcessor>>() {}.type
@@ -258,7 +259,7 @@ private suspend fun parseProcessors(
                 NetWorkUtils.fetchStringFromUrl(vanilla.url).parseTo(GameManifest::class.java)
             }
             manifest.downloads?.clientMappings?.let { mappings ->
-                schedule(mappings.url, mappings.sha1, File(output), mappings.size)
+                schedule(mappings.url.mapMirrorableUrls(), mappings.sha1, File(output), mappings.size)
                 lInfo("Mappings: ${mappings.url} (SHA1: ${mappings.sha1})")
             } ?: throw Exception("client_mappings download info not found")
         }

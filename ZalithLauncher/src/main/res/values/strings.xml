@@ -18,7 +18,6 @@
     <string name="generic_main_menu">Main Menu</string>
     <string name="generic_download">Download</string>
     <string name="generic_done">Done</string>
-    <string name="generic_open">Open</string>
     <string name="generic_close">Close</string>
     <string name="generic_clear">Clear</string>
     <string name="generic_import">Import</string>
@@ -39,21 +38,22 @@
     <string name="generic_in_progress">In Progress</string>
     <string name="generic_anyway">Use Anyway</string>
     <string name="generic_go_it">Got it</string>
+    <string name="generic_ignore">Ignore</string>
+    <string name="generic_authorization">Authorization</string>
     <string name="generic_file_name">File Name: %s</string>
     <string name="generic_file_size">File Size: %s</string>
+    <string name="generic_all">All</string>
     <!-- Unit -->
     <string name="unit_day">day</string>
     <string name="date_format">MMM d, yyyy, h:mm:ss a</string>
     <string name="just_now">just now</string>
     <string name="minutes_ago">%d minutes ago</string>
     <string name="hours_ago">%d hours ago</string>
-    <string name="months_days_ago">%1$d month(s) and %2$d day(s) ago</string>
     <string name="days_ago">%d days ago</string>
     <string name="months_ago">%d months ago</string>
     <string name="years_ago">%d years ago</string>
     <!-- Launcher Version -->
     <string name="launcher_version_label_alpha">Alpha Version: %s (Demo Only)</string>
-    <string name="launcher_version_label_beta">Beta Version: %s (Demo Only)</string>
     <string name="launcher_version_debug_warning">You are using a test version of %s! This version may be unstable and is primarily intended for feature testing and early access. It is not recommended for long-term use! If you encounter any issues during testing, please report them to us via GitHub and we will address them as soon as possible.</string>
     <string name="launcher_version_debug_warning_cant_close">This warning cannot be dismissed</string>
     <!-- Themes -->
@@ -76,8 +76,14 @@
     <string name="crash_exit_message">JVM exited with code %d.</string>
     <string name="crash_singnal_message">JVM aborted due to fatal signal %d.</string>
     <string name="crash_exit_note">Check the logs for details. If you cannot resolve this issue, send the log file to a technical expert. Avoid taking screenshots, as they may lack sufficient information.</string>
+    <string name="crash_type">Crash Type: %s</string>
+    <string name="crash_type_launcher">Launcher Crash</string>
+    <string name="crash_type_game">Game Crash</string>
+    <string name="crash_share_logs">Share Logs</string>
     <string name="crash_restart">Restart</string>
     <string name="crash_exit">Exit</string>
+    <string name="crash_launch_crash_title">App Launch Failed</string>
+    <string name="crash_launch_crash_message">The launcher encountered a serious problem and crashed during startup</string>
     <!-- Errors -->
     <string name="error_import_image">Failed to import image</string>
     <string name="error_create_dir">Failed to create directory: %s</string>
@@ -130,16 +136,17 @@
     <string name="download_game_addon_unavailable">Unavailable</string>
     <string name="download_game_addon_incompatible_with">Incompatible with %s</string>
     <string name="download_game_addon_compatible_with">Compatible with %s</string>
+    <string name="download_game_addon_request_addon">Please select the %s version first</string>
     <string name="download_game_addon_release">Release</string>
     <string name="download_game_addon_preview">Preview</string>
     <string name="download_game_addon_stable">Stable</string>
     <string name="download_game_addon_debug">Debug</string>
-    <string name="download_game_addon_date">Release Date: %s</string>
     <string name="download_game_addon_recommended">%s Recommended</string>
     <string name="download_game_addon_not_installable">Not installable automatically</string>
     <string name="download_game_install_title">Installing Game</string>
     <string name="download_game_install_vanilla">Downloading Vanilla %s</string>
-    <string name="download_game_install_base_download_file">Download %s %s main file</string>
+    <string name="download_game_install_base_download_file">Download %1$s %2$s main file</string>
+    <string name="download_game_install_base_download_file2">Download %s main file</string>
     <string name="download_game_install_base_install">Install %s</string>
     <string name="download_game_install_base_installing">Installing %s in the foreground</string>
     <string name="download_game_install_optifine_fetch_download_url">Fetch download URL for OptiFine %s</string>
@@ -154,6 +161,9 @@
     <string name="download_install_error_download_failed">Some files failed to download, possibly due to network issues.</string>
     <string name="download_install_success_title">Installation Successful</string>
     <string name="download_install_success_message">Your game has been successfully installed!</string>
+    <string name="download_install_clear_temp">Clear cache files</string>
+    <string name="download_install_input_version_name">Waiting for user to enter version name</string>
+    <string name="download_install_input_version_name_title">Enter the pre-installed version name</string>
     <string name="download_assets_filter_search_name">Search Name</string>
     <string name="download_assets_filter_search_platform">Target Platform</string>
     <string name="download_assets_filter_game_version">Game Version</string>
@@ -175,6 +185,7 @@
     <string name="download_assets_show_only_mc_release">Show Only MC Releases</string>
     <string name="download_assets_search_mc_versions">Search MC Versions</string>
     <string name="download_assets_dependency_projects">Dependencies</string>
+    <string name="download_assets_optional_projects">Optional Projects</string>
     <string name="download_assets_links">Related Links</string>
     <string name="download_assets_project_link">Project Page</string>
     <string name="download_assets_source_link">View Source Code</string>
@@ -185,9 +196,21 @@
     <string name="download_assets_release_type_alpha">Alpha</string>
     <string name="download_assets_no_installed_versions">No available game version is currently installed, so the target download location for the asset cannot be determined. Please install a game version first!</string>
     <string name="download_assets_install_assets_for_versions">Install for which game versions?</string>
-    <string name="download_assets_install_progress_downloading">Downloading and installing assets\n%s\n (%s / %s)</string>
+    <string name="download_assets_install_progress_downloading">Downloading and installing assets\n%1$s\n (%2$s / %3$s)</string>
     <string name="download_assets_install_progress_installing">Installing assets\n%s</string>
     <string name="download_assets_install_failed">Failed to install assets!</string>
+    <string name="download_modpack_warning1">Before installation, you need to understand that most modpacks are made for PC, and there\'s a high chance of crashes or other issues when you try to launch them. These problems are often beyond what the launcher can resolve.</string>
+    <string name="download_modpack_warning2">You will need to learn the relevant knowledge to try and resolve the issues yourself, or seek help from others.</string>
+    <string name="download_modpack_warning3">Note: The launcher developers typically do not handle issues caused by modpacks.</string>
+    <string name="download_modpack_install_title">Installing modpack</string>
+    <string name="download_modpack_install_parse">Parse modpack</string>
+    <string name="download_modpack_install_get_mod_url">Get mod download link (%1$d/%2$d)</string>
+    <string name="download_modpack_install_overrides">Extract modpack files</string>
+    <string name="download_modpack_download">Download required content for modpack</string>
+    <string name="download_modpack_download_mods">Download all mods (%1$d/%2$d, %3$s)</string>
+    <string name="download_modpack_download_mods_retry">Retry downloading all mods (%1$d/%2$d, %3$s)</string>
+    <string name="download_modpack_get_loaders">Retrieve loader information</string>
+    <string name="download_modpack_final_move">Moving modpack files</string>
     <!--  Assets Category  -->
     <string name="download_assets_category_worldgen">World Generation</string>
     <string name="download_assets_category_biomes">Biomes</string>
@@ -257,10 +280,10 @@
     <string name="download_assets_category_pbr">PBR</string>
     <string name="download_assets_category_reflections">Reflections</string>
     <string name="download_assets_category_shadows">Shadows</string>
-    <string name="download_assets_category_configuration_potato">Potato Settings</string>
-    <string name="download_assets_category_configuration_low">Low Settings</string>
-    <string name="download_assets_category_configuration_medium">Medium Settings</string>
-    <string name="download_assets_category_configuration_high">High Settings</string>
+    <string name="download_assets_category_configuration_potato">Potato</string>
+    <string name="download_assets_category_configuration_low">Low</string>
+    <string name="download_assets_category_configuration_medium">Medium</string>
+    <string name="download_assets_category_configuration_high">High</string>
     <string name="download_assets_category_screenshot">Screenshots</string>
     <!--  Assets Features  -->
     <string name="download_assets_features_audio">Audio</string>
@@ -283,11 +306,19 @@
     <string name="game_button_mouse_left">Left Click</string>
     <string name="game_button_mouse_right">Right Click</string>
     <string name="game_dialog_force_close_message">Are you sure you want to force close and return to the main screen?</string>
+    <string name="game_loading">The game is running, waiting for the game screen to appear</string>
+    <string name="game_loading_version_name">Game Version: %s</string>
+    <string name="game_loading_version_info">Game Info: %s</string>
+    <string name="game_menu_title">Game Menu</string>
+    <string name="game_menu_option_force_close_text">Forcing the currently running game to close may cause save data corruption or prevent settings from being saved. Avoid this action unless necessary.</string>
+    <string name="game_menu_option_switch_log">Log Output</string>
+    <string name="game_menu_option_input_method">Switch Input Method</string>
+    <string name="game_menu_option_switch_fps">FPS Display</string>
     <!-- Renderers -->
-    <string name="renderer_name_freedreno">Freedreno (Adreno, up to 1.21.4)</string>
-    <string name="renderer_name_panfrost">Panfrost (Mali, up to 1.21.4)</string>
     <string name="renderer_version_support">MC Version Support:</string>
     <string name="renderer_version_unsupported_warning">The current renderer %s does not support this game version. Continuing to use it may cause rendering errors or crashes! Are you sure you want to proceed?</string>
+    <string name="renderer_version_storage_permissions">The current renderer %s can be configured via a config file. Please enable external storage permission for the launcher first, otherwise it will not be able to read and load the renderer\'s configuration!</string>
+    <string name="renderer_version_storage_permissions_sdk30">The current renderer %s can be configured via a config file. Please enable the "Manage All Files" permission for the launcher first, otherwise it will not be able to read and load the renderer\'s configuration!</string>
     <!-- Accounts -->
     <string name="account_no_account">No accounts available</string>
     <string name="account_login">Login</string>
@@ -415,6 +446,8 @@
     <string name="versions_manage_game_storage_permissions">Want to use an external game path? Please enable external storage permission for the launcher first, or it won\'t be able to access external game files!</string>
     <string name="versions_manage_game_storage_permissions_sdk30">Want to use an external game path? Please enable the "Manage all files on device" permission for the launcher first, or it won\'t be able to access external game files!</string>
     <string name="versions_manage_no_versions">No installed versions</string>
+    <string name="versions_manage_category_vanilla">Vanilla</string>
+    <string name="versions_manage_category_modloader">Moddable</string>
     <string name="versions_manage_install_exists">Version name already exists!</string>
     <string name="versions_manage_install_cannot_use_mc_name">Do not use vanilla names for modded versions.</string>
     <string name="versions_manage_invalid">Invalid version</string>
@@ -465,9 +498,16 @@
     <string name="versions_config_follow_global_if_blank">Leave blank to use global settings</string>
     <string name="versions_config_disable_if_blank">Leave blank to disable</string>
     <string name="versions_config_failed_to_save">Failed to save configuration</string>
+    <string name="manage_only_show_valid">Available</string>
+    <string name="mods_manage">Mods</string>
+    <string name="mods_manage_info">Mod Information</string>
+    <string name="mods_manage_authors">Mod Authors:</string>
+    <string name="mods_manage_description">Mod Description:</string>
+    <string name="mods_manage_version">Mod Version: %s</string>
+    <string name="mods_manage_delete_warning">Are you sure you want to delete the mod %s? This action cannot be undone!</string>
+    <string name="mods_manage_no_mods">No mods for this version</string>
     <string name="saves_manage">Saves</string>
     <string name="saves_manage_info">Save Info</string>
-    <string name="saves_manage_only_show_compatible">Only show compatible saves</string>
     <string name="saves_manage_invalid">Invalid save</string>
     <string name="saves_manage_last_played">Last played: %s</string>
     <string name="saves_manage_gamemode">Game Mode: %s</string>
@@ -493,7 +533,6 @@
     <string name="saves_manage_no_saves">No saves for this version</string>
     <string name="resource_pack_manage">Resource Packs</string>
     <string name="resource_pack_manage_info">Resource Pack Information</string>
-    <string name="resource_pack_manage_only_show_valid">Only show valid packs</string>
     <string name="resource_pack_manage_invalid">Invalid Resource Pack Format</string>
     <string name="resource_pack_manage_type">Resource Pack Type: %s</string>
     <string name="resource_pack_manage_type_folder">Folder</string>
@@ -503,13 +542,18 @@
     <string name="resource_pack_manage_name">Resource Pack Name</string>
     <string name="resource_pack_manage_delete_warning">Are you sure you want to delete the resource pack %s? This action cannot be undone!</string>
     <string name="resource_pack_manage_no_packs">No resource packs available for the current version</string>
+    <string name="shader_pack_manage">Shader Packs</string>
+    <string name="shader_pack_manage_exists">A shader pack with this name already exists.</string>
+    <string name="shader_pack_manage_name">Shader Pack Name</string>
+    <string name="shader_pack_manage_delete_warning">Are you sure you want to delete the shader pack %s? This action cannot be undone!</string>
+    <string name="shader_pack_manage_no_packs">No shader packs for this version</string>
     <!-- Game -->
     <string name="minecraft_download_stat_download_task">Preparing downloads</string>
     <string name="minecraft_download_stat_verify_task">Preparing verifications</string>
-    <string name="minecraft_download_downloading_game_files">Downloading files \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_verifying_and_repairing_files">Verifying files \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_progress_retry_downloading_files">Retrying downloads \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_progress_retry_verifying_files">Retrying verifications \n(%d/%d, %s/%s)</string>
+    <string name="minecraft_download_downloading_game_files">Downloading files \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_verifying_and_repairing_files">Verifying files \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_progress_retry_downloading_files">Retrying downloads \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_progress_retry_verifying_files">Retrying verifications \n(%1$d/%2$d, %3$s/%4$s)</string>
     <string name="minecraft_download_failed">Download failed</string>
     <string name="minecraft_download_failed_retried">Retries exhausted. Some files failed to download.</string>
     <string name="minecraft_download_failed_notfound">Some dependency files could not be downloaded. If the issue persists after multiple attempts, the game may be missing required library files. It is recommended to reinstall the game.</string>
@@ -556,13 +600,21 @@
     <string name="settings_game_java_memory_summary">Adjust Minecraft\'s memory usage</string>
     <string name="settings_game_jvm_args_title">JVM Arguments</string>
     <string name="settings_game_jvm_args_summary">Additional JVM arguments added when starting the JVM. Modifying these without proper knowledge is not recommended, as it may cause crashes</string>
+    <string name="settings_game_show_log_automatic_title">Automatically Show Logs</string>
+    <string name="settings_game_show_log_automatic_summary">Automatically show logs before the game officially renders the screen</string>
     <string name="settings_game_log_text_size_title">Log Font Size</string>
     <string name="settings_game_log_text_size_summary">Adjust the text size on the log screen</string>
     <string name="settings_game_log_buffer_flush_interval_title">Log Flush Interval</string>
     <string name="settings_game_log_buffer_flush_interval_summary">Set how often the log buffer refreshes. Refreshing too frequently or too infrequently may affect performance</string>
+    <string name="settings_control_physical_key_bind_ime_title">Physical Keyboard Input Method Invocation</string>
+    <string name="settings_control_physical_key_bind_ime_summary">Click to bind a key for invoking the input method during gameplay</string>
+    <string name="settings_control_physical_key_bind_ime_bound">Bound key: %s</string>
+    <string name="settings_control_physical_key_bind_ime_un_bind">Not bound</string>
     <string name="settings_control_mouse_physical_mouse_mode_title">Physical Mouse</string>
     <string name="settings_control_mouse_physical_mouse_mode_summary">When a physical mouse is connected, disable the virtual mouse pointer and use the system mouse pointer for control</string>
     <string name="settings_control_mouse_physical_mouse_warning">If your device interprets physical mouse right-click as "Back" or middle-click as "Home", you can go to System Settings > Developer Options and enable "Disable Permission Monitoring", this will likely resolve the issue.</string>
+    <string name="settings_control_mouse_hide_title">Hide Virtual Mouse</string>
+    <string name="settings_control_mouse_hide_summary">In some situations, you may want to hide the virtual mouse; this setting does not affect physical mouse control or swipe control</string>
     <string name="settings_control_mouse_size_title">Virtual Mouse Size</string>
     <string name="settings_control_mouse_sensitivity_title">Virtual Mouse Sensitivity</string>
     <string name="settings_control_mouse_sensitivity_summary">Adjust the movement speed of the virtual mouse in normal mode</string>
@@ -601,11 +653,31 @@
     <string name="settings_launcher_log_share_title">Share Launcher Logs</string>
     <string name="settings_launcher_log_share_summary">Tap to share the launcher log files, so developers can identify and fix issues with the launcher.</string>
     <string name="settings_launcher_log_share_packing">Package launcher log files</string>
+    <string name="settings_launcher_mirror_modloader_title">Mod Loader Version Source</string>
+    <string name="settings_launcher_mirror_file_download_title">File Download Source</string>
+    <string name="settings_launcher_mirror_official_first">Prefer Official Source</string>
+    <string name="settings_launcher_mirror_mirror_first">Prefer Mirror Source</string>
+    <!--  Control  -->
+    <string name="control_keyboard_bind_title">Bind Key</string>
+    <string name="control_keyboard_bind_summary">Press the key you want to bind on your keyboard</string>
     <!-- About -->
+    <string name="about_launcher_title">About Launcher</string>
+    <string name="about_launcher_version">Launcher Version: %s</string>
+    <string name="about_launcher_author_movtery_title">MovTery</string>
+    <string name="about_launcher_author_movtery_text">Author of %s</string>
+    <string name="about_launcher_project_link">Project Link</string>
+    <string name="about_sponsor">Sponsorship Support</string>
+    <string name="about_acknowledgements_title">Acknowledgements</string>
+    <string name="about_acknowledgements_pojav_text">%s uses the launch backend from PojavLauncher</string>
+    <string name="about_acknowledgements_pcl_text">%s references parts of the implementation from PCL2</string>
+    <string name="about_acknowledgements_fcl_text">%s incorporates code from FCL and references parts of its implementation</string>
+    <string name="about_acknowledgements_hmcl_text">%s incorporates code from HMCL and references parts of its implementation</string>
+    <string name="about_acknowledgements_mcmod">MCMod (mcmod.cn)</string>
+    <string name="about_acknowledgements_mcmod_text">%s uses Simplified Chinese translations of mods and modpacks from MCMod</string>
+    <string name="about_acknowledgements_bangbang93_text">%s uses the BMCL API mirror source</string>
     <string name="about_plugin_title">Loaded Plugins</string>
     <string name="about_library_title">Third-Party Libraries</string>
     <!--  Url  -->
     <string name="url_wiki_minecraft_game_release">https://minecraft.wiki/w/Java_Edition_%s</string>
     <string name="url_wiki_minecraft_game_snapshot">https://minecraft.wiki/w/Java_Edition_%s</string>
-    <string name="url_mod_custom_skin_loader">https://modrinth.com/mod/customskinloader</string>
 </resources>

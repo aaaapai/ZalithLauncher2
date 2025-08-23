@@ -250,7 +250,6 @@ void* maybe_load_vulkan() {
 }
 
 static int frameCount = 0;
-static int fps = 0;
 static time_t lastTime = 0;
 
 void calculateFPS() {
@@ -259,14 +258,18 @@ void calculateFPS() {
 
     if (currentTime != lastTime) {
         lastTime = currentTime;
-        fps = frameCount;
+
+        if (!pojav_environ->dalvikJavaVMPtr ||!pojav_environ->class_ZLInvoker ||!pojav_environ->method_PutFpsValue) {
+            return;
+        }
+
+        JNIEnv *dalvikEnv;
+        (*pojav_environ->dalvikJavaVMPtr)->AttachCurrentThread(pojav_environ->dalvikJavaVMPtr,&dalvikEnv,NULL);
+        (*dalvikEnv)->CallStaticVoidMethod(dalvikEnv,pojav_environ->class_ZLInvoker,pojav_environ->method_PutFpsValue,(jint) frameCount);
+        (*pojav_environ->dalvikJavaVMPtr)->DetachCurrentThread(pojav_environ->dalvikJavaVMPtr);
+
         frameCount = 0;
     }
-}
-
-EXTERNAL_API JNIEXPORT jint JNICALL
-Java_com_movtery_zalithlauncher_bridge_ZLBridge_getCurrentFPS(JNIEnv *env, jclass clazz) {
-    return fps;
 }
 
 EXTERNAL_API JNIEXPORT jlong JNICALL

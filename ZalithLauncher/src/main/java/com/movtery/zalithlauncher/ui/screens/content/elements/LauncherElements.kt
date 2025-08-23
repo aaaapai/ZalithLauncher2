@@ -1,5 +1,6 @@
 package com.movtery.zalithlauncher.ui.screens.content.elements
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,20 +30,24 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.account.isLocalAccount
+import com.movtery.zalithlauncher.game.download.assets.platform.Platform
+import com.movtery.zalithlauncher.game.download.assets.platform.PlatformClasses
 import com.movtery.zalithlauncher.game.launch.LaunchGame
+import com.movtery.zalithlauncher.game.plugin.renderer.RendererPluginManager
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 import com.movtery.zalithlauncher.game.renderer.Renderers
 import com.movtery.zalithlauncher.game.skin.SkinModelType
 import com.movtery.zalithlauncher.game.skin.isOfflineSkinCompatible
 import com.movtery.zalithlauncher.game.skin.isSkinModelUuidSupported
+import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionInfo
-import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.TooltipIconButton
-import com.movtery.zalithlauncher.utils.network.NetWorkUtils
+import com.movtery.zalithlauncher.utils.StoragePermissionsUtils
 import com.movtery.zalithlauncher.utils.string.isBiggerTo
 import com.movtery.zalithlauncher.utils.string.isLowerTo
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 import kotlinx.coroutines.launch
 
 sealed interface LaunchGameOperation {
@@ -51,12 +56,32 @@ sealed interface LaunchGameOperation {
     data object NoVersion : LaunchGameOperation
     /** 没有可用账号 */
     data object NoAccount : LaunchGameOperation
+
+    /** 渲染器可配置，但需要用到文件管理权限 */
+    data class RendererNoStoragePermission(
+        val renderer: RendererInterface,
+        val version: Version,
+        val quickPlay: String?
+    ) : LaunchGameOperation
+
     /** 当前渲染器不支持选中版本 */
-    data class UnsupportedRenderer(val renderer: RendererInterface): LaunchGameOperation
+    data class UnsupportedRenderer(
+        val renderer: RendererInterface,
+        val version: Version,
+        val quickPlay: String?
+    ): LaunchGameOperation
+
     /** 尝试启动：启动前检查一些东西 */
-    data object TryLaunch : LaunchGameOperation
+    data class TryLaunch(
+        val version: Version?,
+        val quickPlay: String? = null
+    ) : LaunchGameOperation
+
     /** 正式启动 */
-    data object RealLaunch : LaunchGameOperation
+    data class RealLaunch(
+        val version: Version,
+        val quickPlay: String?
+    ) : LaunchGameOperation
 }
 
 @Composable
@@ -65,10 +90,9 @@ fun getLocalSkinWarningButton(
     modifier: Modifier = Modifier,
     account: Account,
     versionInfo: VersionInfo,
-    swapToAccountScreen: () -> Unit = {}
+    swapToAccountScreen: () -> Unit = {},
+    swapToDownloadScreen: (id: String, Platform, classes: PlatformClasses) -> Unit = { _, _, _ -> }
 ): (@Composable () -> Unit)? {
-    val context = LocalContext.current
-
     val warningIcon = @Composable {
         Icon(
             imageVector = Icons.Default.Warning,
@@ -125,7 +149,7 @@ fun getLocalSkinWarningButton(
                             )
                             IconTextButton(
                                 onClick = {
-                                    NetWorkUtils.openLink(context, context.getString(R.string.url_mod_custom_skin_loader))
+                                    swapToDownloadScreen("idMHQ4n2", Platform.MODRINTH, PlatformClasses.MOD)
                                     tooltipState.dismiss()
                                 },
                                 imageVector = Icons.Outlined.Checkroom,
@@ -158,8 +182,10 @@ fun getLocalSkinWarningButton(
 
 @Composable
 fun LaunchGameOperation(
+    activity: Activity,
     launchGameOperation: LaunchGameOperation,
     updateOperation: (LaunchGameOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit,
     toAccountManageScreen: () -> Unit = {},
     toVersionManageScreen: () -> Unit = {}
 ) {
@@ -176,14 +202,31 @@ fun LaunchGameOperation(
             toAccountManageScreen()
             updateOperation(LaunchGameOperation.None)
         }
+        is LaunchGameOperation.RendererNoStoragePermission -> {
+            val renderer = launchGameOperation.renderer
+            val version = launchGameOperation.version
+            val quickPlay = launchGameOperation.quickPlay
+            StoragePermissionsUtils.checkPermissions(
+                activity = activity,
+                message = activity.getString(R.string.renderer_version_storage_permissions, renderer.getRendererName()),
+                messageSdk30 = activity.getString(R.string.renderer_version_storage_permissions_sdk30, renderer.getRendererName()),
+                onDialogCancel = {
+                    //用户拒绝授权，但仍然允许启动（不过这会导致配置无法读取）
+                    updateOperation(LaunchGameOperation.RealLaunch(version, quickPlay))
+                }
+            )
+            updateOperation(LaunchGameOperation.None)
+        }
         is LaunchGameOperation.UnsupportedRenderer -> {
             val renderer = launchGameOperation.renderer
+            val version = launchGameOperation.version
+            val quickPlay = launchGameOperation.quickPlay
             SimpleAlertDialog(
                 title = stringResource(R.string.generic_warning),
                 text = stringResource(R.string.renderer_version_unsupported_warning, renderer.getRendererName()),
                 confirmText = stringResource(R.string.generic_anyway),
                 onConfirm = {
-                    updateOperation(LaunchGameOperation.RealLaunch)
+                    updateOperation(LaunchGameOperation.RealLaunch(version, quickPlay))
                 },
                 onDismiss = {
                     updateOperation(LaunchGameOperation.None)
@@ -191,10 +234,12 @@ fun LaunchGameOperation(
             )
         }
         is LaunchGameOperation.TryLaunch -> {
-            val version = VersionsManager.currentVersion ?: run {
+            val version = launchGameOperation.version ?: run {
                 updateOperation(LaunchGameOperation.NoVersion)
                 return
             }
+
+            val quickPlay = launchGameOperation.quickPlay
 
             AccountsManager.getCurrentAccount() ?: run {
                 updateOperation(LaunchGameOperation.NoAccount)
@@ -214,23 +259,30 @@ fun LaunchGameOperation(
                 (rendererMaxVer?.let { mcVer.isBiggerTo(it) } ?: false)
 
             if (isUnsupported) {
-                updateOperation(LaunchGameOperation.UnsupportedRenderer(currentRenderer))
+                updateOperation(LaunchGameOperation.UnsupportedRenderer(currentRenderer, version, quickPlay))
+                return
+            }
+
+            //为可配置的渲染器检查文件管理权限
+            if (
+                !StoragePermissionsUtils.checkPermissions() &&
+                RendererPluginManager.isConfigurablePlugin(version.getRenderer())
+            ) {
+                updateOperation(LaunchGameOperation.RendererNoStoragePermission(currentRenderer, version, quickPlay))
                 return
             }
 
             //正式启动游戏
-            updateOperation(LaunchGameOperation.RealLaunch)
+            updateOperation(LaunchGameOperation.RealLaunch(version, quickPlay))
         }
         is LaunchGameOperation.RealLaunch -> {
-            val version = VersionsManager.currentVersion ?: run {
-                updateOperation(LaunchGameOperation.None)
-                return
-            }
+            val version = launchGameOperation.version
+            val quickPlay = launchGameOperation.quickPlay
             version.apply {
                 offlineAccountLogin = false
-                quickPlaySingle = null //清除快速启动
+                quickPlaySingle = quickPlay
             }
-            LaunchGame.launchGame(context, version)
+            LaunchGame.launchGame(context, version, summitError)
             updateOperation(LaunchGameOperation.None)
         }
     }

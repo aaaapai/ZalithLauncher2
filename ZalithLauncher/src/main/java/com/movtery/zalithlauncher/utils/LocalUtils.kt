@@ -6,11 +6,18 @@ import android.content.Context
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.GLES20
+import android.os.Build
 import android.os.Process
+import android.util.Log
+import android.view.KeyEvent
 import com.google.gson.GsonBuilder
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.utils.logging.Logger.lDebug
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import java.io.File
+import java.io.PrintStream
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.Instant
@@ -89,18 +96,7 @@ fun getTimeAgo(
     if (years > 0) return context.getString(R.string.years_ago, years)
 
     val months = ChronoUnit.MONTHS.between(pastZoned, nowZoned)
-    if (months > 0) {
-        //计算剩余天数
-        val days = ChronoUnit.DAYS.between(
-            pastZoned.plusMonths(months),
-            nowZoned
-        )
-        return if (days > 0) {
-            context.getString(R.string.months_days_ago, months, days)
-        } else {
-            context.getString(R.string.months_ago, months)
-        }
-    }
+    if (months > 0) return context.getString(R.string.months_ago, months)
 
     val duration = Duration.between(pastInstant, now)
     val days = duration.toDays()
@@ -283,4 +279,128 @@ private fun formatWithUnit(value: Double, unit: String): String {
         floor(value).toInt().toString()
     }
     return "$displayValue$unit"
+}
+
+/**
+ * 检查当前环境是否为中文环境
+ */
+fun isChinese(): Boolean = areaChecks("zh")
+
+/**
+ * 地区检查
+ */
+fun areaChecks(area: String): Boolean {
+    return Locale.getDefault().language == area
+}
+
+/**
+ * 将崩溃报告写入指定文件
+ */
+fun writeCrashFile(
+    file: File,
+    throwable: Throwable,
+    onFailure: (Throwable) -> Unit
+) {
+    runCatching {
+        PrintStream(file).use { stream ->
+            stream.append("================ ${InfoDistributor.LAUNCHER_IDENTIFIER} Crash Report ================\n")
+            stream.append("- Time: ${DateFormat.getDateTimeInstance().format(Date())}\n")
+            stream.append("- Device: ${Build.PRODUCT} ${Build.MODEL}\n")
+            stream.append("- Android Version: ${Build.VERSION.RELEASE}\n")
+            stream.append("- Launcher Version: test\n")
+            stream.append("===================== Crash Stack Trace =====================\n")
+            stream.append(Log.getStackTraceString(throwable))
+        }
+    }.onFailure(onFailure)
+}
+
+fun formatKeyCode(code: Int): String {
+    val rawString = KeyEvent.keyCodeToString(code)
+
+    fun formatAsReadableText(input: String): String {
+        return input.split("_")
+            .joinToString(" ") { word ->
+                when (word) {
+                    //保留常见缩写的大写
+                    "UI", "TV", "API", "NFC", "GPS" -> word
+                    else -> word.lowercase()
+                        .replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase() else it.toString()
+                        }
+                }
+            }
+    }
+
+    return when {
+        rawString.startsWith("KEYCODE_") -> {
+            val s1 = rawString.removePrefix("KEYCODE_")
+            when (s1) {
+                "DEL" -> "Backspace"
+                "FORWARD_DEL" -> "Delete"
+                "GRAVE" -> "`"
+                "MINUS" -> "-"
+                "EQUALS" -> "="
+                "LEFT_BRACKET" -> "["
+                "RIGHT_BRACKET" -> "]"
+                "BACKSLASH" -> "\\"
+                "SEMICOLON" -> ";"
+                "APOSTROPHE" -> "'"
+                "COMMA" -> ","
+                "PERIOD" -> "."
+                "SLASH" -> "/"
+                "NUMPAD_0" -> "Numpad 0"
+                "NUMPAD_1" -> "Numpad 1"
+                "NUMPAD_2" -> "Numpad 2"
+                "NUMPAD_3" -> "Numpad 3"
+                "NUMPAD_4" -> "Numpad 4"
+                "NUMPAD_5" -> "Numpad 5"
+                "NUMPAD_6" -> "Numpad 6"
+                "NUMPAD_7" -> "Numpad 7"
+                "NUMPAD_8" -> "Numpad 8"
+                "NUMPAD_9" -> "Numpad 9"
+                "NUMPAD_DIVIDE" -> "Numpad /"
+                "NUMPAD_MULTIPLY" -> "Numpad *"
+                "NUMPAD_SUBTRACT" -> "Numpad -"
+                "NUMPAD_ADD" -> "Numpad +"
+                "NUMPAD_DOT" -> "Numpad ."
+                "NUMPAD_COMMA" -> "Numpad ,"
+                "NUMPAD_ENTER" -> "Numpad Enter"
+                "NUMPAD_EQUALS" -> "Numpad ="
+                "NUMPAD_LEFT_PAREN" -> "Numpad ("
+                "NUMPAD_RIGHT_PAREN" -> "Numpad )"
+                "CTRL_LEFT" -> "Left Ctrl"
+                "CTRL_RIGHT" -> "Right Ctrl"
+                "SHIFT_LEFT" -> "Left Shift"
+                "SHIFT_RIGHT" -> "Right Shift"
+                "ALT_LEFT" -> "Left Alt"
+                "ALT_RIGHT" -> "Right Alt"
+                "META_LEFT" -> "Left Meta"
+                "META_RIGHT" -> "Right Meta"
+                "CAPS_LOCK" -> "Caps Lock"
+                "SCROLL_LOCK" -> "Scroll Lock"
+                "NUM_LOCK" -> "Num Lock"
+                "PAGE_UP" -> "Page Up"
+                "PAGE_DOWN" -> "Page Down"
+                "MEDIA_PLAY_PAUSE" -> "Play/Pause"
+                "MEDIA_STOP" -> "Stop"
+                else -> null
+            } ?: formatAsReadableText(s1)
+        }
+
+        //未知按键
+        rawString.startsWith("0x") -> "Key ${rawString.uppercase()}"
+
+        else -> {
+            val prefix = when {
+                rawString.startsWith("FLAG_") -> "FLAG_"
+                rawString.startsWith("ACTION_") -> "ACTION_"
+                rawString.startsWith("META_") -> "META_"
+                else -> null
+            }
+
+            prefix?.let {
+                formatAsReadableText(rawString.removePrefix(it))
+            } ?: formatAsReadableText(rawString)
+        }
+    }
 }

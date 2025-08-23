@@ -1,14 +1,14 @@
 package com.movtery.zalithlauncher.setting.unit
 
-import com.movtery.zalithlauncher.setting.Settings.Manager
+import com.movtery.zalithlauncher.setting.launcherMMKV
 
 class IntSettingUnit(key: String, defaultValue: Int) : AbstractSettingUnit<Int>(key, defaultValue) {
     override fun getValue(): Int {
-        if (cacheValue != null) return cacheValue!!
-        return Manager.getValue(key, defaultValue) {
-            it.toIntOrNull()
-        }.also {
-            cacheValue = it
-        }
+        return launcherMMKV().getInt(key, defaultValue)
+            .also { state = it }
+    }
+
+    override fun saveValue(v: Int) {
+        launcherMMKV().putInt(key, v).apply()
     }
 }

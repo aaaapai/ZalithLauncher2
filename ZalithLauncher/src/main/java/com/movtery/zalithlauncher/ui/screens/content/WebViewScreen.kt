@@ -23,27 +23,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.ui.base.BaseScreen
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.navigateTo
-import kotlinx.serialization.Serializable
+import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 import org.apache.commons.io.FileUtils
-
-@Serializable
-data class WebViewScreenKey(val url: String): NavKey
 
 /**
  * 导航至WebViewScreen并访问特定网址
  */
-fun NavBackStack.navigateToWeb(webUrl: String) = this.navigateTo(WebViewScreenKey(webUrl), true)
+fun NavBackStack.navigateToWeb(webUrl: String) = this.navigateTo(
+    screenKey = NormalNavKey.WebScreen(webUrl),
+    useClassEquality = true
+)
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WebViewScreen(key: WebViewScreenKey) {
+fun WebViewScreen(
+    key: NormalNavKey.WebScreen,
+    backStackViewModel: ScreenBackStackViewModel
+) {
     BaseScreen(
         screenKey = key,
-        currentKey = mainScreenKey,
+        currentKey = backStackViewModel.mainScreenKey,
         useClassEquality = true
     ) { isVisible ->
 

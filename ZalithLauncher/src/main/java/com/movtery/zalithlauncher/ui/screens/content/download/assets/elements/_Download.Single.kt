@@ -36,6 +36,7 @@ import androidx.compose.ui.window.Dialog
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
+import com.movtery.zalithlauncher.ui.components.MarqueeText
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.content.elements.CommonVersionInfoLayout
@@ -138,7 +139,7 @@ fun SelectVersionToDownloadDialog(
                             modifier = Modifier.weight(0.5f),
                             onClick = onDismiss
                         ) {
-                            Text(text = stringResource(R.string.generic_cancel))
+                            MarqueeText(text = stringResource(R.string.generic_cancel))
                         }
                         Button(
                             modifier = Modifier.weight(0.5f),
@@ -148,7 +149,7 @@ fun SelectVersionToDownloadDialog(
                                 }
                             }
                         ) {
-                            Text(text = stringResource(R.string.download_install))
+                            MarqueeText(text = stringResource(R.string.download_install))
                         }
                     }
                 }

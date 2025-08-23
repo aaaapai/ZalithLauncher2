@@ -2,7 +2,7 @@ package com.movtery.zalithlauncher.game.renderer.renderers
 
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 
-class VulkanZinkRenderer : RendererInterface {
+object VulkanZinkRenderer : RendererInterface {
     override fun getRendererId(): String = "vulkan_zink"
 
     override fun getUniqueIdentifier(): String = "0fa435e2-46df-45c9-906c-b29606aaef00"

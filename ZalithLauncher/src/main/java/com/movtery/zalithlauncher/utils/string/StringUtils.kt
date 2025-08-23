@@ -4,6 +4,7 @@ import android.util.Base64
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.charset.StandardCharsets
+import java.util.regex.Pattern
 
 class StringUtils {
     companion object {
@@ -145,5 +146,172 @@ class StringUtils {
         fun String.isEmptyOrBlank(): Boolean = this.isEmpty() || this.isBlank()
 
         fun String.isNotEmptyOrBlank(): Boolean = !this.isEmptyOrBlank()
+
+        /**
+         * 检查一段字符串内是否含有中文字符（中文标点）
+         * @return 是否带有中文
+         */
+        fun String?.containsChinese(): Boolean {
+            if (this == null || this.isEmpty()) {
+                return false
+            }
+
+            val pattern = Pattern.compile("[一-龥|！，。（）《》“”？：；【】]")
+            val matcher = pattern.matcher(this)
+            return matcher.find()
+        }
+
+        /**
+         * 修改自源代码：[HMCL Github](https://github.com/HMCL-dev/HMCL/blob/942f7b7/HMCLCore/src/main/java/org/jackhuang/hmcl/util/StringUtils.java#L291-L393)
+         * 原项目版权归原作者所有，遵循GPL v3协议
+         */
+        fun tokenize(str: String, vars: Map<String, String>? = null): List<String> {
+            if (str.isBlank()) return emptyList()
+            val variables = vars ?: emptyMap()
+            val tokens = mutableListOf<String>()
+            val current = StringBuilder()
+            var i = 0
+
+            while (i < str.length) {
+                when (val c = str[i]) {
+                    '\'' -> {
+                        val end = str.indexOf('\'', startIndex = i + 1).takeIf { it >= 0 } ?: str.length
+                        current.append(str, i + 1, end)
+                        i = end + 1
+                    }
+
+                    '"' -> {
+                        i++
+                        while (i < str.length) {
+                            when (val ch = str[i++]) {
+                                '"' -> break
+                                '`' -> if (i < str.length) {
+                                    current.append(
+                                        when (val esc = str[i++]) {
+                                            'a' -> '\u0007'
+                                            'b' -> '\b'
+                                            'f' -> '\u000C'
+                                            'n' -> '\n'
+                                            'r' -> '\r'
+                                            't' -> '\t'
+                                            'v' -> '\u000B'
+                                            else -> esc
+                                        }
+                                    )
+                                }
+                                '$' -> handleVariable(str, i, variables, current).also { i = it }
+                                else -> current.append(ch)
+                            }
+                        }
+                    }
+
+                    '$' -> {
+                        i = handleVariable(str, i + 1, variables, current)
+                    }
+
+                    ' ' -> {
+                        if (current.isNotEmpty()) {
+                            tokens.add(current.toString())
+                            current.clear()
+                        }
+                        i++
+                    }
+
+                    else -> {
+                        current.append(c)
+                        i++
+                    }
+                }
+            }
+
+            if (current.isNotEmpty()) tokens.add(current.toString())
+            return tokens
+        }
+
+        private fun handleVariable(
+            str: String,
+            start: Int,
+            vars: Map<String, String>,
+            current: StringBuilder
+        ): Int {
+            val varEnd = findVarEnd(str, start)
+            if (varEnd < 0) { //无效变量格式
+                current.append('$')
+                return start
+            }
+
+            val varName = str.substring(start, varEnd)
+            current.append(vars[varName] ?: "$$varName")
+            return varEnd
+        }
+
+        private fun findVarEnd(str: String, start: Int): Int {
+            if (start >= str.length) return -1
+            if (!str[start].isJavaIdentifierStart()) return -1
+
+            var pos = start + 1
+            while (pos < str.length && str[pos].isJavaIdentifierPart()) {
+                pos++
+            }
+            return pos
+        }
+    }
+
+    /**
+     * 修改自源代码：[HMCL Github](https://github.com/HMCL-dev/HMCL/blob/942f7b7/HMCLCore/src/main/java/org/jackhuang/hmcl/util/StringUtils.java#L462-L516)
+     * 原项目版权归原作者所有，遵循GPL v3协议
+     */
+    class LevCalculator {
+        private var lev: Array<IntArray> = emptyArray()
+
+        constructor()
+
+        constructor(length1: Int, length2: Int) {
+            allocate(length1, length2)
+        }
+
+        private fun allocate(length1: Int, length2: Int) {
+            val rows = length1 + 1
+            val cols = length2 + 1
+
+            lev = Array(rows) { i ->
+                IntArray(cols).apply {
+                    if (i == 0) {
+                        indices.forEach { j -> this[j] = j }
+                    } else {
+                        this[0] = i
+                    }
+                }
+            }
+        }
+
+        val length1: Int
+            get() = lev.size
+
+        val length2: Int
+            get() = lev[0].size
+
+        private fun min(a: Int, b: Int, c: Int) = minOf(a, b, c)
+
+        fun calc(a: CharSequence, b: CharSequence): Int {
+            if (lev.isEmpty() || a.length >= lev.size || b.length >= lev[0].size) {
+                allocate(a.length, b.length)
+            }
+
+            for (i in 1..a.length) {
+                for (j in 1..b.length) {
+                    lev[i][j] = min(
+                        lev[i][j - 1] + 1,
+                        lev[i - 1][j] + 1,
+                        if (a[i - 1] == b[j - 1])
+                            lev[i - 1][j - 1]
+                        else
+                            lev[i - 1][j - 1] + 1
+                    )
+                }
+            }
+
+            return lev[a.length][b.length]
+        }
     }
 }

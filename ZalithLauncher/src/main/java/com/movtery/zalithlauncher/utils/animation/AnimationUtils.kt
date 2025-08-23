@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.utils.animation
 
 import android.view.animation.BounceInterpolator
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
@@ -11,7 +12,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.state.MutableStates
 
 /**
  * 获取动画的持续时长
@@ -35,29 +35,37 @@ fun getAdjustedDelayMillis(baseDelayMillis: Int): Int {
 }
 
 /**
- * 获取切换动画的类型
- */
-fun getAnimateType(): TransitionAnimationType {
-    val currentValue = AllSettings.launcherSwapAnimateType.getValue()
-    return TransitionAnimationType.entries.find { it.name == currentValue } ?: TransitionAnimationType.BOUNCE
-}
-
-/**
  * 页面切换动画是否关闭
  */
-fun isSwapAnimateClosed() = MutableStates.launcherAnimateType == TransitionAnimationType.CLOSE
+fun isSwapAnimateClosed() = AllSettings.launcherSwapAnimateType.state == TransitionAnimationType.CLOSE
 
 fun <E> getAnimateTween(
     delayMillis: Int = 0
-): FiniteAnimationSpec<E> = tween(
+): FiniteAnimationSpec<E> = getAnimateTween(
     durationMillis = getAnimateSpeed(),
+    delayMillis = delayMillis
+)
+
+fun <E> getAnimateTween(
+    durationMillis: Int,
+    delayMillis: Int = 0
+): FiniteAnimationSpec<E> = tween(
+    durationMillis = durationMillis,
     delayMillis = delayMillis
 )
 
 fun <E> getAnimateTweenBounce(
     delayMillis: Int = 0
-): FiniteAnimationSpec<E> = tween(
+): FiniteAnimationSpec<E> = getAnimateTweenBounce(
     durationMillis = getAnimateSpeed(),
+    delayMillis = delayMillis
+)
+
+fun <E> getAnimateTweenBounce(
+    durationMillis: Int,
+    delayMillis: Int = 0
+): FiniteAnimationSpec<E> = tween(
+    durationMillis = durationMillis,
     delayMillis = delayMillis,
     easing = { fraction ->
         BounceInterpolator().getInterpolation(fraction)
@@ -66,8 +74,16 @@ fun <E> getAnimateTweenBounce(
 
 fun <E> getAnimateTweenJellyBounce(
     delayMillis: Int = 0
-): FiniteAnimationSpec<E> = tween(
+): FiniteAnimationSpec<E> = getAnimateTweenJellyBounce(
     durationMillis = getAnimateSpeed(),
+    delayMillis = delayMillis
+)
+
+fun <E> getAnimateTweenJellyBounce(
+    durationMillis: Int,
+    delayMillis: Int = 0
+): FiniteAnimationSpec<E> = tween(
+    durationMillis = durationMillis,
     delayMillis = delayMillis,
     easing = { fraction ->
         JellyBounceInterpolator().getInterpolation(fraction)
@@ -83,8 +99,7 @@ fun <E> getSwapAnimateTween(
 ): FiniteAnimationSpec<E> {
     val adjustedDelayMillis = getAdjustedDelayMillis(delayMillis)
     return if (swapIn) {
-        val type = getAnimateType()
-        when (type) {
+        when (AllSettings.launcherSwapAnimateType.getValue()) {
             TransitionAnimationType.CLOSE -> snap()
             TransitionAnimationType.BOUNCE -> getAnimateTweenBounce(adjustedDelayMillis)
             TransitionAnimationType.JELLY_BOUNCE -> getAnimateTweenJellyBounce(adjustedDelayMillis)
@@ -133,21 +148,38 @@ fun swapAnimateDpAsState(
     delayMillis: Int = 0
 ): State<Dp> {
     return if (!isSwapAnimateClosed()) {
-        val value = if (swapIn) 0.dp
-        else {
-            getTargetValueByAmplitude(
-                if (isHorizontal) targetValue / 2
-                else targetValue,
-                amplitude
-            )
-        }
-        animateDpAsState(
-            targetValue = value,
+        swapAnimateDpAsState(
+            targetValue = targetValue,
+            swapIn = swapIn,
+            amplitude = amplitude,
+            isHorizontal = isHorizontal,
             animationSpec = getSwapAnimateTween(swapIn, delayMillis = delayMillis)
         )
     } else {
         rememberUpdatedState(newValue = 0.dp)
     }
+}
+
+@Composable
+fun swapAnimateDpAsState(
+    targetValue: Dp,
+    swapIn: Boolean,
+    amplitude: Int = AllSettings.launcherAnimateExtent.getValue(),
+    isHorizontal: Boolean = false,
+    animationSpec: AnimationSpec<Dp>
+): State<Dp> {
+    val value = if (swapIn) 0.dp
+    else {
+        getTargetValueByAmplitude(
+            if (isHorizontal) targetValue / 2
+            else targetValue,
+            amplitude
+        )
+    }
+    return animateDpAsState(
+        targetValue = value,
+        animationSpec = animationSpec
+    )
 }
 
 /**

@@ -898,8 +898,8 @@ public class GLFW
     }
 
     public static int glfwGetWindowAttrib(@NativeType("GLFWwindow *") long window, int attrib) {
-        if (attrib == GLFW_CONTEXT_VERSION_MAJOR) return GLFW_VERSION_MAJOR;
-        if (attrib == GLFW_CONTEXT_VERSION_MINOR) return GLFW_VERSION_MINOR;
+        if (attrib == GLFW_CONTEXT_VERSION_MAJOR) return 4; // TODO: report actual GL version or add an option for users to select the version
+        if (attrib == GLFW_CONTEXT_VERSION_MINOR) return 6;
         return internalGetWindow(window).windowAttribs.getOrDefault(attrib, 0);
     }
 
@@ -1464,5 +1464,11 @@ public class GLFW
             widthMM[0] = mGLFWWindowWidth;
             heightMM[0] = mGLFWWindowHeight;
         }
+    }
+
+    public static void glfwMaximizeWindow(@NativeType("GLFWwindow *") long window) {
+    }
+
+    public static void glfwRestoreWindow(@NativeType("GLFWwindow *") long window) {
     }
 }

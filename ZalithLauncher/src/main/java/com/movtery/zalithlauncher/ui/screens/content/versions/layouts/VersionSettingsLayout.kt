@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.R
@@ -72,14 +71,12 @@ class VersionSettingsLayoutScope {
             ) {
                 Text(
                     modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                    overflow = TextOverflow.Clip,
                     maxLines = 1,
                     text = versionName,
                     style = MaterialTheme.typography.labelLarge
                 )
                 Text(
                     modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                    overflow = TextOverflow.Clip,
                     maxLines = 1,
                     text = versionSummary,
                     style = MaterialTheme.typography.labelMedium

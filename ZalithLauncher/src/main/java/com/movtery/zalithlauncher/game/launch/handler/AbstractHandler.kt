@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import com.movtery.zalithlauncher.game.launch.Launcher
+import com.movtery.zalithlauncher.viewmodel.EventViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,5 +41,5 @@ abstract class AbstractHandler(
     abstract fun sendMouseRight(isPressed: Boolean)
 
     @Composable
-    abstract fun getComposableLayout(): @Composable () -> Unit
+    abstract fun getComposableLayout(eventViewModel: EventViewModel): @Composable () -> Unit
 }

@@ -39,4 +39,13 @@ class ModrinthFile(
         @SerialName("sha512")
         val sha512: String
     )
+
+    companion object {
+        fun Array<ModrinthFile>.getPrimary(): ModrinthFile? {
+            val files = this.takeIf { it.isNotEmpty() } ?: run {
+                return null
+            }
+            return files.find { it.primary } ?: this[0] //仅下载主文件
+        }
+    }
 }

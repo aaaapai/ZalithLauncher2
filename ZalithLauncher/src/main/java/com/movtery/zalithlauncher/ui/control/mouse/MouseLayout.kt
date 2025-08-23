@@ -1,12 +1,12 @@
 package com.movtery.zalithlauncher.ui.control.mouse
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,7 +29,6 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.enums.MouseControlMode
-import com.movtery.zalithlauncher.setting.enums.toMouseControlMode
 import com.movtery.zalithlauncher.utils.device.PhysicalMouseChecker
 import com.movtery.zalithlauncher.utils.file.child
 import java.io.File
@@ -49,6 +48,7 @@ fun getMousePointerFileAvailable(): File? = mousePointerFile.takeIf { it.exists(
  * @param controlMode               控制模式：SLIDE（滑动控制）、CLICK（点击控制）
  * @param longPressTimeoutMillis    长按触发检测时长
  * @param requestPointerCapture     是否使用鼠标抓取方案
+ * @param hideMouseInClickMode      是否在鼠标为点击控制模式时，隐藏鼠标指针
  * @param lastMousePosition         上次虚拟鼠标指针位置
  * @param onTap                     点击回调，参数是触摸点在控件内的绝对坐标
  * @param onLongPress               长按开始回调
@@ -59,13 +59,13 @@ fun getMousePointerFileAvailable(): File? = mousePointerFile.takeIf { it.exists(
  * @param mouseSize                 指针大小
  * @param cursorSensitivity         指针灵敏度（滑动模式生效）
  */
-@SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 fun VirtualPointerLayout(
     modifier: Modifier = Modifier,
-    controlMode: MouseControlMode = AllSettings.mouseControlMode.toMouseControlMode(),
-    longPressTimeoutMillis: Long = -1L,
-    requestPointerCapture: Boolean = true,
+    controlMode: MouseControlMode = AllSettings.mouseControlMode.state,
+    longPressTimeoutMillis: Long = AllSettings.mouseLongPressDelay.state.toLong(),
+    requestPointerCapture: Boolean = !AllSettings.physicalMouseMode.state,
+    hideMouseInClickMode: Boolean = AllSettings.hideMouse.state,
     lastMousePosition: Offset? = null,
     onTap: (Offset) -> Unit = {},
     onLongPress: () -> Unit = {},
@@ -73,24 +73,34 @@ fun VirtualPointerLayout(
     onPointerMove: (Offset) -> Unit = {},
     onMouseScroll: (Offset) -> Unit = {},
     onMouseButton: (button: Int, pressed: Boolean) -> Unit = { _, _ -> },
-    mouseSize: Dp = AllSettings.mouseSize.getValue().dp,
-    cursorSensitivity: Int = AllSettings.cursorSensitivity.getValue(),
+    mouseSize: Dp = AllSettings.mouseSize.state.dp,
+    cursorSensitivity: Int = AllSettings.cursorSensitivity.state,
     requestFocusKey: Any? = null
 ) {
     val speedFactor = cursorSensitivity / 100f
-    var showMousePointer by remember {
-        mutableStateOf(
-            if (PhysicalMouseChecker.physicalMouseConnected) { //物理鼠标已连接
-                requestPointerCapture //根据是否是抓取模式（虚拟鼠标控制模式）判断是否显示虚拟鼠标
-            } else {
-                true //物理鼠标未连接，默认显示虚拟鼠标
-            }
-        )
-    }
 
     val windowSize = LocalWindowInfo.current.containerSize
     val screenWidth: Float = windowSize.width.toFloat()
     val screenHeight: Float = windowSize.height.toFloat()
+
+    var showMousePointer by remember {
+        mutableStateOf(requestPointerCapture)
+    }
+    fun updateMousePointer(show: Boolean) {
+        showMousePointer = show
+    }
+    LaunchedEffect(hideMouseInClickMode) {
+        updateMousePointer(
+            show = when {
+                //物理鼠标已连接：是否为抓获控制模式
+                PhysicalMouseChecker.physicalMouseConnected -> requestPointerCapture
+                //点击控制模式：由隐藏虚拟鼠标设置决定
+                controlMode == MouseControlMode.CLICK -> !hideMouseInClickMode
+                //滑动控制始终显示
+                else -> controlMode == MouseControlMode.SLIDE
+            }
+        )
+    }
 
     var pointerPosition by remember {
         val pos = lastMousePosition?.takeIf {
@@ -122,6 +132,7 @@ fun VirtualPointerLayout(
             onTap = { fingerPos ->
                 onTap(
                     if (controlMode == MouseControlMode.CLICK) {
+                        updateMousePointer(!hideMouseInClickMode)
                         //当前手指的绝对坐标
                         pointerPosition = fingerPos
                         fingerPos
@@ -133,13 +144,14 @@ fun VirtualPointerLayout(
             onLongPress = onLongPress,
             onLongPressEnd = onLongPressEnd,
             onPointerMove = { offset ->
-                if (!showMousePointer) showMousePointer = true
                 pointerPosition = if (controlMode == MouseControlMode.SLIDE) {
+                    updateMousePointer(true)
                     Offset(
                         x = (pointerPosition.x + offset.x * speedFactor).coerceIn(0f, screenWidth),
                         y = (pointerPosition.y + offset.y * speedFactor).coerceIn(0f, screenHeight)
                     )
                 } else {
+                    updateMousePointer(!hideMouseInClickMode)
                     //当前手指的绝对坐标
                     offset
                 }
@@ -147,6 +159,7 @@ fun VirtualPointerLayout(
             },
             onMouseMove = { offset ->
                 if (requestPointerCapture) {
+                    updateMousePointer(true)
                     pointerPosition = Offset(
                         x = (pointerPosition.x + offset.x * speedFactor).coerceIn(0f, screenWidth),
                         y = (pointerPosition.y + offset.y * speedFactor).coerceIn(0f, screenHeight)
@@ -154,7 +167,7 @@ fun VirtualPointerLayout(
                     onPointerMove(pointerPosition)
                 } else {
                     //非鼠标抓取模式
-                    if (showMousePointer) showMousePointer = false
+                    updateMousePointer(false)
                     pointerPosition = offset
                     onPointerMove(pointerPosition)
                 }
@@ -170,7 +183,7 @@ fun VirtualPointerLayout(
 @Composable
 fun MousePointer(
     modifier: Modifier = Modifier,
-    mouseSize: Dp = AllSettings.mouseSize.getValue().dp,
+    mouseSize: Dp = AllSettings.mouseSize.state.dp,
     mouseFile: File?,
     centerIcon: Boolean = false,
     triggerRefresh: Any? = null
@@ -187,7 +200,7 @@ fun MousePointer(
     val imageModifier = modifier.size(mouseSize)
 
     val (model, defaultRes) = remember(mouseFile, triggerRefresh, context) {
-        val default = null to R.drawable.ic_mouse_pointer
+        val default = null to R.drawable.img_mouse_pointer
         when {
             mouseFile == null -> default
             else -> {

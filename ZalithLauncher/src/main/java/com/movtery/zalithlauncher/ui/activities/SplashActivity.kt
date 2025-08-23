@@ -129,7 +129,7 @@ class SplashActivity : BaseComponentActivity(refreshData = false) {
         }.invokeOnCompletion {
             AllSettings.javaRuntime.apply {
                 //检查并设置默认的Java环境
-                if (getValue().isEmpty()) put(Jre.JRE_8.jreName).save()
+                if (getValue().isEmpty()) save(Jre.JRE_8.jreName)
             }
             swapToMain()
         }

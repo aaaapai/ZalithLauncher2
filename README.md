@@ -3,8 +3,7 @@
 [![QQ](https://img.shields.io/badge/QQ-blue)](https://qm.qq.com/q/2MVxS0B29y)
 [![Sponsor](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors)](https://afdian.com/a/MovTery)
 
-[简体中文](README_ZH_CN.md)  
-[繁體中文](README_ZH_TW.md)
+[简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md)
 
 **Zalith Launcher 2** is a newly designed launcher for **Android devices** tailored for [Minecraft: Java Edition](https://www.minecraft.net/). The project uses [PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/tree/v3_openjdk/app_pojavlauncher/src/main/jni) as its core launching engine and features a modern UI built with **Jetpack Compose** and **Material Design 3**.
 We are currently building our official website [zalithlauncher.cn](https://zalithlauncher.cn)  
@@ -24,6 +23,7 @@ Here’s the current roadmap of features and development status:
 * [x] Core launcher framework (themes, animations, settings, etc.)
 * [x] Game launching and rendering
 * [x] Game version download and installation
+* [x] Modpack download and automatic installation
 * [x] Mod download and automatic installation
 * [x] Resource pack download and automatic installation
 * [x] World save download and installation
@@ -33,44 +33,14 @@ Here’s the current roadmap of features and development status:
 * [x] Customizable game installation directory
 * [x] Account system: Microsoft OAuth login, offline accounts, and authentication server support
 * [x] Java runtime management
-* [x] Content managers: UI for managing saves / resource packs
+* [x] Content managers: UI for managing saves / resource packs / shaders / mods
 
 ### 🛠️ In Development / Planned Features
 
 * [ ] Full control system (custom layout editor, control profile manager, etc.)
-* [ ] Game version download extensions:
-    * [ ] Install OptiFine with OptiFabric and Fabric
-    * [ ] Install Fabric with the Fabric API mod
-    * [ ] Install Quilt with the Quilted Fabric API mod
-* [ ] Modpack download and automatic installation
-* [ ] Content managers: UI for managing mods / shaders
 * [ ] Gamepad control support
 
 ## 🌐 Language and Translation Support
-
-### Zalith Launcher 2 currently supports the following two languages:
-
-* **English** (default)
-* **Simplified Chinese**
-
-These two languages are **officially maintained by the project and guaranteed for completeness**.
-
-### Community-supported languages for Zalith Launcher 2:
-
-We welcome the community to contribute translations for other languages!
-
-* **Turkish** - by Star1xr
-* **Traditional Chinese** - by HongyiHank
-* **Russian** - by warrior-genius
-
-### 📌 Why Only English and Simplified Chinese?
-
-* The project is **internationally aimed**, so English is used as the default language; however, since the developer is not a native English speaker, the English content relies heavily on AI-assisted translation, which may contain minor inaccuracies.
-   * If you have any objections to the English translation, please provide the line number of the translated content along with your feedback~ [`values/strings.xml`](./ZalithLauncher/src/main/res/values/strings.xml)
-* The developer [@MovTery](https://github.com/MovTery) is based in China, and can guarantee the quality and completeness of the **Simplified Chinese** translation.
-* Due to resource limitations, the completeness of other language translations cannot be guaranteed at this time and will depend on community contributions.
-
-### ✍️ How to Contribute Translations?
 
 We are using the Weblate platform to translate Zalith Launcher 2. You're welcome to join our [Weblate project](https://hosted.weblate.org/projects/zalithlauncher2) and contribute to the translations!  
 Thank you to every language contributor for helping make Zalith Launcher 2 more multilingual and global!

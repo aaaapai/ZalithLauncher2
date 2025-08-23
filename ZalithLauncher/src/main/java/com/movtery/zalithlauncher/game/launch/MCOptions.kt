@@ -3,9 +3,11 @@ package com.movtery.zalithlauncher.game.launch
 import android.content.Context
 import android.os.Build
 import android.os.FileObserver
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import com.movtery.zalithlauncher.context.copyAssetFile
 import com.movtery.zalithlauncher.game.version.installed.Version
-import com.movtery.zalithlauncher.setting.mcOptionsGuiScale
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.splitPreservingQuotes
@@ -19,6 +21,12 @@ object MCOptions {
     private val parameterMap = ConcurrentHashMap<String, String>()
     private var fileObserver: FileObserver? = null
     private lateinit var version: Version
+
+    /**
+     * GUI 缩放尺寸
+     */
+    var guiScale by mutableIntStateOf(0)
+        private set
 
     /**
      * 初始化 Minecraft 选项配置
@@ -66,7 +74,9 @@ object MCOptions {
             parameterMap.clear()
             parameterMap.putAll(newMap)
 
-            mcOptionsGuiScale = mcScale
+            val guiScale = get("guiScale")?.toIntOrNull() ?: 0
+            val dynamicScale = calculateDynamicScale()
+            this.guiScale = if (guiScale == 0 || dynamicScale < guiScale) dynamicScale else guiScale
         }.onFailure {
             lWarning("Failed to load options!", it)
         }
@@ -121,13 +131,6 @@ object MCOptions {
             tempFile.delete()
         }
     }
-
-    private val mcScale: Int
-        get() {
-            val guiScale = get("guiScale")?.toIntOrNull() ?: 0
-            val dynamicScale = calculateDynamicScale()
-            return if (guiScale == 0 || dynamicScale < guiScale) dynamicScale else guiScale
-        }
 
     private fun calculateDynamicScale() = minOf(
         windowWidth / 320,

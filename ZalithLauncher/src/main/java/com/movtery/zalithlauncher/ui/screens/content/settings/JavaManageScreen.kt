@@ -54,25 +54,20 @@ import com.movtery.zalithlauncher.game.multirt.Runtime
 import com.movtery.zalithlauncher.game.multirt.RuntimesManager
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
-import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
-import com.movtery.zalithlauncher.ui.screens.content.settingsScreenKey
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.string.StringUtils
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object JavaManageScreenKey: NavKey
 
 sealed interface RuntimeOperation {
     data object None: RuntimeOperation
@@ -83,10 +78,15 @@ sealed interface RuntimeOperation {
 }
 
 @Composable
-fun JavaManageScreen() {
+fun JavaManageScreen(
+    key: NestedNavKey.Settings,
+    settingsScreenKey: NavKey?,
+    mainScreenKey: NavKey?,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
+) {
     BaseScreen(
-        Triple(SettingsScreenKey, mainScreenKey, false),
-        Triple(JavaManageScreenKey, settingsScreenKey, false)
+        Triple(key, mainScreenKey, false),
+        Triple(NormalNavKey.Settings.JavaManager, settingsScreenKey, false)
     ) { isVisible ->
         val yOffset by swapAnimateDpAsState(
             targetValue = (-40).dp,
@@ -98,7 +98,8 @@ fun JavaManageScreen() {
         RuntimeOperation(
             runtimeOperation = runtimeOperation,
             updateOperation = { runtimeOperation = it },
-            callRefresh = { runtimes = getRuntimes(true) }
+            callRefresh = { runtimes = getRuntimes(true) },
+            summitError = summitError
         )
 
         val runtimePicker = rememberLauncherForActivityResult(
@@ -189,7 +190,8 @@ private fun getRuntimes(forceLoad: Boolean = false): List<Runtime> =
 private fun RuntimeOperation(
     runtimeOperation: RuntimeOperation,
     updateOperation: (RuntimeOperation) -> Unit,
-    callRefresh: () -> Unit
+    callRefresh: () -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
     when(runtimeOperation) {
         is RuntimeOperation.None -> {}
@@ -214,8 +216,8 @@ private fun RuntimeOperation(
                         RuntimesManager.removeRuntime(runtime.name)
                     },
                     onError = {
-                        ObjectStates.updateThrowable(
-                            ObjectStates.ThrowableMessage(
+                        summitError(
+                            ErrorViewModel.ThrowableMessage(
                                 title = failedMessage,
                                 message = it.getMessageOrToString()
                             )
@@ -232,7 +234,8 @@ private fun RuntimeOperation(
                 progressRuntimeUri(
                     context = context,
                     uri = uri,
-                    callRefresh = callRefresh
+                    callRefresh = callRefresh,
+                    summitError = summitError
                 )
             }
             updateOperation(RuntimeOperation.None)
@@ -254,19 +257,23 @@ private fun RuntimeOperation(
 private fun progressRuntimeUri(
     context: Context,
     uri: Uri,
-    callRefresh: () -> Unit
+    callRefresh: () -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
-    fun showError(message: String) {
-        ObjectStates.updateThrowable(
-            ObjectStates.ThrowableMessage(
-                title = context.getString(R.string.multirt_runtime_import_failed),
+    fun showError(
+        title: String = context.getString(R.string.multirt_runtime_import_failed),
+        message: String
+    ) {
+        summitError(
+            ErrorViewModel.ThrowableMessage(
+                title = title,
                 message = message
             )
         )
     }
 
     val name = context.getFileName(uri) ?: run {
-        showError(context.getString(R.string.multirt_runtime_import_failed_file_name))
+        showError(message = context.getString(R.string.multirt_runtime_import_failed_file_name))
         return
     }
     TaskSystem.submitTask(
@@ -275,7 +282,7 @@ private fun progressRuntimeUri(
             dispatcher = Dispatchers.IO,
             task = { task ->
                 val inputStream = context.contentResolver.openInputStream(uri) ?: run {
-                    showError(context.getString(R.string.multirt_runtime_import_failed_input_stream))
+                    showError(message = context.getString(R.string.multirt_runtime_import_failed_input_stream))
                     return@runTask
                 }
                 RuntimesManager.installRuntime(
@@ -288,7 +295,7 @@ private fun progressRuntimeUri(
                 )
             },
             onError = {
-                showError(StringUtils.throwableToString(it))
+                showError(message = StringUtils.throwableToString(it))
             },
             onFinally = callRefresh,
             onCancel = {
@@ -296,11 +303,9 @@ private fun progressRuntimeUri(
                     RuntimesManager.removeRuntime(name)
                     callRefresh()
                 }.onFailure { t ->
-                    ObjectStates.updateThrowable(
-                        ObjectStates.ThrowableMessage(
-                            title = context.getString(R.string.multirt_runtime_delete_failed),
-                            message = t.getMessageOrToString()
-                        )
+                    showError(
+                        title = context.getString(R.string.multirt_runtime_delete_failed),
+                        message = t.getMessageOrToString()
                     )
                 }
             }

@@ -9,13 +9,6 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 import java.util.zip.ZipFile
 
-/** 资源包加载状态 */
-sealed interface ResourcePackState {
-    data object None : ResourcePackState
-    /** 正在加载所有资源包 */
-    data object Loading : ResourcePackState
-}
-
 /** 资源包操作状态 */
 sealed interface ResourcePackOperation {
     data object None : ResourcePackOperation

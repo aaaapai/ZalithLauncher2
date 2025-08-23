@@ -20,6 +20,7 @@ import com.movtery.zalithlauncher.game.path.GamePathManager
 import com.movtery.zalithlauncher.game.plugin.PluginLoader
 import com.movtery.zalithlauncher.game.renderer.Renderers
 import com.movtery.zalithlauncher.setting.AllSettings
+import com.movtery.zalithlauncher.setting.loadAllSettings
 import com.movtery.zalithlauncher.utils.StoragePermissionsUtils.Companion.checkPermissionsForInit
 import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import org.lwjgl.glfw.CallbackBridge
@@ -27,10 +28,8 @@ import kotlin.math.min
 
 open class BaseComponentActivity(
     /** 是否刷新数据 */
-    private val refreshData: Boolean = true,
-    /** 是否忽略刘海屏 */
-    shouldIgnoreNotch: Boolean = AllSettings.launcherFullScreen.getValue()
-) : FullScreenComponentActivity(shouldIgnoreNotch) {
+    private val refreshData: Boolean = true
+) : FullScreenComponentActivity() {
     private var notchSize = -1
 
     @CallSuper
@@ -43,7 +42,7 @@ open class BaseComponentActivity(
 
         if (refreshData) {
             //加载渲染器
-            Renderers.init(this)
+            Renderers.init()
             //加载插件
             PluginLoader.loadAllPlugins(this, false)
         }
@@ -52,6 +51,7 @@ open class BaseComponentActivity(
     @CallSuper
     override fun onResume() {
         super.onResume()
+        loadAllSettings(this, true)
         checkStoragePermissions()
         if (refreshData) {
             refreshData()
@@ -66,6 +66,16 @@ open class BaseComponentActivity(
 
     override fun onAttachedToWindow() {
         computeNotchSize()
+    }
+
+    override fun shouldIgnoreNotch(): Boolean {
+        runCatching {
+            return AllSettings.launcherFullScreen.getValue()
+        }
+        //AllSettings初始化出现异常（MMKV在Application未正常初始化）
+        //不出意外应该正在展示FatalErrorActivity，忽略并关闭当前Activity
+        finish()
+        return false
     }
 
     private fun refreshData() {
@@ -101,7 +111,7 @@ open class BaseComponentActivity(
             } else { // Removed the clause for devices with unofficial notch support, since it also ruins all devices with virtual nav bars before P
                 windowManager.defaultDisplay.getRealMetrics(displayMetrics)
             }
-            if (!shouldIgnoreNotch) {
+            if (!shouldIgnoreNotch()) {
                 //Remove notch width when it isn't ignored.
                 if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) displayMetrics.heightPixels -= notchSize
                 else displayMetrics.widthPixels -= notchSize
@@ -118,9 +128,9 @@ open class BaseComponentActivity(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
         runCatching {
             val cutout: Rect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                windowManager.currentWindowMetrics.getWindowInsets().displayCutout!!.getBoundingRects()[0]
+                windowManager.currentWindowMetrics.windowInsets.displayCutout!!.boundingRects[0]
             } else {
-                window.decorView.getRootWindowInsets().displayCutout!!.getBoundingRects()[0]
+                window.decorView.rootWindowInsets.displayCutout!!.boundingRects[0]
             }
 
             // Notch values are rotation sensitive, handle all cases

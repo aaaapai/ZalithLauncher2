@@ -1,7 +1,9 @@
 package com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models
 
+import android.os.Parcel
+import android.os.Parcelable
 import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
-import com.movtery.zalithlauncher.game.download.assets.platform.PlatformDisplayLabel
+import com.movtery.zalithlauncher.game.download.assets.platform.ModLoaderDisplayLabel
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -11,7 +13,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @Serializable(with = CurseForgeModLoader.Serializer::class)
-enum class CurseForgeModLoader(val code: Int) : PlatformDisplayLabel {
+enum class CurseForgeModLoader(val code: Int) : ModLoaderDisplayLabel {
     ANY(0) {
         override fun getDisplayName(): String = ""
     },
@@ -36,9 +38,23 @@ enum class CurseForgeModLoader(val code: Int) : PlatformDisplayLabel {
 
     override fun index(): Int = this.ordinal
 
-    companion object {
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(name)
+    }
+
+    companion object CREATOR: Parcelable.Creator<CurseForgeModLoader> {
         private val map = entries.associateBy { it.code }
         fun fromCode(code: Int): CurseForgeModLoader = map[code] ?: error("Unknown mod loader code: $code")
+
+        override fun createFromParcel(parcel: Parcel): CurseForgeModLoader {
+            return CurseForgeModLoader.valueOf(
+                value = parcel.readString()!!
+            )
+        }
+
+        override fun newArray(size: Int): Array<out CurseForgeModLoader?> {
+            return arrayOfNulls(size)
+        }
     }
 
     object Serializer : KSerializer<CurseForgeModLoader> {

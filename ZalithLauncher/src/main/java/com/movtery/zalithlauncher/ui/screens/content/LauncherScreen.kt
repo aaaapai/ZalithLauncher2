@@ -30,45 +30,44 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.BuildConfig
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.account.AccountsManager
+import com.movtery.zalithlauncher.game.download.assets.platform.Platform
+import com.movtery.zalithlauncher.game.download.assets.platform.PlatformClasses
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.components.MarqueeText
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.AccountAvatar
-import com.movtery.zalithlauncher.ui.screens.content.elements.LaunchGameOperation
 import com.movtery.zalithlauncher.ui.screens.content.elements.VersionIconImage
 import com.movtery.zalithlauncher.ui.screens.content.elements.getLocalSkinWarningButton
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object LauncherScreenKey: NavKey
+import com.movtery.zalithlauncher.viewmodel.LaunchGameViewModel
+import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 
 @Composable
-fun LauncherScreen() {
+fun LauncherScreen(
+    backStackViewModel: ScreenBackStackViewModel,
+    navigateToVersions: (Version) -> Unit,
+    launchGameViewModel: LaunchGameViewModel
+) {
     BaseScreen(
-        screenKey = LauncherScreenKey,
-        currentKey = mainScreenKey
+        screenKey = NormalNavKey.LauncherMain,
+        currentKey = backStackViewModel.mainScreenKey
     ) { isVisible ->
         Row(
             modifier = Modifier.fillMaxSize()
@@ -84,14 +83,28 @@ fun LauncherScreen() {
                     .weight(3f)
                     .fillMaxHeight()
                     .padding(top = 12.dp, end = 12.dp, bottom = 12.dp),
+                launchGameViewModel = launchGameViewModel,
                 toAccountManageScreen = {
-                    mainScreenBackStack.navigateTo(AccountManageScreenKey)
+                    backStackViewModel.mainScreenBackStack.navigateTo(NormalNavKey.AccountManager)
                 },
                 toVersionManageScreen = {
-                    mainScreenBackStack.navigateTo(VersionsManageScreenKey)
+                    backStackViewModel.mainScreenBackStack.navigateTo(NormalNavKey.VersionsManager)
                 },
                 toVersionSettingsScreen = {
-                    mainScreenBackStack.navigateTo(VersionSettingsScreenKey)
+                    VersionsManager.currentVersion?.let { version ->
+                        navigateToVersions(version)
+                    }
+                },
+                toDownloadScreen = { projectId, platform, classes ->
+                    backStackViewModel.navigateToDownload(
+                        targetScreen = NestedNavKey.DownloadMod(
+                            backStack = backStackViewModel.downloadModBackStack.also { stack ->
+                                stack.navigateTo(
+                                    NormalNavKey.DownloadAssets(platform, projectId, classes)
+                                )
+                            }
+                        )
+                    )
                 }
             )
         }
@@ -149,22 +162,16 @@ private fun ContentMenu(
 private fun RightMenu(
     isVisible: Boolean,
     modifier: Modifier = Modifier,
+    launchGameViewModel: LaunchGameViewModel,
     toAccountManageScreen: () -> Unit = {},
     toVersionManageScreen: () -> Unit = {},
-    toVersionSettingsScreen: () -> Unit = {}
+    toVersionSettingsScreen: () -> Unit = {},
+    toDownloadScreen: (id: String, Platform, classes: PlatformClasses) -> Unit = { _, _, _ -> }
 ) {
     val xOffset by swapAnimateDpAsState(
         targetValue = 40.dp,
         swapIn = isVisible,
         isHorizontal = true
-    )
-
-    var launchGameOperation by remember { mutableStateOf<LaunchGameOperation>(LaunchGameOperation.None) }
-    LaunchGameOperation(
-        launchGameOperation = launchGameOperation,
-        updateOperation = { launchGameOperation = it },
-        toAccountManageScreen = toAccountManageScreen,
-        toVersionManageScreen = toVersionManageScreen
     )
 
     Card(
@@ -197,7 +204,8 @@ private fun RightMenu(
                     getLocalSkinWarningButton(
                         account = acc1,
                         versionInfo = versionInfo,
-                        swapToAccountScreen = toAccountManageScreen
+                        swapToAccountScreen = toAccountManageScreen,
+                        swapToDownloadScreen = toDownloadScreen
                     )
                 }
             }
@@ -233,10 +241,7 @@ private fun RightMenu(
                 version?.takeIf { it.isValid() }?.let {
                     IconButton(
                         modifier = Modifier.padding(end = 8.dp),
-                        onClick = {
-                            VersionsManager.versionBeingSet = VersionsManager.currentVersion
-                            toVersionSettingsScreen()
-                        }
+                        onClick = toVersionSettingsScreen
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Settings,
@@ -255,10 +260,12 @@ private fun RightMenu(
                     .padding(PaddingValues(horizontal = 12.dp)),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp),
                 onClick = {
-                    launchGameOperation = LaunchGameOperation.TryLaunch
+                    launchGameViewModel.tryLaunch(
+                        VersionsManager.currentVersion
+                    )
                 },
             ) {
-                Text(text = stringResource(R.string.main_launch_game))
+                MarqueeText(text = stringResource(R.string.main_launch_game))
             }
         }
     }
@@ -300,7 +307,6 @@ private fun VersionManagerLayout(
                         modifier = Modifier
                             .align(Alignment.CenterVertically)
                             .basicMarquee(iterations = Int.MAX_VALUE),
-                        overflow = TextOverflow.Clip,
                         text = stringResource(R.string.versions_manage_no_versions),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1
@@ -313,7 +319,6 @@ private fun VersionManagerLayout(
                     ) {
                         Text(
                             modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                            overflow = TextOverflow.Clip,
                             text = version.getVersionName(),
                             style = MaterialTheme.typography.labelMedium,
                             maxLines = 1
@@ -321,7 +326,6 @@ private fun VersionManagerLayout(
                         if (version.isValid()) {
                             Text(
                                 modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                                overflow = TextOverflow.Clip,
                                 text = version.getVersionSummary(),
                                 style = MaterialTheme.typography.labelSmall,
                                 maxLines = 1

@@ -97,15 +97,19 @@ private fun NavigationUI(
         splashScreenKey = currentKey
     }
 
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier,
-        entryProvider = entryProvider {
-            entry<UnpackScreenKey> {
-                UnpackScreen(unpackItems) {
-                    startAllTask()
+    if (backStack.isNotEmpty()) {
+        NavDisplay(
+            backStack = backStack,
+            modifier = modifier,
+            entryProvider = entryProvider {
+                entry<UnpackScreenKey> {
+                    UnpackScreen(unpackItems) {
+                        startAllTask()
+                    }
                 }
             }
-        }
-    )
+        )
+    } else {
+        Box(modifier)
+    }
 }

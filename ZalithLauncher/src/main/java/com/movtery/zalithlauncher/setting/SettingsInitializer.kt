@@ -10,15 +10,17 @@ private const val LWJGL_LIB_NAME_ARG = "-Dorg.lwjgl.opengl.libname="
 
 /**
  * 初始化处理所有设置项
+ * @param reloadAll 是否重新加载全部设置项
  */
-fun loadAllSettings(context: Context) {
+fun loadAllSettings(context: Context, reloadAll: Boolean = false) {
+    if (reloadAll) AllSettings.reloadAll()
     if (AllSettings.ramAllocation.getValue() == -1) {
         val ram = findBestRAMAllocation(context)
-        AllSettings.ramAllocation.put(ram).save()
+        AllSettings.ramAllocation.save(ram)
     }
     val jvmArgs = AllSettings.jvmArgs.getValue()
     Launcher.parseJavaArguments(jvmArgs).find { it.startsWith(LWJGL_LIB_NAME_ARG) }?.let { arg ->
-        AllSettings.jvmArgs.put(jvmArgs.replace(arg, "")).save()
+        AllSettings.jvmArgs.save(jvmArgs.replace(arg, ""))
     }
 }
 

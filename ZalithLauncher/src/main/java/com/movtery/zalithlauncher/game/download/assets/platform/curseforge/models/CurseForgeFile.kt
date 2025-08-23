@@ -202,5 +202,11 @@ class CurseForgeFile(
                     null
                 }
         }
+
+        fun CurseForgeFile.getSHA1(): String? {
+            return hashes.find { hash ->
+                hash.algo == Hash.Algo.SHA1
+            }?.value
+        }
     }
 }

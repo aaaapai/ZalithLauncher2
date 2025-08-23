@@ -83,7 +83,7 @@ class GameLauncher(
         return version.getGameDir().absolutePath
     }
 
-    override fun getLogName(): String = "latest_game"
+    override fun getLogName(): String = LogName.GAME.fileName
 
     override fun initEnv(jreHome: String, runtime: Runtime): MutableMap<String, String> {
         val envMap = super.initEnv(jreHome, runtime)

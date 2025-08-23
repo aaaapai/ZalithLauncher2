@@ -40,47 +40,42 @@ import com.movtery.zalithlauncher.context.copyLocalFile
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.game.version.installed.Version
+import com.movtery.zalithlauncher.game.version.installed.VersionFolders
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
-import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.IconTextButton
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleTaskDialog
-import com.movtery.zalithlauncher.ui.screens.content.VersionSettingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.DeleteVersionDialog
 import com.movtery.zalithlauncher.ui.screens.content.elements.RenameVersionDialog
-import com.movtery.zalithlauncher.ui.screens.content.versionSettScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionSettingsBackground
-import com.movtery.zalithlauncher.ui.screens.main.elements.backToMainScreen
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.shareFile
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.serialization.Serializable
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-@Serializable
-data object VersionOverViewScreenKey: NavKey
-
 @Composable
-fun VersionOverViewScreen() {
+fun VersionOverViewScreen(
+    mainScreenKey: NavKey?,
+    versionsScreenKey: NavKey?,
+    backToMainScreen: () -> Unit,
+    version: Version,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
+) {
     BaseScreen(
-        Triple(VersionSettingsScreenKey, mainScreenKey, false),
-        Triple(VersionOverViewScreenKey, versionSettScreenKey, false)
+        levels1 = listOf(
+            Pair(NestedNavKey.Versions::class.java, mainScreenKey)
+        ),
+        Triple(NormalNavKey.Versions.OverView, versionsScreenKey, false)
     ) { isVisible ->
-
-        val version = VersionsManager.versionBeingSet?.takeIf { it.isValid() } ?: run {
-            mainScreenBackStack.backToMainScreen()
-            return@BaseScreen
-        }
-
-        var versionName by remember { mutableStateOf(version.getVersionName()) }
         var versionSummary by remember { mutableStateOf(version.getVersionSummary()) }
         var refreshVersionIcon by remember { mutableIntStateOf(0) }
 
@@ -91,6 +86,7 @@ fun VersionOverViewScreen() {
         VersionsOperation(
             versionsOperation = versionsOperation,
             updateOperation = { versionsOperation = it },
+            summitError = summitError,
             onIconPicked = {
                 refreshVersionIcon++
                 iconFileExists = VersionsManager.getVersionIconFile(version).exists()
@@ -102,10 +98,7 @@ fun VersionOverViewScreen() {
                 refreshVersionIcon++
                 iconFileExists = iconFile.exists()
             },
-            setVersionName = { value ->
-                version.setVersionName(value)
-                versionName = value
-            },
+            onVersionRefreshed = backToMainScreen,
             setVersionSummary = { value ->
                 version.getVersionConfig().apply {
                     this.versionSummary = value
@@ -113,9 +106,7 @@ fun VersionOverViewScreen() {
                 }
                 versionSummary = version.getVersionSummary()
             },
-            onVersionDeleted = {
-                mainScreenBackStack.backToMainScreen()
-            }
+            onVersionDeleted = backToMainScreen
         )
 
         Column(
@@ -132,7 +123,7 @@ fun VersionOverViewScreen() {
 
             VersionInfoLayout(
                 modifier = Modifier.offset { IntOffset(x = 0, y = yOffset1.roundToPx()) },
-                version, versionName, versionSummary, iconFileExists, refreshVersionIcon,
+                version, versionSummary, iconFileExists, refreshVersionIcon,
                 pickIcon = { versionsOperation = VersionsOperation.PickIcon(version) },
                 resetIcon = { versionsOperation = VersionsOperation.ResetIconAlert }
             )
@@ -163,8 +154,8 @@ fun VersionOverViewScreen() {
                     runCatching {
                         folder.ensureDirectory()
                     }.onFailure { e ->
-                        ObjectStates.updateThrowable(
-                            ObjectStates.ThrowableMessage(
+                        summitError(
+                            ErrorViewModel.ThrowableMessage(
                                 title = context.getString(R.string.error_create_dir, folder.absolutePath),
                                 message = e.getMessageOrToString()
                             )
@@ -179,7 +170,11 @@ fun VersionOverViewScreen() {
 }
 
 @Composable
-private fun PickIcon(version: Version, onDone: () -> Unit) {
+private fun PickIcon(
+    version: Version,
+    onDone: () -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
+) {
     val context = LocalContext.current
 
     val iconFile = VersionsManager.getVersionIconFile(version)
@@ -196,8 +191,8 @@ private fun PickIcon(version: Version, onDone: () -> Unit) {
                     onError = { e ->
                         lError("Failed to import icon!", e)
                         FileUtils.deleteQuietly(iconFile)
-                        ObjectStates.updateThrowable(
-                            ObjectStates.ThrowableMessage(
+                        summitError(
+                            ErrorViewModel.ThrowableMessage(
                                 title = context.getString(R.string.error_import_image),
                                 message = e.getMessageOrToString()
                             )
@@ -218,7 +213,6 @@ private fun PickIcon(version: Version, onDone: () -> Unit) {
 private fun VersionInfoLayout(
     modifier: Modifier = Modifier,
     version: Version,
-    versionName: String,
     versionSummary: String,
     iconFileExists: Boolean,
     refreshKey: Any? = null,
@@ -236,7 +230,6 @@ private fun VersionInfoLayout(
             VersionOverviewItem(
                 modifier = Modifier.padding(start = 4.dp).weight(1f),
                 version = version,
-                versionName = versionName,
                 versionSummary = versionSummary,
                 refreshKey = refreshKey
             )
@@ -344,7 +337,7 @@ private fun VersionQuickActions(
                 }
                 OutlinedButton(
                     modifier = Modifier.padding(end = 12.dp),
-                    onClick = { accessFolder("saves") }
+                    onClick = { accessFolder(VersionFolders.SAVES.folderName) }
                 ) {
                     Text(
                         text = stringResource(R.string.versions_overview_saves_folder)
@@ -352,7 +345,7 @@ private fun VersionQuickActions(
                 }
                 OutlinedButton(
                     modifier = Modifier.padding(end = 12.dp),
-                    onClick = { accessFolder("resourcepacks") }
+                    onClick = { accessFolder(VersionFolders.RESOURCE_PACK.folderName) }
                 ) {
                     Text(
                         text = stringResource(R.string.versions_overview_resource_pack_folder)
@@ -360,7 +353,7 @@ private fun VersionQuickActions(
                 }
                 OutlinedButton(
                     modifier = Modifier.padding(end = 12.dp),
-                    onClick = { accessFolder("shaderpacks") }
+                    onClick = { accessFolder(VersionFolders.SHADERS.folderName) }
                 ) {
                     Text(
                         text = stringResource(R.string.versions_overview_shaders_pack_folder)
@@ -413,16 +406,21 @@ sealed interface VersionsOperation {
 private fun VersionsOperation(
     versionsOperation: VersionsOperation,
     updateOperation: (VersionsOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit,
     onIconPicked: () -> Unit = {},
     resetIcon: () -> Unit = {},
-    setVersionName: (String) -> Unit = {},
+    onVersionRefreshed: () -> Unit = {},
     setVersionSummary: (String) -> Unit = {},
     onVersionDeleted: () -> Unit = {}
 ) {
     when(versionsOperation) {
         is VersionsOperation.None -> {}
         is VersionsOperation.PickIcon -> {
-            PickIcon(version = versionsOperation.version, onDone = onIconPicked)
+            PickIcon(
+                version = versionsOperation.version,
+                onDone = onIconPicked,
+                summitError = summitError
+            )
         }
         is VersionsOperation.ResetIconAlert -> {
             SimpleAlertDialog(
@@ -443,7 +441,7 @@ private fun VersionsOperation(
                             title = R.string.versions_manage_rename_version,
                             task = {
                                 VersionsManager.renameVersion(versionsOperation.version, it)
-                                setVersionName(it)
+                                onVersionRefreshed()
                             }
                         )
                     )
@@ -495,8 +493,8 @@ private fun VersionsOperation(
                 onDismiss = { updateOperation(VersionsOperation.None) },
                 onError = { e ->
                     lError("Failed to run task.", e)
-                    ObjectStates.updateThrowable(
-                        ObjectStates.ThrowableMessage(
+                    summitError(
+                        ErrorViewModel.ThrowableMessage(
                             title = errorMessage,
                             message = e.getMessageOrToString()
                         )

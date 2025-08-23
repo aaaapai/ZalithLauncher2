@@ -21,35 +21,33 @@ import com.movtery.zalithlauncher.game.download.assets.platform.Platform
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformClasses
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformDisplayLabel
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformFilterCode
-import com.movtery.zalithlauncher.game.download.assets.platform.PlatformSearch
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformSearchFilter
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformSearchResult
-import com.movtery.zalithlauncher.game.download.assets.platform.getIds
+import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.CurseForgeSearchResult
 import com.movtery.zalithlauncher.game.download.assets.platform.getPageInfo
-import com.movtery.zalithlauncher.game.download.assets.platform.mcmod.models.McModSearchRes
+import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.ModrinthSearchResult
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthModLoaderCategory
 import com.movtery.zalithlauncher.game.download.assets.platform.nextPage
 import com.movtery.zalithlauncher.game.download.assets.platform.previousPage
 import com.movtery.zalithlauncher.game.download.assets.platform.searchAssets
+import com.movtery.zalithlauncher.game.download.assets.utils.ModTranslations
 import com.movtery.zalithlauncher.ui.base.BaseScreen
-import com.movtery.zalithlauncher.ui.screens.content.DownloadScreenKey
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.AssetsPage
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.ResultListLayout
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.SearchAssetsState
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.SearchFilter
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 /**
  * 资源搜索屏幕的 view model
  * @param initialPlatform 初始设定的平台
  * @param platformClasses 资源搜索的类型
  */
-private class ScreenViewModel(
+private class SearchScreenViewModel(
     initialPlatform: Platform,
     private val platformClasses: PlatformClasses
 ): ViewModel() {
@@ -70,7 +68,18 @@ private class ScreenViewModel(
         search()
     }
 
-    fun putRes(result: PlatformSearchResult, mcmod:McModSearchRes? = null) {
+    private fun putResult(result: PlatformSearchResult) {
+        //将平台项目搜索结果与 mcmod 信息打包在一起
+        val data = when (result) {
+            is CurseForgeSearchResult -> result.data.map {
+                it to ModTranslations.getTranslationsByRepositoryType(platformClasses).getModBySlugId(it.slug)
+            }
+            is ModrinthSearchResult -> result.hits.map {
+                it to ModTranslations.getTranslationsByRepositoryType(platformClasses).getModBySlugId(it.slug)
+            }
+            else -> error("Unknown result type $result")
+        }
+
         result.getPageInfo { pageNumber, pageIndex, totalPage, isLastPage ->
             lInfo("Searched page info: {pageNumber: $pageNumber, pageIndex: $pageIndex, totalPage: $totalPage, isLastPage: $isLastPage}")
 
@@ -79,8 +88,7 @@ private class ScreenViewModel(
                 pageIndex = pageIndex,
                 totalPage = totalPage,
                 isLastPage = isLastPage,
-                result = result,
-                mcmod = mcmod
+                data = data
             )
 
             val targetIndex = pageNumber - 1
@@ -108,26 +116,7 @@ private class ScreenViewModel(
                 searchFilter = searchFilter,
                 platformClasses = platformClasses,
                 onSuccess = { result ->
-                    val type: Int = when (searchPlatform) {
-                        Platform.MODRINTH -> 1
-                        else -> 0
-                    }
-                    val mctype: Int = when (platformClasses) {
-                        PlatformClasses.MOD -> 0
-                        PlatformClasses.MOD_PACK -> 1
-                        else -> -1
-                    }
-
-                    val locale: Locale = Locale.getDefault()
-
-                    if (locale.language.equals("zh") && locale.country.equals("CN")) {
-                        currentSearchJob = viewModelScope.launch {
-                            val res = PlatformSearch.getMcmodModInfo(type, result.getIds(), mctype)
-                            putRes(result, res)
-                        }
-                    } else {
-                        putRes(result)
-                    }
+                    putResult(result)
                 },
                 onError = {
                     searchResult = it
@@ -151,11 +140,11 @@ private fun rememberSearchAssetsViewModel(
     navKey: NavKey,
     initialPlatform: Platform,
     platformClasses: PlatformClasses
-): ScreenViewModel {
+): SearchScreenViewModel {
     return viewModel(
         key = navKey.toString()
     ) {
-        ScreenViewModel(initialPlatform, platformClasses)
+        SearchScreenViewModel(initialPlatform, platformClasses)
     }
 }
 
@@ -175,6 +164,7 @@ private fun rememberSearchAssetsViewModel(
  */
 @Composable
 fun SearchAssetsScreen(
+    mainScreenKey: NavKey?,
     parentScreenKey: NavKey,
     parentCurrentKey: NavKey?,
     screenKey: NavKey,
@@ -186,9 +176,9 @@ fun SearchAssetsScreen(
     enableModLoader: Boolean = false,
     getModloaders: (Platform) -> List<PlatformDisplayLabel> = { emptyList() },
     mapCategories: (Platform, String) -> PlatformFilterCode?,
-    swapToDownload: (Platform, projectId: String) -> Unit = { _, _ -> }
+    swapToDownload: (Platform, projectId: String, iconUrl: String?) -> Unit = { _, _, _ -> }
 ) {
-    val viewModel: ScreenViewModel = rememberSearchAssetsViewModel(
+    val viewModel: SearchScreenViewModel = rememberSearchAssetsViewModel(
         navKey = screenKey,
         initialPlatform = initialPlatform,
         platformClasses = platformClasses
@@ -204,7 +194,7 @@ fun SearchAssetsScreen(
 
     BaseScreen(
         levels1 = listOf(
-            Pair(DownloadScreenKey::class.java, mainScreenKey)
+            Pair(NestedNavKey.Download::class.java, mainScreenKey)
         ),
         Triple(parentScreenKey, parentCurrentKey, false),
         Triple(screenKey, currentKey, false)

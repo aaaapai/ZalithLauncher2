@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.ui.screens.main
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,10 +45,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -58,64 +56,57 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
+import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.state.ObjectStates
-import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.clearWith
 import com.movtery.zalithlauncher.ui.screens.content.AccountManageScreen
-import com.movtery.zalithlauncher.ui.screens.content.AccountManageScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.DownloadScreen
-import com.movtery.zalithlauncher.ui.screens.content.DownloadScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.FileSelectorScreen
-import com.movtery.zalithlauncher.ui.screens.content.FileSelectorScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.LauncherScreen
-import com.movtery.zalithlauncher.ui.screens.content.LauncherScreenKey
+import com.movtery.zalithlauncher.ui.screens.content.LicenseScreen
 import com.movtery.zalithlauncher.ui.screens.content.SettingsScreen
-import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.VersionSettingsScreen
-import com.movtery.zalithlauncher.ui.screens.content.VersionSettingsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.VersionsManageScreen
-import com.movtery.zalithlauncher.ui.screens.content.VersionsManageScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.WebViewScreen
-import com.movtery.zalithlauncher.ui.screens.content.WebViewScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.navigateToDownload
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.ui.screens.navigateTo
+import com.movtery.zalithlauncher.ui.screens.onBack
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
-import com.movtery.zalithlauncher.utils.string.ShiftDirection
-import com.movtery.zalithlauncher.utils.string.StringUtils
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
+import com.movtery.zalithlauncher.viewmodel.LaunchGameViewModel
+import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 
 @Composable
-fun MainScreen() {
-    val throwableState by ObjectStates.throwableFlow.collectAsState()
-    throwableState?.let { tm ->
-        SimpleAlertDialog(
-            title = tm.title,
-            text = tm.message,
-        ) { ObjectStates.updateThrowable(null) }
-    }
-
+fun MainScreen(
+    screenBackStackModel: ScreenBackStackViewModel,
+    launchGameViewModel: LaunchGameViewModel,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxHeight()
     ) {
         val tasks by TaskSystem.tasksFlow.collectAsState()
 
-        var isTaskMenuExpanded by remember { mutableStateOf(AllSettings.launcherTaskMenuExpanded.getValue()) }
+        val isTaskMenuExpanded = AllSettings.launcherTaskMenuExpanded.state
 
         fun changeTasksExpandedState() {
-            isTaskMenuExpanded = !isTaskMenuExpanded
-            AllSettings.launcherTaskMenuExpanded.put(isTaskMenuExpanded).save()
+            AllSettings.launcherTaskMenuExpanded.save(!isTaskMenuExpanded)
+        }
+
+        /** 回到主页面通用函数 */
+        val toMainScreen: () -> Unit = {
+            screenBackStackModel.mainScreenBackStack.clearWith(NormalNavKey.LauncherMain)
         }
 
         TopBar(
@@ -123,10 +114,24 @@ fun MainScreen() {
                 .fillMaxWidth()
                 .height(40.dp)
                 .zIndex(10f),
+            mainScreenKey = screenBackStackModel.mainScreenKey,
             taskRunning = tasks.isEmpty(),
             isTasksExpanded = isTaskMenuExpanded,
-            backStack = mainScreenBackStack,
-            color = MaterialTheme.colorScheme.surfaceContainer
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            onScreenBack = {
+                screenBackStackModel.mainScreenBackStack.removeFirstOrNull()
+            },
+            toMainScreen = toMainScreen,
+            toSettingsScreen = {
+                screenBackStackModel.mainScreenBackStack.navigateTo(
+                    NestedNavKey.Settings(
+                        screenBackStackModel.settingsBackStack
+                    )
+                )
+            },
+            toDownloadScreen = {
+                screenBackStackModel.navigateToDownload()
+            }
         ) {
             changeTasksExpandedState()
         }
@@ -137,10 +142,13 @@ fun MainScreen() {
                 .weight(1f)
         ) {
             NavigationUI(
-                backStack = mainScreenBackStack,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = MaterialTheme.colorScheme.surface)
+                    .background(color = MaterialTheme.colorScheme.surface),
+                screenBackStackModel = screenBackStackModel,
+                toMainScreen = toMainScreen,
+                launchGameViewModel = launchGameViewModel,
+                summitError = summitError
             )
 
             TaskMenu(
@@ -159,16 +167,19 @@ fun MainScreen() {
 
 @Composable
 private fun TopBar(
+    mainScreenKey: NavKey?,
     taskRunning: Boolean,
     isTasksExpanded: Boolean,
-    backStack: NavBackStack,
     modifier: Modifier = Modifier,
     color: Color,
+    onScreenBack: () -> Unit,
+    toMainScreen: () -> Unit,
+    toSettingsScreen: () -> Unit,
+    toDownloadScreen: () -> Unit,
     changeExpandedState: () -> Unit = {}
 ) {
-    var appTitle by rememberSaveable { mutableStateOf(InfoDistributor.LAUNCHER_IDENTIFIER) }
-
-    val inLauncherScreen = mainScreenKey == null || mainScreenKey is LauncherScreenKey
+    val inLauncherScreen = mainScreenKey == null || mainScreenKey is NormalNavKey.LauncherMain
+    val inDownloadScreen = mainScreenKey is NestedNavKey.Download
 
     Surface(
         modifier = modifier,
@@ -176,7 +187,7 @@ private fun TopBar(
         tonalElevation = 3.dp
     ) {
         ConstraintLayout {
-            val (backButton, title, tasksLayout, download, settings) = createRefs()
+            val (backButton, title, endButtons) = createRefs()
 
             val backButtonX by animateDpAsState(
                 targetValue = if (inLauncherScreen) -(60).dp else 0.dp,
@@ -197,7 +208,7 @@ private fun TopBar(
                     if (!inLauncherScreen) {
                         //不在主屏幕时才允许返回
                         backDispatcher?.onBackPressed() ?: run {
-                            backStack.removeFirstOrNull()
+                            onScreenBack()
                         }
                     }
                 }
@@ -215,97 +226,91 @@ private fun TopBar(
             )
 
             Text(
-                text = appTitle,
+                text = InfoDistributor.LAUNCHER_IDENTIFIER,
                 modifier = Modifier
                     .offset { IntOffset(x = appTitleX.roundToPx(), y = 0) }
                     .constrainAs(title) {
                         centerVerticallyTo(parent)
                         start.linkTo(parent.start, margin = 18.dp)
                     }
-                    .clickable {
-                        appTitle = StringUtils.shiftString(appTitle, ShiftDirection.RIGHT, 1)
-                    }
-            )
-
-            val taskLayoutY by animateDpAsState(
-                targetValue = if (isTasksExpanded || taskRunning) (-50).dp else 0.dp,
-                animationSpec = getAnimateTween()
             )
 
             Row(
                 modifier = Modifier
-                    .constrainAs(tasksLayout) {
+                    .constrainAs(endButtons) {
                         top.linkTo(parent.top)
                         bottom.linkTo(parent.bottom)
-                        end.linkTo(download.start, margin = 8.dp)
-                    }
-                    .offset { IntOffset(x = 0, y = taskLayoutY.roundToPx()) }
-                    .clip(shape = MaterialTheme.shapes.large)
-                    .clickable { changeExpandedState() }
-                    .padding(all = 8.dp)
-                    .width(120.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                LinearProgressIndicator(modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically))
-                Icon(
-                    modifier = Modifier.size(22.dp),
-                    imageVector = Icons.Filled.Task,
-                    contentDescription = stringResource(R.string.main_task_menu)
-                )
-            }
-
-            IconButton(
-                modifier = Modifier
-                    .constrainAs(download) {
-                        centerVerticallyTo(parent)
-                        end.linkTo(settings.start, margin = 4.dp)
-                    }
-                    .fillMaxHeight(),
-                onClick = {
-                    backStack.navigateToDownload()
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Download,
-                    contentDescription = stringResource(R.string.generic_download)
-                )
-            }
-
-            IconButton(
-                modifier = Modifier
-                    .constrainAs(settings) {
-                        centerVerticallyTo(parent)
                         end.linkTo(parent.end, margin = 12.dp)
                     }
-                    .fillMaxHeight(),
-                onClick = {
-                    if (inLauncherScreen) {
-                        backStack.navigateTo(SettingsScreenKey)
-                    } else {
-                        backStack.clearWith(LauncherScreenKey)
+            ) {
+                val taskLayoutY by animateDpAsState(
+                    targetValue = if (isTasksExpanded || taskRunning) (-50).dp else 0.dp,
+                    animationSpec = getAnimateTween()
+                )
+
+                Row(
+                    modifier = Modifier
+                        .offset { IntOffset(x = 0, y = taskLayoutY.roundToPx()) }
+                        .clip(shape = MaterialTheme.shapes.large)
+                        .clickable { changeExpandedState() }
+                        .padding(all = 8.dp)
+                        .width(120.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LinearProgressIndicator(modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically))
+                    Icon(
+                        modifier = Modifier.size(22.dp),
+                        imageVector = Icons.Filled.Task,
+                        contentDescription = stringResource(R.string.main_task_menu)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                AnimatedVisibility(
+                    visible = !inDownloadScreen,
+                    modifier = Modifier.fillMaxHeight()
+                ) {
+                    IconButton(
+                        onClick = toDownloadScreen
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Download,
+                            contentDescription = stringResource(R.string.generic_download)
+                        )
                     }
                 }
-            ) {
-                Crossfade(
-                    targetState = mainScreenKey,
-                    label = "SettingsIconCrossfade",
-                    animationSpec = getAnimateTween()
-                ) { key ->
-                    val isLauncherScreen = key === LauncherScreenKey
-                    Icon(
-                        imageVector = if (isLauncherScreen) {
-                            Icons.Filled.Settings
+
+                IconButton(
+                    modifier = Modifier.fillMaxHeight(),
+                    onClick = {
+                        if (inLauncherScreen) {
+                            toSettingsScreen()
                         } else {
-                            Icons.Filled.Home
-                        },
-                        contentDescription = if (isLauncherScreen) {
-                            stringResource(R.string.generic_setting)
-                        } else {
-                            stringResource(R.string.generic_main_menu)
+                            toMainScreen()
                         }
-                    )
+                    }
+                ) {
+                    Crossfade(
+                        targetState = inLauncherScreen,
+                        label = "SettingsIconCrossfade",
+                        animationSpec = getAnimateTween()
+                    ) { isLauncherScreen ->
+                        Icon(
+                            imageVector = if (isLauncherScreen) {
+                                Icons.Filled.Settings
+                            } else {
+                                Icons.Filled.Home
+                            },
+                            contentDescription = if (isLauncherScreen) {
+                                stringResource(R.string.generic_setting)
+                            } else {
+                                stringResource(R.string.generic_main_menu)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -314,38 +319,113 @@ private fun TopBar(
 
 @Composable
 private fun NavigationUI(
-    backStack: NavBackStack,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    screenBackStackModel: ScreenBackStackViewModel,
+    toMainScreen: () -> Unit,
+    launchGameViewModel: LaunchGameViewModel,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
+    val backStack = screenBackStackModel.mainScreenBackStack
     val currentKey = backStack.lastOrNull()
 
     LaunchedEffect(currentKey) {
-        mainScreenKey = currentKey
+        screenBackStackModel.mainScreenKey = currentKey
     }
 
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier,
-        onBack = {
-            val key = backStack.lastOrNull()
-            if (key is NestedNavKey && !key.isLastScreen()) return@NavDisplay
-            backStack.removeLastOrNull()
-        },
-        entryProvider = entryProvider {
-            entry<LauncherScreenKey> { LauncherScreen() }
-            entry<SettingsScreenKey> { SettingsScreen() }
-            entry<AccountManageScreenKey> { AccountManageScreen() }
-            entry<WebViewScreenKey> { WebViewScreen(it) }
-            entry<VersionsManageScreenKey> { VersionsManageScreen() }
-            entry<FileSelectorScreenKey> {
-                FileSelectorScreen(it) {
-                    backStack.removeLastOrNull()
+    if (backStack.isNotEmpty()) {
+        /** 导航至版本详细信息屏幕 */
+        val navigateToVersions: (Version) -> Unit = { version ->
+            screenBackStackModel.versionsBackStack.clearWith(NormalNavKey.Versions.OverView)
+            screenBackStackModel.mainScreenBackStack.navigateTo(
+                screenKey = NestedNavKey.Versions(
+                    backStack = screenBackStackModel.versionsBackStack,
+                    version = version
+                ),
+                useClassEquality = true
+            )
+        }
+
+        NavDisplay(
+            backStack = backStack,
+            modifier = modifier,
+            onBack = {
+                onBack(backStack)
+            },
+            entryProvider = entryProvider {
+                entry<NormalNavKey.LauncherMain> {
+                    LauncherScreen(
+                        backStackViewModel = screenBackStackModel,
+                        navigateToVersions = navigateToVersions,
+                        launchGameViewModel = launchGameViewModel
+                    )
+                }
+                entry<NestedNavKey.Settings> { key ->
+                    SettingsScreen(
+                        key = key,
+                        backStackViewModel = screenBackStackModel,
+                        openLicenseScreen = { raw ->
+                            backStack.navigateTo(NormalNavKey.License(raw))
+                        },
+                        summitError = summitError
+                    )
+                }
+                entry<NormalNavKey.License> { key ->
+                    LicenseScreen(
+                        key = key,
+                        backStackViewModel = screenBackStackModel
+                    )
+                }
+                entry<NormalNavKey.AccountManager> {
+                    AccountManageScreen(
+                        backStackViewModel = screenBackStackModel,
+                        backToMainScreen = {
+                            screenBackStackModel.mainScreenBackStack.clearWith(NormalNavKey.LauncherMain)
+                        },
+                        summitError = summitError
+                    )
+                }
+                entry<NormalNavKey.WebScreen> { key ->
+                    WebViewScreen(
+                        key = key,
+                        backStackViewModel = screenBackStackModel
+                    )
+                }
+                entry<NormalNavKey.VersionsManager> {
+                    VersionsManageScreen(
+                        backScreenViewModel = screenBackStackModel,
+                        navigateToVersions = navigateToVersions,
+                        summitError = summitError
+                    )
+                }
+                entry<NormalNavKey.FileSelector> { key ->
+                    FileSelectorScreen(
+                        key = key,
+                        backScreenViewModel = screenBackStackModel
+                    ) {
+                        backStack.removeLastOrNull()
+                    }
+                }
+                entry<NestedNavKey.Versions> { key ->
+                    VersionSettingsScreen(
+                        key = key,
+                        backScreenViewModel = screenBackStackModel,
+                        backToMainScreen = toMainScreen,
+                        launchGameViewModel = launchGameViewModel,
+                        summitError = summitError
+                    )
+                }
+                entry<NestedNavKey.Download> { key ->
+                    DownloadScreen(
+                        key = key,
+                        backScreenViewModel = screenBackStackModel,
+                        summitError = summitError
+                    )
                 }
             }
-            entry<VersionSettingsScreenKey> { VersionSettingsScreen() }
-            entry<DownloadScreenKey> { DownloadScreen(it) }
-        }
-    )
+        )
+    } else {
+        Box(modifier)
+    }
 }
 
 @Composable

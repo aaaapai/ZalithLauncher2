@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -47,11 +48,6 @@ fun PlatformIdentifier(
     shape: Shape = MaterialTheme.shapes.large,
     textStyle: TextStyle = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp)
 ) {
-    val drawable = when (platform) {
-        Platform.CURSEFORGE -> R.drawable.ic_curseforge
-        Platform.MODRINTH -> R.drawable.ic_modrinth
-    }
-
     Surface(
         modifier = modifier,
         color = color,
@@ -65,7 +61,7 @@ fun PlatformIdentifier(
         ) {
             Icon(
                 modifier = Modifier.size(iconSize),
-                painter = painterResource(drawable),
+                painter = painterResource(platform.getDrawable()),
                 contentDescription = platform.displayName
             )
             Text(
@@ -77,13 +73,22 @@ fun PlatformIdentifier(
 }
 
 /**
+ * 获取平台的LOGO
+ */
+fun Platform.getDrawable() = when (this) {
+    Platform.CURSEFORGE -> R.drawable.img_platform_curseforge
+    Platform.MODRINTH -> R.drawable.img_platform_modrinth
+}
+
+/**
  * 资源封面网络图标
  * @param iconUrl 图标链接
  */
 @Composable
 fun AssetsIcon(
     modifier: Modifier = Modifier,
-    iconUrl: String? = null
+    iconUrl: String? = null,
+    colorFilter: ColorFilter? = null
 ) {
     val context = LocalContext.current
 
@@ -121,7 +126,8 @@ fun AssetsIcon(
                 contentDescription = null,
                 alignment = Alignment.Center,
                 contentScale = ContentScale.Fit,
-                modifier = modifier
+                modifier = modifier,
+                colorFilter = colorFilter
             )
         }
     }

@@ -32,22 +32,19 @@ fun PlatformSearchResult.getPageInfo(
 }
 
 fun PlatformSearchResult.getIds() : Set<String> {
-    val list = HashSet<String>()
-    when (this) {
+    return when (this) {
         is CurseForgeSearchResult -> {
-            for (item in this.data) {
-                list.add(item.id.toString())
+            data.mapTo(HashSet(data.size)) {
+                it.id.toString()
             }
         }
-
         is ModrinthSearchResult -> {
-            for (item in this.hits) {
-                list.add(item.projectId)
+            hits.mapTo(HashSet(hits.size)) {
+                it.projectId
             }
         }
+        else -> error("Unknown result type: $this")
     }
-
-    return list
 }
 
 fun previousPage(

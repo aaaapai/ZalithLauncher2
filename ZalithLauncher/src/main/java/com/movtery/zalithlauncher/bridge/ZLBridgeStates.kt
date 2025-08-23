@@ -10,6 +10,12 @@ object ZLBridgeStates {
      */
     @JvmStatic
     var cursorMode by mutableIntStateOf(CURSOR_ENABLED)
+
+    /**
+     * 状态：当前画面帧率
+     */
+    @JvmStatic
+    var currentFPS by mutableIntStateOf(0)
 }
 
 /** 指针:启用 */

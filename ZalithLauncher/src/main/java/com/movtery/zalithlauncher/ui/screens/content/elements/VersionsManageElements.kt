@@ -1,5 +1,6 @@
 package com.movtery.zalithlauncher.ui.screens.content.elements
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.basicMarquee
@@ -23,12 +24,14 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,34 +41,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.gif.GifDecoder
 import coil3.request.ImageRequest
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
 import com.movtery.zalithlauncher.game.path.GamePath
 import com.movtery.zalithlauncher.game.path.GamePathManager
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
-import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleCheckEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleTaskDialog
+import com.movtery.zalithlauncher.ui.components.TextRailItem
+import com.movtery.zalithlauncher.ui.components.desaturate
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.components.secondaryContainerDrawerItemColors
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.isNotEmptyOrBlank
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 import kotlinx.coroutines.Dispatchers
 
 sealed interface GamePathOperation {
@@ -83,6 +90,15 @@ sealed interface VersionsOperation {
     data class Delete(val version: Version, val text: String? = null): VersionsOperation
     data class InvalidDelete(val version: Version): VersionsOperation
     data class RunTask(val title: Int, val task: suspend () -> Unit): VersionsOperation
+}
+
+enum class VersionCategory(val textRes: Int) {
+    /** 全部 */
+    ALL(R.string.generic_all),
+    /** 原版 */
+    VANILLA(R.string.versions_manage_category_vanilla),
+    /** 带有模组加载器 */
+    MODLOADER(R.string.versions_manage_category_modloader)
 }
 
 @Composable
@@ -105,14 +121,12 @@ fun GamePathItemLayout(
             ) {
                 Text(
                     modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                    overflow = TextOverflow.Clip,
                     text = if (notDefault) item.title else stringResource(R.string.versions_manage_game_path_default),
                     style = MaterialTheme.typography.labelMedium,
                     maxLines = 1
                 )
                 Text(
                     modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                    overflow = TextOverflow.Clip,
                     text = item.path,
                     style = MaterialTheme.typography.labelSmall,
                     maxLines = 1
@@ -179,7 +193,8 @@ fun GamePathItemLayout(
 @Composable
 fun GamePathOperation(
     gamePathOperation: GamePathOperation,
-    changeState: (GamePathOperation) -> Unit
+    changeState: (GamePathOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
     runCatching {
         when(gamePathOperation) {
@@ -227,13 +242,53 @@ fun GamePathOperation(
             }
         }
     }.onFailure { e ->
-        ObjectStates.updateThrowable(
-            ObjectStates.ThrowableMessage(
+        summitError(
+            ErrorViewModel.ThrowableMessage(
                 title = stringResource(R.string.versions_manage_game_path_error_title),
                 message = e.getMessageOrToString()
             )
         )
     }
+}
+
+@Composable
+fun VersionCategoryItem(
+    modifier: Modifier = Modifier,
+    value: VersionCategory,
+    versionsCount: Int,
+    selected: Boolean,
+    shape: Shape = MaterialTheme.shapes.large,
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer.desaturate(0.5f),
+    selectedContentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    unselectedContentColor: Color = MaterialTheme.colorScheme.onSurface,
+    style: TextStyle = MaterialTheme.typography.labelMedium,
+    onClick: () -> Unit = {}
+) {
+    TextRailItem(
+        modifier = modifier,
+        text = {
+            val contentColor by animateColorAsState(
+                targetValue = if (selected) selectedContentColor else unselectedContentColor
+            )
+            CompositionLocalProvider(
+                LocalContentColor provides contentColor
+            ) {
+                Text(
+                    text = stringResource(value.textRes),
+                    style = style
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "($versionsCount)",
+                    style = style
+                )
+            }
+        },
+        onClick = onClick,
+        selected = selected,
+        shape = shape,
+        backgroundColor = backgroundColor
+    )
 }
 
 @Composable
@@ -265,7 +320,8 @@ private fun NameEditPathDialog(
 @Composable
 fun VersionsOperation(
     versionsOperation: VersionsOperation,
-    updateVersionsOperation: (VersionsOperation) -> Unit
+    updateVersionsOperation: (VersionsOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
     when(versionsOperation) {
         is VersionsOperation.None -> {}
@@ -279,7 +335,6 @@ fun VersionsOperation(
                             title = R.string.versions_manage_rename_version,
                             task = {
                                 VersionsManager.renameVersion(versionsOperation.version, it)
-                                VersionsManager.refresh()
                             }
                         )
                     )
@@ -333,8 +388,8 @@ fun VersionsOperation(
                 onDismiss = { updateVersionsOperation(VersionsOperation.None) },
                 onError = { e ->
                     lError("Failed to run task.", e)
-                    ObjectStates.updateThrowable(
-                        ObjectStates.ThrowableMessage(
+                    summitError(
+                        ErrorViewModel.ThrowableMessage(
                             title = errorMessage,
                             message = e.getMessageOrToString()
                         )
@@ -608,7 +663,6 @@ fun CommonVersionInfoLayout(
             //版本名称
             Text(
                 modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                overflow = TextOverflow.Clip,
                 maxLines = 1,
                 text = version.getVersionName(),
                 style = MaterialTheme.typography.labelLarge
@@ -617,7 +671,6 @@ fun CommonVersionInfoLayout(
             if (version.isValid() && version.isSummaryValid()) {
                 Text(
                     modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                    overflow = TextOverflow.Clip,
                     maxLines = 1,
                     text = version.getVersionSummary(),
                     style = MaterialTheme.typography.labelLarge
@@ -647,7 +700,7 @@ fun CommonVersionInfoLayout(
                     )
                     versionInfo.loaderInfo?.let { loaderInfo ->
                         Text(
-                            text = loaderInfo.name,
+                            text = loaderInfo.loader.displayName,
                             style = MaterialTheme.typography.labelSmall
                         )
                         Text(
@@ -677,7 +730,7 @@ fun VersionIconImage(
 
     val (model, fallbackRes) = remember(version, refreshKey, context) {
         when {
-            version == null -> null to R.drawable.ic_minecraft
+            version == null -> null to R.drawable.img_minecraft
             else -> {
                 val iconFile = VersionsManager.getVersionIconFile(version)
                 if (iconFile.exists()) {
@@ -697,28 +750,27 @@ fun VersionIconImage(
             model = model,
             imageLoader = imageLoader,
             modifier = modifier,
-            contentScale = ContentScale.Inside,
+            contentScale = ContentScale.Fit,
             contentDescription = null
         )
     } else {
         Image(
-            painter = painterResource(id = fallbackRes ?: R.drawable.ic_minecraft),
+            painter = painterResource(id = fallbackRes ?: R.drawable.img_minecraft),
             modifier = modifier,
-            contentScale = ContentScale.Inside,
+            contentScale = ContentScale.Fit,
             contentDescription = null
         )
     }
 }
 
 private fun getLoaderIconRes(version: Version): Int {
-    val loaderName = version.getVersionInfo()?.loaderInfo?.name?.lowercase() ?: ""
-    return when(loaderName) {
-        "fabric" -> R.drawable.ic_fabric
-        "forge" -> R.drawable.ic_anvil
-        "quilt" -> R.drawable.ic_quilt
-        "neoforge" -> R.drawable.ic_neoforge
-        "optifine" -> R.drawable.ic_optifine
-        "liteloader" -> R.drawable.ic_chicken_old
-        else -> R.drawable.ic_minecraft
+    return when(version.getVersionInfo()?.loaderInfo?.loader) {
+        ModLoader.FABRIC -> R.drawable.img_loader_fabric
+        ModLoader.FORGE -> R.drawable.img_anvil
+        ModLoader.QUILT -> R.drawable.img_loader_quilt
+        ModLoader.NEOFORGE -> R.drawable.img_loader_neoforge
+        ModLoader.OPTIFINE -> R.drawable.img_loader_optifine
+        ModLoader.LITE_LOADER -> R.drawable.img_chicken_old
+        else -> R.drawable.img_minecraft
     }
 }

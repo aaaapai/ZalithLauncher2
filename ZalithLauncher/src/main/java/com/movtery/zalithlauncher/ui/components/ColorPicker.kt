@@ -189,7 +189,7 @@ fun ColorPickerDialog(
                             onDismissRequest()
                         }
                     ) {
-                        Text(text = stringResource(R.string.generic_cancel))
+                        MarqueeText(text = stringResource(R.string.generic_cancel))
                     }
                     Button(
                         modifier = Modifier.weight(1f),
@@ -197,7 +197,7 @@ fun ColorPickerDialog(
                             onConfirm(selectedColor)
                         }
                     ) {
-                        Text(text = stringResource(R.string.generic_confirm))
+                        MarqueeText(text = stringResource(R.string.generic_confirm))
                     }
                 }
             }

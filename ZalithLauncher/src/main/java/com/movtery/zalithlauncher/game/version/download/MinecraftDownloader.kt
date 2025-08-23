@@ -21,7 +21,6 @@ import kotlinx.coroutines.sync.withPermit
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.InterruptedIOException
 import java.util.concurrent.atomic.AtomicLong
 
 class MinecraftDownloader(
@@ -72,7 +71,6 @@ class MinecraftDownloader(
                 }
 
                 if (allDownloadTasks.isNotEmpty()) {
-                    //使用线程池进行下载
                     downloadAll(task, allDownloadTasks, getTaskMessage(R.string.minecraft_download_downloading_game_files, R.string.minecraft_download_verifying_and_repairing_files))
                     if (downloadFailedTasks.isNotEmpty()) {
                         downloadedFileCount.set(0)
@@ -89,10 +87,10 @@ class MinecraftDownloader(
             onError = { e ->
                 lError("Failed to download Minecraft!", e)
                 val message = when(e) {
-                    is InterruptedException, is InterruptedIOException, is CancellationException -> return@runTask
+                    is CancellationException -> return@runTask
                     is FileNotFoundException -> context.getString(R.string.minecraft_download_failed_notfound)
                     is DownloadFailedException -> {
-                        val failedUrls = downloadFailedTasks.map { it.url }
+                        val failedUrls = downloadFailedTasks.map { it.urls.joinToString(", ") }
                         "${ context.getString(R.string.minecraft_download_failed_retried) }\r\n${ failedUrls.joinToString("\r\n") }"
                     }
                     else -> e.getMessageOrToString()
@@ -132,7 +130,7 @@ class MinecraftDownloader(
                         formatFileSize(currentFileSize), formatFileSize(totalFileSize) //文件大小
                     )
                     delay(100)
-                } catch (e: CancellationException) {
+                } catch (_: CancellationException) {
                     break //取消
                 }
             }
@@ -185,26 +183,26 @@ class MinecraftDownloader(
     ) {
         val assetsIndex = downloader.createAssetIndex(downloader.assetIndexTarget, gameManifest)
 
-        downloader.loadClientJarDownload(gameManifest, clientName, clientVersionsDir) { url, hash, targetFile, size ->
-            scheduleDownload(url, hash, targetFile, size)
+        downloader.loadClientJarDownload(gameManifest, clientName, clientVersionsDir) { urls, hash, targetFile, size ->
+            scheduleDownload(urls, hash, targetFile, size)
         }
-        downloader.loadAssetsDownload(assetsIndex) { url, hash, targetFile, size ->
-            scheduleDownload(url, hash, targetFile, size)
+        downloader.loadAssetsDownload(assetsIndex) { urls, hash, targetFile, size ->
+            scheduleDownload(urls, hash, targetFile, size)
         }
-        downloader.loadLibraryDownloads(gameManifest) { url, hash, targetFile, size, isDownloadable ->
-            scheduleDownload(url, hash, targetFile, size, isDownloadable)
+        downloader.loadLibraryDownloads(gameManifest) { urls, hash, targetFile, size, isDownloadable ->
+            scheduleDownload(urls, hash, targetFile, size, isDownloadable)
         }
     }
 
     /**
      * 提交计划下载
      */
-    private fun scheduleDownload(url: String, sha1: String?, targetFile: File, size: Long, isDownloadable: Boolean = true) {
+    private fun scheduleDownload(urls: List<String>, sha1: String?, targetFile: File, size: Long, isDownloadable: Boolean = true) {
         totalFileCount.incrementAndGet()
         totalFileSize.addAndGet(size)
         allDownloadTasks.add(
             DownloadTask(
-                url = url,
+                urls = urls,
                 verifyIntegrity = verifyIntegrity,
                 targetFile = targetFile,
                 sha1 = sha1,

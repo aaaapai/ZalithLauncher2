@@ -82,6 +82,7 @@ import com.movtery.zalithlauncher.game.skin.SkinModelType
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.path.UrlManager
 import com.movtery.zalithlauncher.ui.components.IconTextButton
+import com.movtery.zalithlauncher.ui.components.MarqueeText
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
@@ -654,20 +655,19 @@ fun OtherServerLoginDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Button(
                         modifier = Modifier.weight(1f),
                         onClick = onDismissRequest
                     ) {
-                        Text(text = stringResource(R.string.generic_cancel))
+                        MarqueeText(text = stringResource(R.string.generic_cancel))
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
                     Button(
                         modifier = Modifier.weight(1f),
                         onClick = confirmAction
                     ) {
-                        Text(text = stringResource(R.string.generic_confirm))
+                        MarqueeText(text = stringResource(R.string.generic_confirm))
                     }
                 }
             }
@@ -716,7 +716,7 @@ fun SelectSkinModelDialog(
                             onSelected(SkinModelType.STEVE)
                         }
                     ) {
-                        Text(text = stringResource(R.string.account_change_skin_model_steve))
+                        MarqueeText(text = stringResource(R.string.account_change_skin_model_steve))
                     }
                     Button(
                         modifier = Modifier.fillMaxWidth(),
@@ -724,13 +724,13 @@ fun SelectSkinModelDialog(
                             onSelected(SkinModelType.ALEX)
                         }
                     ) {
-                        Text(text = stringResource(R.string.account_change_skin_model_alex))
+                        MarqueeText(text = stringResource(R.string.account_change_skin_model_alex))
                     }
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = onDismissRequest
                     ) {
-                        Text(text = stringResource(R.string.generic_cancel))
+                        MarqueeText(text = stringResource(R.string.generic_cancel))
                     }
                 }
             }

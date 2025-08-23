@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.game.download.game.forge
 
 import com.movtery.zalithlauncher.coroutine.Task
+import com.movtery.zalithlauncher.game.addons.mirror.mapMirrorableUrls
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.ForgeLikeVersion
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.forge.ForgeVersion
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.forge.ForgeVersions
@@ -33,7 +34,7 @@ fun getForgeLikeDownloadTask(
                 ForgeVersions.getDownloadUrl(forgeLikeVersion as ForgeVersion)
             }
 
-            NetWorkUtils.downloadFileSuspend(url, targetTempInstaller)
+            NetWorkUtils.downloadFromMirrorListSuspend(url.mapMirrorableUrls(), targetTempInstaller)
         }
     )
 }

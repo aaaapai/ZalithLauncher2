@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
+import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import com.movtery.zalithlauncher.utils.string.compareChar
 import kotlinx.coroutines.CancellationException
@@ -12,6 +13,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.io.IOUtils
 import java.io.File
 import java.io.FileInputStream
@@ -19,9 +21,11 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
+import org.apache.commons.compress.archivers.zip.ZipFile as CompressZipFile
 
 fun compareSHA1(file: File, sourceSHA: String?, default: Boolean = false): Boolean {
     if (!file.exists()) return false //文件不存在
@@ -36,6 +40,22 @@ fun compareSHA1(file: File, sourceSHA: String?, default: Boolean = false): Boole
     }
 
     return sourceSHA?.equals(computedSHA, ignoreCase = true) ?: default
+}
+
+suspend fun calculateFileSha1(file: File): String = withContext(Dispatchers.IO) {
+    require(file.exists()) { "File does not exist: ${file.absolutePath}" }
+    require(file.isFile) { "Path is not a file: ${file.absolutePath}" }
+
+    val digest = MessageDigest.getInstance("SHA-1")
+    file.inputStream().use { stream ->
+        val buffer = ByteArray(8192)
+        var bytesRead: Int
+        while (stream.read(buffer).also { bytesRead = it } != -1) {
+            ensureActive()
+            digest.update(buffer, 0, bytesRead)
+        }
+    }
+    digest.digest().joinToString("") { "%02x".format(it) }
 }
 
 @SuppressLint("DefaultLocale")
@@ -91,11 +111,11 @@ fun checkFilenameValidity(str: String) {
  */
 @Throws(IOException::class)
 fun File.ensureDirectory(): File {
-    if (isFile) throw IOException("Target directory is a file")
+    if (isFile) throw IOException("Target directory is a file, path = $this")
     if (exists()) {
-        if (!canWrite()) throw IOException("Target directory is not writable")
+        if (!canWrite()) throw IOException("Target directory is not writable, path = $this")
     } else {
-        if (!mkdirs()) throw IOException("Unable to create target directory")
+        if (!mkdirs()) throw IOException("Unable to create target directory, path = $this")
     }
     return this
 }
@@ -107,7 +127,7 @@ fun File.ensureDirectory(): File {
  */
 @Throws(IOException::class)
 fun File.ensureParentDirectory(): File {
-    val parentDir: File = parentFile ?: throw IOException("targetFile does not have a parent")
+    val parentDir: File = parentFile ?: throw IOException("targetFile does not have a parent, path = $this")
     parentDir.ensureDirectory()
     return this
 }
@@ -171,10 +191,52 @@ fun ZipEntry.readText(zip: ZipFile): String =
  * @throws SecurityException 如果检测到路径穿越攻击
  */
 suspend fun ZipFile.extractFromZip(internalPath: String, outputDir: File) {
-    require(outputDir.isDirectory || outputDir.mkdirs()) { "The output directory does not exist and cannot be created: $outputDir" }
+    val entries = entries()
+        .asSequence()
+        .map { JavaZipEntryAdapter(it) }
+
+    extractZipEntries(
+        entries = entries,
+        inputStreamProvider = { entry -> getInputStream(entry.entry) },
+        internalPath = internalPath,
+        outputDir = outputDir
+    )
+}
+
+/**
+ * 从ZIP文件中提取指定内部路径下的所有条目到输出目录，保持相对路径结构
+ * @param internalPath ZIP文件中的路径前缀（类似目录），留空则解压整个压缩包
+ * @param outputDir 目标输出目录（必须为目录）
+ * @throws IllegalArgumentException 如果路径不存在或参数无效
+ * @throws SecurityException 如果检测到路径穿越攻击
+ */
+suspend fun CompressZipFile.extractFromZip(internalPath: String, outputDir: File) {
+    val entries = entries.asSequence()
+        .map { CompressZipEntryAdapter(it as ZipArchiveEntry) }
+
+    extractZipEntries(
+        entries = entries,
+        inputStreamProvider = { entry -> getInputStream(entry.entry) },
+        internalPath = internalPath,
+        outputDir = outputDir
+    )
+}
+
+/**
+ * 抽象核心提取逻辑，适用于任何类型的 ZIP 条目
+ */
+private suspend fun <T> extractZipEntries(
+    entries: Sequence<T>,
+    inputStreamProvider: (T) -> InputStream,
+    internalPath: String,
+    outputDir: File
+) where T : ZipEntryBase {
+    require(outputDir.isDirectory || outputDir.mkdirs()) {
+        "The output directory does not exist and cannot be created: $outputDir"
+    }
 
     val prefix = when {
-        internalPath.isEmpty() -> "" //传入空路径以解压整个的压缩包
+        internalPath.isEmpty() -> ""
         internalPath.endsWith("/") -> internalPath
         else -> "$internalPath/"
     }
@@ -182,8 +244,7 @@ suspend fun ZipFile.extractFromZip(internalPath: String, outputDir: File) {
 
     withContext(Dispatchers.IO) {
         try {
-            entries()
-                .asSequence()
+            entries
                 .filter { it.name.startsWith(prefix) }
                 .forEach { entry ->
                     ensureActive()
@@ -197,7 +258,7 @@ suspend fun ZipFile.extractFromZip(internalPath: String, outputDir: File) {
                     when {
                         entry.isDirectory -> targetFile.mkdirs()
                         else -> {
-                            getInputStream(entry).use { input ->
+                            inputStreamProvider(entry).use { input ->
                                 targetFile.ensureParentDirectory()
                                 input.copyTo(targetFile.outputStream())
                             }
@@ -264,5 +325,47 @@ suspend fun zipDirectory(
             }
             zipOut.closeEntry()
         }
+    }
+}
+
+/**
+ * 复制目录下的所有内容到目标目录
+ */
+suspend fun copyDirectoryContents(
+    from: File,
+    to: File,
+    onProgress: ((Float) -> Unit)? = null
+) = withContext(Dispatchers.IO) {
+    val normalizedFrom = from.absoluteFile.normalize()
+    val normalizedTo = to.absoluteFile.normalize()
+
+    val allFiles = mutableListOf<File>()
+
+    normalizedFrom.walkTopDown().forEach { file ->
+        val targetPath = File(normalizedTo, file.relativeTo(normalizedFrom).path)
+        if (file.isDirectory) {
+            targetPath.mkdirs()
+        } else {
+            allFiles.add(file)
+        }
+    }
+
+    val fileCount = allFiles.size
+
+    if (fileCount == 0) {
+        onProgress?.invoke(1.0f)
+        return@withContext
+    }
+
+    allFiles.forEachIndexed { index, file ->
+        val targetFile = File(normalizedTo, file.relativeTo(normalizedFrom).path)
+        try {
+            targetFile.ensureParentDirectory()
+            file.copyTo(targetFile, overwrite = true)
+            lInfo("copied: ${file.path} -> ${targetFile.path}")
+        } catch (e: IOException) {
+            lError("Failed to copy: ${file.path} -> ${targetFile.path}", e)
+        }
+        onProgress?.invoke((index + 1).toFloat() / fileCount)
     }
 }

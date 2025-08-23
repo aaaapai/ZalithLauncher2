@@ -146,15 +146,10 @@ object AuthServerApi {
     }
 
     suspend fun getServeInfo(url: String): String? = withContext(Dispatchers.IO) {
-        try {
-            val response = GLOBAL_CLIENT.get(url)
-            if (response.status == HttpStatusCode.OK) {
-                response.bodyAsText()
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            lError("Failed to get server info", e)
+        val response = GLOBAL_CLIENT.get(url)
+        if (response.status == HttpStatusCode.OK) {
+            response.bodyAsText()
+        } else {
             null
         }
     }

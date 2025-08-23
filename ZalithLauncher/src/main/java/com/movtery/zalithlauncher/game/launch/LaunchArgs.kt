@@ -8,6 +8,7 @@ import com.movtery.zalithlauncher.game.multirt.Runtime
 import com.movtery.zalithlauncher.game.path.getAssetsHome
 import com.movtery.zalithlauncher.game.path.getLibrariesHome
 import com.movtery.zalithlauncher.game.version.download.artifactToPath
+import com.movtery.zalithlauncher.game.version.download.getLibraryReplacement
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.getGameManifest
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
@@ -212,10 +213,27 @@ class LaunchArgs(
         val libDir: MutableList<String> = ArrayList()
         for (libItem in gameManifest.libraries) {
             if (!checkRules(libItem.rules)) continue
-            val libArtifactPath: String = artifactToPath(libItem) ?: continue
+            val libArtifactPath: String = libItem.progressLibrary() ?: continue
             libDir.add(getLibrariesHome() + "/" + libArtifactPath)
         }
         return libDir.toTypedArray<String>()
+    }
+
+    /**
+     * @return 库相对路径
+     */
+    private fun GameManifest.Library.progressLibrary(): String? {
+        var path = artifactToPath(this)
+
+        val versionSegment = name.split(":").getOrNull(2) ?: return path
+        val versionParts = versionSegment.split(".")
+
+        getLibraryReplacement(name, versionParts)?.let { replacement ->
+            lDebug("Library ${this.name} has been changed to version ${replacement.newName.split(":").last()}")
+            path = replacement.newPath
+        }
+
+        return path
     }
 
     /**

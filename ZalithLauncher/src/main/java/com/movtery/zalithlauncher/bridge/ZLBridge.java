@@ -55,9 +55,6 @@ public final class ZLBridge {
     public static native void sendInputData(int type, int i1, int i2, int i3, int i4);
     public static native void clipboardReceived(String data, String mimeTypeSub);
 
-    //Callback
-    public static native int getCurrentFPS();
-
     //Utils
     public static native int chdir(String path);
 

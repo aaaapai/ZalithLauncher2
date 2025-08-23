@@ -37,25 +37,19 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.state.FilePathSelectorData
 import com.movtery.zalithlauncher.state.MutableStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.components.MarqueeText
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.BaseFileItem
 import com.movtery.zalithlauncher.ui.screens.content.elements.CreateNewDirDialog
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.file.sortWithFileName
-import kotlinx.serialization.Serializable
+import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 import java.io.File
-
-@Serializable
-data class FileSelectorScreenKey(
-    val startPath: String,
-    val selectFile: Boolean,
-    val saveKey: NavKey
-): NavKey
 
 /**
  * 导航至FileSelectorScreen
@@ -64,11 +58,15 @@ fun NavBackStack.navigateToFileSelector(
     startPath: String,
     selectFile: Boolean,
     saveKey: NavKey
-) = this.navigateTo(FileSelectorScreenKey(startPath, selectFile, saveKey), true)
+) = this.navigateTo(
+    screenKey = NormalNavKey.FileSelector(startPath, selectFile, saveKey),
+    useClassEquality = true
+)
 
 @Composable
 fun FileSelectorScreen(
-    key: FileSelectorScreenKey,
+    key: NormalNavKey.FileSelector,
+    backScreenViewModel: ScreenBackStackViewModel,
     back: () -> Unit
 ) {
     val startPath1 = File(key.startPath)
@@ -76,7 +74,7 @@ fun FileSelectorScreen(
 
     BaseScreen(
         screenKey = key,
-        currentKey = mainScreenKey,
+        currentKey = backScreenViewModel.mainScreenKey,
         useClassEquality = true
     ) { isVisible ->
         Column(
@@ -211,19 +209,19 @@ private fun LeftActionMenu(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = backToParent
             ) {
-                Text(text = stringResource(R.string.files_back_to_parent))
+                MarqueeText(text = stringResource(R.string.files_back_to_parent))
             }
             ScalingActionButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = createDir
             ) {
-                Text(text = stringResource(R.string.files_create_dir))
+                MarqueeText(text = stringResource(R.string.files_create_dir))
             }
             ScalingActionButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = selectDir
             ) {
-                Text(text = stringResource(R.string.files_select_dir))
+                MarqueeText(text = stringResource(R.string.files_select_dir))
             }
         }
     }

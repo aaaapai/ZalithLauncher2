@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -25,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.setting.unit.BooleanSettingUnit
+import com.movtery.zalithlauncher.setting.unit.EnumSettingUnit
 import com.movtery.zalithlauncher.setting.unit.IntSettingUnit
 import com.movtery.zalithlauncher.setting.unit.StringSettingUnit
 import com.movtery.zalithlauncher.ui.components.SimpleIntSliderLayout
@@ -46,21 +46,20 @@ class SettingsLayoutScope {
         unit: BooleanSettingUnit,
         title: String,
         summary: String? = null,
+        enabled: Boolean = true,
         onCheckedChange: (Boolean) -> Unit = {},
         trailingIcon: @Composable (() -> Unit)? = null
     ) {
-        var checked by rememberSaveable { mutableStateOf(unit.getValue()) }
-
         SwitchLayout(
-            checked = checked,
+            checked = unit.state,
             onCheckedChange = { value ->
-                checked = value
-                unit.put(checked).save()
-                onCheckedChange(checked)
+                unit.save(value)
+                onCheckedChange(value)
             },
             modifier = modifier,
             title = title,
             summary = summary,
+            enabled = enabled,
             trailingIcon = trailingIcon
         )
     }
@@ -82,7 +81,7 @@ class SettingsLayoutScope {
 
         SimpleIntSliderLayout(
             modifier = modifier,
-            value = value,
+            value = unit.state,
             title = title,
             summary = summary,
             valueRange = valueRange,
@@ -90,9 +89,10 @@ class SettingsLayoutScope {
             suffix = suffix,
             onValueChange = {
                 value = it
-                onValueChange(value)
+                unit.updateState(it)
+                onValueChange(it)
             },
-            onValueChangeFinished = { unit.put(value).save() },
+            onValueChangeFinished = { unit.save(value) },
             enabled = enabled,
             fineTuningControl = fineTuningControl
         )
@@ -102,7 +102,7 @@ class SettingsLayoutScope {
     @Composable
     fun <E: Enum<E>> EnumSettingsLayout(
         modifier: Modifier = Modifier,
-        unit: StringSettingUnit,
+        unit: EnumSettingUnit<E>,
         entries: EnumEntries<E>,
         title: String,
         summary: String? = null,
@@ -111,8 +111,6 @@ class SettingsLayoutScope {
         onRadioClick: (E) -> Unit = {},
         onValueChange: (E) -> Unit = {}
     ) {
-        var value by rememberSaveable { mutableStateOf(unit.getValue()) }
-
         Column(
             modifier = modifier
                 .fillMaxWidth()
@@ -134,12 +132,11 @@ class SettingsLayoutScope {
                         val radioText = getRadioText(enum)
                         RadioButton(
                             enabled = getRadioEnable(enum),
-                            selected = value == enum.name,
+                            selected = unit.state == enum,
                             onClick = {
                                 onRadioClick(enum)
-                                if (value == enum.name) return@RadioButton
-                                value = enum.name
-                                unit.put(value).save()
+                                if (unit.state == enum) return@RadioButton
+                                unit.save(enum)
                                 onValueChange(enum)
                             }
                         )
@@ -173,7 +170,7 @@ class SettingsLayoutScope {
         SimpleListLayout(
             modifier = modifier,
             items = items,
-            currentId = unit.getValue(),
+            currentId = unit.state,
             defaultId = unit.defaultValue,
             title = title,
             summary = summary,
@@ -183,7 +180,39 @@ class SettingsLayoutScope {
             enabled = enabled,
             itemListPadding = itemListPadding,
             onValueChange = { item ->
-                unit.put(getItemId(item)).save()
+                unit.save(getItemId(item))
+                onValueChange(item)
+            }
+        )
+    }
+
+    @Composable
+    fun <E: Enum<E>> ListSettingsLayout(
+        modifier: Modifier = Modifier,
+        unit: EnumSettingUnit<E>,
+        items: List<E>,
+        title: String,
+        summary: String? = null,
+        getItemText: @Composable (E) -> String,
+        getItemSummary: (@Composable (E) -> Unit)? = null,
+        enabled: Boolean = true,
+        itemListPadding: PaddingValues = PaddingValues(bottom = 4.dp),
+        onValueChange: (E) -> Unit = {}
+    ) {
+        SimpleListLayout(
+            modifier = modifier,
+            items = items,
+            currentId = unit.state.name,
+            defaultId = unit.defaultValue.name,
+            title = title,
+            summary = summary,
+            getItemText = getItemText,
+            getItemId = { it.name },
+            getItemSummary = getItemSummary,
+            enabled = enabled,
+            itemListPadding = itemListPadding,
+            onValueChange = { item ->
+                unit.save(item)
                 onValueChange(item)
             }
         )
@@ -205,7 +234,7 @@ class SettingsLayoutScope {
             title = title,
             summary = summary,
             onValueChange = { value ->
-                unit.put(value).save()
+                unit.save(value)
                 onValueChange(value)
             },
             label = {

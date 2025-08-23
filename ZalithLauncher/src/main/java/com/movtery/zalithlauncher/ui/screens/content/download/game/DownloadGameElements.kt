@@ -20,7 +20,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material3.Icon
@@ -32,7 +36,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,29 +46,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
 import com.movtery.zalithlauncher.game.addons.modloader.fabriclike.FabricLikeVersion
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.forge.ForgeVersion
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.neoforge.NeoForgeVersion
+import com.movtery.zalithlauncher.game.addons.modloader.modlike.ModVersion
 import com.movtery.zalithlauncher.game.addons.modloader.optifine.OptiFineVersion
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.components.rememberMaxHeight
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
-
-/**
- * 下载游戏屏幕堆栈
- */
-val downloadGameBackStack = mutableStateListOf<NavKey>(SelectGameVersionScreenKey)
-
-/**
- * 状态：下载游戏子屏幕的标签
- */
-var downloadGameScreenKey by mutableStateOf<NavKey?>(null)
+import com.movtery.zalithlauncher.utils.getTimeAgo
 
 /** Addon 加载状态 */
 sealed interface AddonState {
@@ -396,58 +393,129 @@ fun AddonListItem(
 }
 
 @Composable
-fun OptiFineVersionSummary(optifine: OptiFineVersion) {
+fun OptiFineVersionSummary(
+    optifine: OptiFineVersion,
+    iconSize: Dp = 14.dp,
+    textStyle: TextStyle = MaterialTheme.typography.labelSmall
+) {
     val typeText = if (optifine.isPreview) {
         stringResource(R.string.download_game_addon_preview)
     } else {
         stringResource(R.string.download_game_addon_release)
     }
 
-    val dateText = stringResource(R.string.download_game_addon_date, optifine.releaseDate)
-
-    val compatibilityText = when {
-        optifine.forgeVersion == null -> {
-            stringResource(R.string.download_game_addon_incompatible_with, ModLoader.FORGE.displayName)
-        }
-        optifine.forgeVersion.isNotEmpty() -> {
-            stringResource(R.string.download_game_addon_compatible_with, "${ModLoader.FORGE.displayName} ${optifine.forgeVersion}")
-        }
-        else -> null
-    }
-
     Row(
         modifier = Modifier.alpha(alpha = 0.7f),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = typeText, style = MaterialTheme.typography.labelSmall)
-        Text(text = dateText, style = MaterialTheme.typography.labelSmall)
-        compatibilityText?.let {
-            Text(text = it, style = MaterialTheme.typography.labelSmall)
+        //版本状态
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                painter = painterResource(R.drawable.ic_package_2),
+                contentDescription = null
+            )
+            Text(text = typeText, style = textStyle)
+        }
+        //发布时间
+        optifine.releaseDate.takeIf { it.isNotEmpty() }?.let { releaseDate ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    modifier = Modifier.size(iconSize),
+                    imageVector = Icons.Outlined.Autorenew,
+                    contentDescription = null
+                )
+                Text(text = releaseDate, style = textStyle)
+            }
+        }
+
+        //兼容状态
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            when {
+                optifine.forgeVersion == null -> {
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null
+                    )
+                    Text(
+                        text = stringResource(R.string.download_game_addon_incompatible_with, ModLoader.FORGE.displayName),
+                        style = textStyle
+                    )
+                }
+                optifine.forgeVersion.isNotEmpty() -> {
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null
+                    )
+                    Text(
+                        text = stringResource(R.string.download_game_addon_compatible_with, "${ModLoader.FORGE.displayName} ${optifine.forgeVersion}"),
+                        style = textStyle
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ForgeVersionSummary(forgeVersion: ForgeVersion) {
-    val recommendedText = if (forgeVersion.isRecommended) {
-        stringResource(R.string.download_game_addon_recommended, ModLoader.FORGE.displayName)
-    } else null
-
-    val dateText = stringResource(R.string.download_game_addon_date, forgeVersion.releaseTime)
-
+fun ForgeVersionSummary(
+    forgeVersion: ForgeVersion,
+    iconSize: Dp = 14.dp,
+    textStyle: TextStyle = MaterialTheme.typography.labelSmall
+) {
     Row(
         modifier = Modifier.alpha(alpha = 0.7f),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        recommendedText?.let {
-            Text(text = it, style = MaterialTheme.typography.labelSmall)
+        if (forgeVersion.isRecommended) {
+            //Forge 官方推荐
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    modifier = Modifier.size(iconSize),
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = null
+                )
+                Text(
+                    text = stringResource(R.string.download_game_addon_recommended, ModLoader.FORGE.displayName),
+                    style = textStyle
+                )
+            }
         }
-        Text(text = dateText, style = MaterialTheme.typography.labelSmall)
+        //发布时间
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                imageVector = Icons.Outlined.Autorenew,
+                contentDescription = null
+            )
+            Text(text = forgeVersion.releaseTime, style = textStyle)
+        }
     }
 }
 
 @Composable
-fun NeoForgeSummary(neoforgeVersion: NeoForgeVersion) {
+fun NeoForgeSummary(
+    neoforgeVersion: NeoForgeVersion,
+    iconSize: Dp = 14.dp,
+    textStyle: TextStyle = MaterialTheme.typography.labelSmall
+) {
     val typeText = if (neoforgeVersion.isBeta) {
         stringResource(R.string.download_game_addon_debug)
     } else {
@@ -455,14 +523,30 @@ fun NeoForgeSummary(neoforgeVersion: NeoForgeVersion) {
     }
 
     Row(
-        modifier = Modifier.alpha(alpha = 0.7f)
+        modifier = Modifier.alpha(alpha = 0.7f),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = typeText, style = MaterialTheme.typography.labelSmall)
+        //版本状态
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                painter = painterResource(R.drawable.ic_package_2),
+                contentDescription = null
+            )
+            Text(text = typeText, style = textStyle)
+        }
     }
 }
 
 @Composable
-fun FabricLikeSummary(fabricLikeVersion: FabricLikeVersion) {
+fun FabricLikeSummary(
+    fabricLikeVersion: FabricLikeVersion,
+    iconSize: Dp = 14.dp,
+    textStyle: TextStyle = MaterialTheme.typography.labelSmall
+) {
     val typeText = if (fabricLikeVersion.stable) {
         stringResource(R.string.download_game_addon_stable)
     } else {
@@ -470,8 +554,68 @@ fun FabricLikeSummary(fabricLikeVersion: FabricLikeVersion) {
     }
 
     Row(
-        modifier = Modifier.alpha(alpha = 0.7f)
+        modifier = Modifier.alpha(alpha = 0.7f),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = typeText, style = MaterialTheme.typography.labelSmall)
+        //版本状态
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                painter = painterResource(R.drawable.ic_package_2),
+                contentDescription = null
+            )
+            Text(text = typeText, style = textStyle)
+        }
+    }
+}
+
+@Composable
+fun ModSummary(
+    modVersion: ModVersion,
+    iconSize: Dp = 14.dp,
+    textStyle: TextStyle = MaterialTheme.typography.labelSmall
+) {
+    val version = modVersion.version
+
+    Row(
+        modifier = Modifier.alpha(alpha = 0.7f),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        //版本状态
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                painter = painterResource(R.drawable.ic_package_2),
+                contentDescription = null
+            )
+            Text(
+                text = stringResource(version.versionType.textRes),
+                style = textStyle
+            )
+        }
+        //更新时间
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.size(iconSize),
+                imageVector = Icons.Outlined.Autorenew,
+                contentDescription = null
+            )
+            Text(
+                text = getTimeAgo(
+                    context = LocalContext.current,
+                    dateString = version.datePublished
+                ),
+                style = textStyle
+            )
+        }
     }
 }

@@ -40,7 +40,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.context.copyLocalFile
 import com.movtery.zalithlauncher.coroutine.Task
@@ -59,17 +58,21 @@ import com.movtery.zalithlauncher.game.account.microsoft.NotPurchasedMinecraftEx
 import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException
 import com.movtery.zalithlauncher.game.account.microsoft.toLocal
 import com.movtery.zalithlauncher.game.account.microsoftLogin
+import com.movtery.zalithlauncher.game.download.assets.platform.Platform
+import com.movtery.zalithlauncher.game.download.assets.platform.PlatformClasses
 import com.movtery.zalithlauncher.game.skin.SkinModelType
 import com.movtery.zalithlauncher.game.skin.getLocalUUIDWithSkinModel
 import com.movtery.zalithlauncher.path.UrlManager
-import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.IconTextButton
+import com.movtery.zalithlauncher.ui.components.MarqueeText
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
 import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.components.SimpleListDialog
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.AccountItem
 import com.movtery.zalithlauncher.ui.screens.content.elements.AccountOperation
 import com.movtery.zalithlauncher.ui.screens.content.elements.AccountSkinOperation
@@ -83,33 +86,35 @@ import com.movtery.zalithlauncher.ui.screens.content.elements.OtherServerLoginDi
 import com.movtery.zalithlauncher.ui.screens.content.elements.SelectSkinModelDialog
 import com.movtery.zalithlauncher.ui.screens.content.elements.ServerItem
 import com.movtery.zalithlauncher.ui.screens.content.elements.ServerOperation
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
+import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.getMessageOrToString
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
+import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
-import kotlinx.serialization.Serializable
 import org.apache.commons.io.FileUtils
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 
-@Serializable
-data object AccountManageScreenKey: NavKey
-
 @Composable
-fun AccountManageScreen() {
+fun AccountManageScreen(
+    backStackViewModel: ScreenBackStackViewModel,
+    backToMainScreen: () -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
+) {
     var microsoftLoginOperation by remember { mutableStateOf<MicrosoftLoginOperation>(MicrosoftLoginOperation.None) }
     var localLoginOperation by remember { mutableStateOf<LocalLoginOperation>(LocalLoginOperation.None) }
     var otherLoginOperation by remember { mutableStateOf<OtherLoginOperation>(OtherLoginOperation.None) }
     var serverOperation by remember { mutableStateOf<ServerOperation>(ServerOperation.None) }
 
     BaseScreen(
-        screenKey = AccountManageScreenKey,
-        currentKey = mainScreenKey
+        screenKey = NormalNavKey.AccountManager,
+        currentKey = backStackViewModel.mainScreenKey
     ) { isVisible ->
         Row(
             modifier = Modifier.fillMaxSize()
@@ -131,9 +136,21 @@ fun AccountManageScreen() {
                     .fillMaxHeight()
                     .padding(top = 12.dp, end = 12.dp, bottom = 12.dp)
                     .weight(7.5f),
+                summitError = summitError,
                 onAddAuthClicked = {
                     //打开添加认证服务器的对话框
                     serverOperation = ServerOperation.AddNew
+                },
+                swapToDownloadScreen = { projectId, platform, classes ->
+                    backStackViewModel.navigateToDownload(
+                        targetScreen = NestedNavKey.DownloadMod(
+                            backStack = backStackViewModel.downloadModBackStack.also { stack ->
+                                stack.navigateTo(
+                                    NormalNavKey.DownloadAssets(platform, projectId, classes)
+                                )
+                            }
+                        )
+                    )
                 }
             )
         }
@@ -141,8 +158,16 @@ fun AccountManageScreen() {
 
     //微软账号操作逻辑
     MicrosoftLoginOperation(
+        checkIfInWebScreen = {
+            backStackViewModel.mainScreenKey is NormalNavKey.WebScreen
+        },
+        navigateToWeb = { url ->
+            backStackViewModel.mainScreenBackStack.navigateToWeb(url)
+        },
+        backToMainScreen = backToMainScreen,
         microsoftLoginOperation = microsoftLoginOperation,
-        updateOperation = { microsoftLoginOperation = it }
+        updateOperation = { microsoftLoginOperation = it },
+        summitError = summitError
     )
 
     //离线账号操作逻辑
@@ -154,13 +179,15 @@ fun AccountManageScreen() {
     //外置账号操作逻辑
     OtherLoginOperation(
         otherLoginOperation = otherLoginOperation,
-        updateOperation = { otherLoginOperation = it }
+        updateOperation = { otherLoginOperation = it },
+        summitError = summitError
     )
 
     //外置服务器操作逻辑
     ServerTypeOperation(
         serverOperation = serverOperation,
-        updateServerOperation = { serverOperation = it }
+        updateServerOperation = { serverOperation = it },
+        summitError = summitError
     )
 }
 
@@ -228,9 +255,7 @@ private fun ServerTypeMenu(
                     .fillMaxWidth(),
                 onClick = { updateServerOperation(ServerOperation.AddNew) }
             ) {
-                Text(
-                    text = stringResource(R.string.account_add_new_server_button)
-                )
+                MarqueeText(text = stringResource(R.string.account_add_new_server_button))
             }
         }
     }
@@ -241,8 +266,12 @@ private fun ServerTypeMenu(
  */
 @Composable
 private fun MicrosoftLoginOperation(
+    checkIfInWebScreen: () -> Boolean,
+    navigateToWeb: (url: String) -> Unit,
+    backToMainScreen: () -> Unit,
     microsoftLoginOperation: MicrosoftLoginOperation,
-    updateOperation: (MicrosoftLoginOperation) -> Unit = {}
+    updateOperation: (MicrosoftLoginOperation) -> Unit = {},
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -257,7 +286,11 @@ private fun MicrosoftLoginOperation(
         is MicrosoftLoginOperation.RunTask -> {
             microsoftLogin(
                 context = context,
-                updateOperation = { updateOperation(it) }
+                toWeb = navigateToWeb,
+                backToMain = backToMainScreen,
+                checkIfInWebScreen = checkIfInWebScreen,
+                updateOperation = { updateOperation(it) },
+                summitError = summitError
             )
             updateOperation(MicrosoftLoginOperation.None)
         }
@@ -326,7 +359,8 @@ private fun LocalLoginOperation(
 @Composable
 private fun OtherLoginOperation(
     otherLoginOperation: OtherLoginOperation,
-    updateOperation: (OtherLoginOperation) -> Unit = {}
+    updateOperation: (OtherLoginOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
     val context = LocalContext.current
     when (otherLoginOperation) {
@@ -384,8 +418,8 @@ private fun OtherLoginOperation(
                 }
             }
 
-            ObjectStates.updateThrowable(
-                ObjectStates.ThrowableMessage(
+            summitError(
+                ErrorViewModel.ThrowableMessage(
                     title = stringResource(R.string.account_logging_in_failed),
                     message = message
                 )
@@ -407,7 +441,8 @@ private fun OtherLoginOperation(
 @Composable
 private fun ServerTypeOperation(
     serverOperation: ServerOperation,
-    updateServerOperation: (ServerOperation) -> Unit
+    updateServerOperation: (ServerOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
     when (serverOperation) {
         is ServerOperation.AddNew -> {
@@ -449,8 +484,8 @@ private fun ServerTypeOperation(
             )
         }
         is ServerOperation.OnThrowable -> {
-            ObjectStates.updateThrowable(
-                ObjectStates.ThrowableMessage(
+            summitError(
+                ErrorViewModel.ThrowableMessage(
                     title = stringResource(R.string.account_other_login_adding_failure),
                     message = serverOperation.throwable.getMessageOrToString()
                 )
@@ -465,7 +500,9 @@ private fun ServerTypeOperation(
 private fun AccountsLayout(
     isVisible: Boolean,
     modifier: Modifier = Modifier,
-    onAddAuthClicked: () -> Unit = {}
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit,
+    onAddAuthClicked: () -> Unit = {},
+    swapToDownloadScreen: (id: String, platform: Platform, classes: PlatformClasses) -> Unit = { _, _, _ -> }
 ) {
     val yOffset by swapAnimateDpAsState(
         targetValue = (-40).dp,
@@ -487,7 +524,8 @@ private fun AccountsLayout(
         var accountOperation by remember { mutableStateOf<AccountOperation>(AccountOperation.None) }
         AccountOperation(
             accountOperation = accountOperation,
-            updateAccountOperation = { accountOperation = it }
+            updateAccountOperation = { accountOperation = it },
+            summitError = summitError
         )
 
         if (accounts.isNotEmpty()) {
@@ -504,8 +542,10 @@ private fun AccountsLayout(
                         account = account,
                         accountSkinOperation = accountSkinOperation,
                         updateOperation = { accountSkinOperation = it },
+                        summitError = summitError,
                         onAddAuthClicked = onAddAuthClicked,
-                        onRefreshAvatar = { refreshAvatar = !refreshAvatar }
+                        onRefreshAvatar = { refreshAvatar = !refreshAvatar },
+                        swapToDownloadScreen = swapToDownloadScreen
                     )
 
                     val skinPicker = rememberLauncherForActivityResult(
@@ -560,8 +600,10 @@ private fun AccountSkinOperation(
     account: Account,
     accountSkinOperation: AccountSkinOperation,
     updateOperation: (AccountSkinOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit,
     onAddAuthClicked: () -> Unit = {},
-    onRefreshAvatar: () -> Unit = {}
+    onRefreshAvatar: () -> Unit = {},
+    swapToDownloadScreen: (id: String, platform: Platform, classes: PlatformClasses) -> Unit = { _, _, _ -> }
 ) {
     val context = LocalContext.current
     when (accountSkinOperation) {
@@ -580,8 +622,8 @@ private fun AccountSkinOperation(
                     },
                     onError = { th ->
                         FileUtils.deleteQuietly(skinFile)
-                        ObjectStates.updateThrowable(
-                            ObjectStates.ThrowableMessage(
+                        summitError(
+                            ErrorViewModel.ThrowableMessage(
                                 title = context.getString(R.string.error_import_image),
                                 message = th.getMessageOrToString()
                             )
@@ -639,7 +681,7 @@ private fun AccountSkinOperation(
                         )
                         IconTextButton(
                             onClick = {
-                                NetWorkUtils.openLink(context, context.getString(R.string.url_mod_custom_skin_loader))
+                                swapToDownloadScreen("idMHQ4n2", Platform.MODRINTH, PlatformClasses.MOD)
                                 updateOperation(AccountSkinOperation.None)
                             },
                             imageVector = Icons.Outlined.Checkroom,
@@ -654,7 +696,7 @@ private fun AccountSkinOperation(
                             updateOperation(AccountSkinOperation.None)
                         }
                     ) {
-                        Text(text = stringResource(R.string.generic_go_it))
+                        MarqueeText(text = stringResource(R.string.generic_go_it))
                     }
                 }
             )
@@ -690,7 +732,8 @@ private fun AccountSkinOperation(
 @Composable
 private fun AccountOperation(
     accountOperation: AccountOperation,
-    updateAccountOperation: (AccountOperation) -> Unit
+    updateAccountOperation: (AccountOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
     val context = LocalContext.current
     when (accountOperation) {
@@ -746,8 +789,8 @@ private fun AccountOperation(
                     stringResource(R.string.error_unknown, errorMessage)
                 }
             }
-            ObjectStates.updateThrowable(
-                ObjectStates.ThrowableMessage(
+            summitError(
+                ErrorViewModel.ThrowableMessage(
                     title = stringResource(R.string.account_logging_in_failed),
                     message = message
                 )

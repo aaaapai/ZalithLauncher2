@@ -38,24 +38,25 @@
     <string name="generic_loading">加载中</string>
     <string name="generic_in_progress">执行中</string>
     <string name="generic_anyway">nmd就用</string>
-    <string name="generic_go_it">我懂了</string>
-    <string name="generic_file_name">文件名称：%s</string>
-    <string name="generic_file_size">文件小大：%s</string>
+    <string name="generic_go_it">我明白了</string>
+    <string name="generic_ignore">忽略</string>
+    <string name="generic_authorization">授权</string>
+    <string name="generic_file_name">文件名：%s</string>
+    <string name="generic_file_size">文件大小：%s</string>
+    <string name="generic_all">全部</string>
     <!--  单位  -->
     <string name="unit_day">天</string>
     <string name="date_format">yyyy 年 MM 月 dd 日 HH:mm:ss</string>
     <string name="just_now">刚刚</string>
     <string name="minutes_ago">%d 分钟前</string>
     <string name="hours_ago">%d 小时前</string>
-    <string name="months_days_ago">%1$d 个月 %2$d 天前</string>
     <string name="days_ago">%d 天前</string>
     <string name="months_ago">%d 个月前</string>
     <string name="years_ago">%d 年前</string>
     <!--  启动器版本  -->
-    <string name="launcher_version_label_alpha">内厕版本：%s，仅供演示</string>
-    <string name="launcher_version_label_beta">公厕版本：%s，仅供演示</string>
-    <string name="launcher_version_debug_warning">您正在使用厕试版的 %s！该版本可能很不稳定😈主要是用于功能草飞、品尝，不建议长期食用这个板本！如果你滴在上厕所过程中发现任何难题，请通过 最大的gay网站 反馈给我们，我们会尽快！</string>
-    <string name="launcher_version_debug_warning_cant_close">这条警告不可去实</string>
+    <string name="launcher_version_label_alpha">内测版本：%s，仅供演示</string>
+    <string name="launcher_version_debug_warning">您正在使用测试版的 %s！该版本可能并不稳定，主要是用于功能测试、尝鲜，不建议长期使用这个版本！如果您在测试过程中发现任何问题，请通过 Github 反馈给我们，我们会尽快处理！</string>
+    <string name="launcher_version_debug_warning_cant_close">这条警告无法被关闭</string>
     <!--  主题  -->
     <string name="theme_color_dynamic">变态 (Android 12+)</string>
     <string name="theme_color_embermire">釉烬</string>
@@ -71,13 +72,19 @@
     <string name="animate_type_jelly_bounce">回弹</string>
     <string name="animate_type_slice_in">黑手</string>
     <!--  崩溃  -->
-    <string name="crash_launcher_title">%s 遇到了严重的问题黑化了</string>
-    <string name="crash_launcher_message">应用程序意外飞起来了，以下错误信息将助开发者一臂之力改进程序</string>
-    <string name="crash_exit_message">JVM 以代码 %d 出局了。</string>
-    <string name="crash_singnal_message">JVM 因致命信号 %d 而被扇了 %d 巴掌。</string>
-    <string name="crash_exit_note">具体原因请查看曰志。如果您无法自己消化这个问题，请将曰志发送给具有相关魔法能力的入，他可以帮您消化问题。请不要楚门当前画哇，楚门的世界可能无法提供足够的空间来消化问题。</string>
-    <string name="crash_restart">重开应用</string>
-    <string name="crash_exit">退出做局</string>
+    <string name="crash_launcher_title">%s 遇到了严重的问题崩溃了</string>
+    <string name="crash_launcher_message">应用程序意外崩溃了，以下错误信息将帮助开发者改进程序</string>
+    <string name="crash_exit_message">JVM 以代码 %d 退出。</string>
+    <string name="crash_singnal_message">JVM 因致命信号 %d 而中止。</string>
+    <string name="crash_exit_note">具体原因请查看日志文件。如果您无法自己解决这个问题，请将日志文件发送给具有相关技术能力的人，他们可以帮助您排查并修复问题。请不要截图当前画面，截图可能无法提供足够的信息来解决问题。</string>
+    <string name="crash_type">崩溃类型：%s</string>
+    <string name="crash_type_launcher">启动器崩溃</string>
+    <string name="crash_type_game">游戏运行崩溃</string>
+    <string name="crash_share_logs">分享日志</string>
+    <string name="crash_restart">重启应用</string>
+    <string name="crash_exit">退出应用</string>
+    <string name="crash_launch_crash_title">应用启动失败</string>
+    <string name="crash_launch_crash_message">启动器在启动的过程中遇到了严重的问题崩溃了</string>
     <!--  错误  -->
     <string name="error_import_image">导入图片时出现了大问题</string>
     <string name="error_create_dir">无法生个文件夹：%s</string>
@@ -130,16 +137,17 @@
     <string name="download_game_addon_unavailable">不可用</string>
     <string name="download_game_addon_incompatible_with">与 %s 不兼容</string>
     <string name="download_game_addon_compatible_with">兼容 %s</string>
+    <string name="download_game_addon_request_addon">请先选择 %s 版本</string>
     <string name="download_game_addon_release">正式版</string>
     <string name="download_game_addon_preview">预览版</string>
     <string name="download_game_addon_stable">稳定版</string>
     <string name="download_game_addon_debug">测试版</string>
-    <string name="download_game_addon_date">发布时间：%s</string>
     <string name="download_game_addon_recommended">%s 官方推荐</string>
     <string name="download_game_addon_not_installable">还不具备自动安装能力</string>
     <string name="download_game_install_title">安装游戏中</string>
     <string name="download_game_install_vanilla">下载安装原版 %s</string>
-    <string name="download_game_install_base_download_file">下载 %s %s 主文件</string>
+    <string name="download_game_install_base_download_file">下载 %1$s %2$s 主文件</string>
+    <string name="download_game_install_base_download_file2">下载 %s 主文件</string>
     <string name="download_game_install_base_install">安装 %s</string>
     <string name="download_game_install_base_installing">正在前台安装 %s</string>
     <string name="download_game_install_optifine_fetch_download_url">获取 OptiFine %s 下载链接</string>
@@ -154,6 +162,9 @@
     <string name="download_install_error_download_failed">一些文件下载失败，可能是网络问题导致的</string>
     <string name="download_install_success_title">安装成功</string>
     <string name="download_install_success_message">您的游戏已顺利的完成了安装！</string>
+    <string name="download_install_clear_temp">清理缓存文件</string>
+    <string name="download_install_input_version_name">等待用户输入版本名称</string>
+    <string name="download_install_input_version_name_title">输入预安装的版本名称</string>
     <string name="download_assets_filter_search_name">搜索名称</string>
     <string name="download_assets_filter_search_platform">目标平台</string>
     <string name="download_assets_filter_game_version">游戏版本</string>
@@ -175,6 +186,7 @@
     <string name="download_assets_show_only_mc_release">仅展示 MC 正式版</string>
     <string name="download_assets_search_mc_versions">搜索 MC 版本</string>
     <string name="download_assets_dependency_projects">依赖前置</string>
+    <string name="download_assets_optional_projects">可选项目</string>
     <string name="download_assets_links">相关链接</string>
     <string name="download_assets_project_link">项目地址</string>
     <string name="download_assets_source_link">浏览源代码</string>
@@ -185,9 +197,21 @@
     <string name="download_assets_release_type_alpha">内测版</string>
     <string name="download_assets_no_installed_versions">当前未安装可用的游戏版本，无法决定该资源的目标下载位置，请先安装游戏版本哦！</string>
     <string name="download_assets_install_assets_for_versions">为哪些游戏版本安装？</string>
-    <string name="download_assets_install_progress_downloading">下载安装资源中\n%s\n (%s / %s)</string>
+    <string name="download_assets_install_progress_downloading">下载安装资源中\n%1$s\n (%2$s / %3$s)</string>
     <string name="download_assets_install_progress_installing">安装资源中\n%s</string>
     <string name="download_assets_install_failed">安装资源失败！</string>
+    <string name="download_modpack_warning1">在安装前，您需要理解，绝大多数整合包都是为电脑端制作的，当您尝试启动时会有极大概率出现崩溃或是其他问题，这往往不是在启动器层面上能够解决的问题。</string>
+    <string name="download_modpack_warning2">您需要自己了解相关知识后尝试自己解决，或是寻求其他人帮忙。</string>
+    <string name="download_modpack_warning3">注：启动器开发者通常不会受理整合包带来的任何问题。</string>
+    <string name="download_modpack_install_title">安装整合包中</string>
+    <string name="download_modpack_install_parse">解析整合包</string>
+    <string name="download_modpack_install_get_mod_url">获取模组下载链接 (%1$d/%2$d)</string>
+    <string name="download_modpack_install_overrides">提取整合包文件</string>
+    <string name="download_modpack_download">下载整合包所需内容</string>
+    <string name="download_modpack_download_mods">下载所有模组 (%1$d/%2$d, %3$s)</string>
+    <string name="download_modpack_download_mods_retry">重试下载所有模组 (%1$d/%2$d, %3$s)</string>
+    <string name="download_modpack_get_loaders">获取加载器信息</string>
+    <string name="download_modpack_final_move">迁移整合包文件中</string>
     <!-- 资源类别 -->
     <string name="download_assets_category_worldgen">世界元素</string>
     <string name="download_assets_category_biomes">生物群系</string>
@@ -283,11 +307,19 @@
     <string name="game_button_mouse_left">鼠标左键</string>
     <string name="game_button_mouse_right">鼠标右键</string>
     <string name="game_dialog_force_close_message">您确定要强制关闭，并返回主界面吗？</string>
+    <string name="game_loading">游戏正在运行，等待游戏画面出现中</string>
+    <string name="game_loading_version_name">游戏版本：%s</string>
+    <string name="game_loading_version_info">游戏信息：%s</string>
+    <string name="game_menu_title">游戏菜单</string>
+    <string name="game_menu_option_force_close_text">强制关闭正在运行的游戏可能导致存档损坏或设置无法保存，除特殊情况外请避免此操作</string>
+    <string name="game_menu_option_switch_log">日志输出</string>
+    <string name="game_menu_option_input_method">切换输入法</string>
+    <string name="game_menu_option_switch_fps">帧率显示</string>
     <!--  渲染器  -->
-    <string name="renderer_name_freedreno">Freedreno</string>
-    <string name="renderer_name_panfrost">Panfrost</string>
     <string name="renderer_version_support">MC 版本支持：</string>
     <string name="renderer_version_unsupported_warning">当前渲染器 %s 不支持该游戏版本，继续使用可能导致渲染错误或游戏崩溃！您确定要无视风险坚持访问吗？</string>
+    <string name="renderer_version_storage_permissions">当前渲染器 %s 可通过配置文件修改设置，请先为启动器开启外部存储权限，否则启动器无法读取并加载该渲染器的配置！</string>
+    <string name="renderer_version_storage_permissions_sdk30">当前渲染器 %s 可通过配置文件修改设置，请先为启动器开启“管理设备所有文件”的权限，否则启动器无法读取并加载该渲染器的配置！</string>
     <!--  账号  -->
     <string name="account_no_account">未找到可用账号</string>
     <string name="account_login">登录</string>
@@ -415,6 +447,8 @@
     <string name="versions_manage_game_storage_permissions">想要使用外部游戏路径？请先为启动器开启外部存储权限，否则启动器无法使用外部的游戏文件！</string>
     <string name="versions_manage_game_storage_permissions_sdk30">想要使用外部游戏路径？请先为启动器开启“管理设备所有文件”的权限，否则启动器无法使用外部的游戏文件！</string>
     <string name="versions_manage_no_versions">没有安装版本</string>
+    <string name="versions_manage_category_vanilla">原版</string>
+    <string name="versions_manage_category_modloader">可安装模组</string>
     <string name="versions_manage_install_exists">此名称的版本已经存在！</string>
     <string name="versions_manage_install_cannot_use_mc_name">已选择附加内容，需要确保原版核心的独立性，请勿使用原版名称！</string>
     <string name="versions_manage_invalid">该版本无效</string>
@@ -465,9 +499,16 @@
     <string name="versions_config_follow_global_if_blank">留白则跟随全局设置</string>
     <string name="versions_config_disable_if_blank">留白则不使用此功能</string>
     <string name="versions_config_failed_to_save">保存版本配置时出现异常</string>
+    <string name="manage_only_show_valid">可用的</string>
+    <string name="mods_manage">模组管理</string>
+    <string name="mods_manage_info">模组信息</string>
+    <string name="mods_manage_authors">模组作者：</string>
+    <string name="mods_manage_description">模组描述：</string>
+    <string name="mods_manage_version">模组版本：%s</string>
+    <string name="mods_manage_delete_warning">您确定要删除模组 %s 吗？该操作不可撤销！</string>
+    <string name="mods_manage_no_mods">当前版本还没有模组</string>
     <string name="saves_manage">存档管理</string>
     <string name="saves_manage_info">存档信息</string>
-    <string name="saves_manage_only_show_compatible">仅显示兼容的存档</string>
     <string name="saves_manage_invalid">无效的存档</string>
     <string name="saves_manage_last_played">上一次游玩时间：%s</string>
     <string name="saves_manage_gamemode">游戏模式：%s</string>
@@ -493,7 +534,6 @@
     <string name="saves_manage_no_saves">当前版本还没有存档</string>
     <string name="resource_pack_manage">资源包管理</string>
     <string name="resource_pack_manage_info">资源包信息</string>
-    <string name="resource_pack_manage_only_show_valid">仅展示有效资源包</string>
     <string name="resource_pack_manage_invalid">资源包格式无效</string>
     <string name="resource_pack_manage_type">资源包类型：%s</string>
     <string name="resource_pack_manage_type_folder">文件夹</string>
@@ -503,13 +543,18 @@
     <string name="resource_pack_manage_name">资源包名称</string>
     <string name="resource_pack_manage_delete_warning">您确定要删除资源包 %s 吗？该操作不可撤销！</string>
     <string name="resource_pack_manage_no_packs">当前版本还没有资源包</string>
+    <string name="shader_pack_manage">光影包管理</string>
+    <string name="shader_pack_manage_exists">该名称的光影包已经存在</string>
+    <string name="shader_pack_manage_name">光影包名称</string>
+    <string name="shader_pack_manage_delete_warning">您确定要删除光影包 %s 吗？该操作不可撤销！</string>
+    <string name="shader_pack_manage_no_packs">当前版本还没有光影包</string>
     <!--  游戏  -->
     <string name="minecraft_download_stat_download_task">统计下载任务</string>
     <string name="minecraft_download_stat_verify_task">统计验证任务</string>
-    <string name="minecraft_download_downloading_game_files">下载游戏文件中 \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_verifying_and_repairing_files">验证并补全游戏文件中 \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_progress_retry_downloading_files">重试下载游戏文件中 \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_progress_retry_verifying_files">重试验证并补全游戏文件中 \n(%d/%d, %s/%s)</string>
+    <string name="minecraft_download_downloading_game_files">下载游戏文件中 \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_verifying_and_repairing_files">验证并补全游戏文件中 \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_progress_retry_downloading_files">重试下载游戏文件中 \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_progress_retry_verifying_files">重试验证并补全游戏文件中 \n(%1$d/%2$d, %3$s/%4$s)</string>
     <string name="minecraft_download_failed">下载 Minecraft 过程中出现异常</string>
     <string name="minecraft_download_failed_retried">在此之前，启动器已经尝试过重试一次，但仍有任务下载失败</string>
     <string name="minecraft_download_failed_notfound">某些依赖文件无法下载，如果多次尝试仍失败，可能是游戏缺少必要的库文件，建议重新安装游戏</string>
@@ -556,13 +601,21 @@
     <string name="settings_game_java_memory_summary">控制给 Minecraft 分配多少内存</string>
     <string name="settings_game_jvm_args_title">JVM 启动参数</string>
     <string name="settings_game_jvm_args_summary">启动 JVM 时，额外添加的 JVM 参数，不建议在没有把握的情况下进行修改，因为这很有可能导致崩溃</string>
+    <string name="settings_game_show_log_automatic_title">自动显示日志</string>
+    <string name="settings_game_show_log_automatic_summary">在游戏还未正式渲染画面前，自动显示日志</string>
     <string name="settings_game_log_text_size_title">日志字体大小</string>
     <string name="settings_game_log_text_size_summary">调整日志屏幕上的文字大小</string>
     <string name="settings_game_log_buffer_flush_interval_title">日志刷新间隔</string>
     <string name="settings_game_log_buffer_flush_interval_summary">设置日志缓冲区多长时间刷新一次。刷新太频繁或太久不刷新都可能影响性能</string>
+    <string name="settings_control_physical_key_bind_ime_title">实体键盘呼出输入法</string>
+    <string name="settings_control_physical_key_bind_ime_summary">点击绑定一个按键，用于在游戏内呼出输入法</string>
+    <string name="settings_control_physical_key_bind_ime_bound">已绑定按键：%s</string>
+    <string name="settings_control_physical_key_bind_ime_un_bind">未绑定</string>
     <string name="settings_control_mouse_physical_mouse_mode_title">实体鼠标控制</string>
     <string name="settings_control_mouse_physical_mouse_mode_summary">连接实体鼠标时，是否禁用虚拟鼠标指针，直接使用系统鼠标指针进行操控</string>
-    <string name="settings_control_mouse_physical_mouse_warning">若您的设备把实体鼠标右键识别为“返回”，或中键识别为“回到桌面”，可进入系统设置 > 开发者选项，开启“禁用权限监控”，大概率能解决</string>
+    <string name="settings_control_mouse_physical_mouse_warning">若您的设备把实体鼠标右键识别为“返回”，或中键识别为“回到桌面”，可进入系统设置 &gt; 开发者选项，开启“禁用权限监控”，大概率能解决</string>
+    <string name="settings_control_mouse_hide_title">隐藏虚拟鼠标</string>
+    <string name="settings_control_mouse_hide_summary">一些场景下，您可能希望隐藏虚拟鼠标；该设置不会影响实体鼠标控制、滑动控制</string>
     <string name="settings_control_mouse_size_title">虚拟鼠标大小</string>
     <string name="settings_control_mouse_sensitivity_title">虚拟鼠标灵敏度</string>
     <string name="settings_control_mouse_sensitivity_summary">调节虚拟鼠标在普通模式下的移动速度</string>
@@ -601,12 +654,31 @@
     <string name="settings_launcher_log_share_title">分享启动器日志</string>
     <string name="settings_launcher_log_share_summary">点击以分享启动器的日志文件，以供开发者定位并修复启动器的问题</string>
     <string name="settings_launcher_log_share_packing">打包启动器日志文件</string>
+    <string name="settings_launcher_mirror_modloader_title">模组加载器版本获取源</string>
+    <string name="settings_launcher_mirror_file_download_title">文件下载源</string>
+    <string name="settings_launcher_mirror_official_first">优先使用官方源</string>
+    <string name="settings_launcher_mirror_mirror_first">优先使用镜像源</string>
+    <!--  控制  -->
+    <string name="control_keyboard_bind_title">绑定按键</string>
+    <string name="control_keyboard_bind_summary">请在您的键盘上按下想要绑定的按键</string>
     <!--  关于  -->
+    <string name="about_launcher_title">关于启动器</string>
+    <string name="about_launcher_version">启动器版本：%s</string>
+    <string name="about_launcher_author_movtery_title">墨北MovTery</string>
+    <string name="about_launcher_author_movtery_text">%s 的作者</string>
+    <string name="about_launcher_project_link">项目地址</string>
+    <string name="about_sponsor">赞助支持</string>
+    <string name="about_acknowledgements_title">鸣谢</string>
+    <string name="about_acknowledgements_pojav_text">%s 使用了 PojavLauncher 的启动后端</string>
+    <string name="about_acknowledgements_pcl_text">%s 参考了 PCL2 部分代码实现</string>
+    <string name="about_acknowledgements_fcl_text">%s 引用了 FCL 部分代码，参考了部分代码实现</string>
+    <string name="about_acknowledgements_hmcl_text">%s 引用了 HMCL 部分代码，参考了部分代码实现</string>
+    <string name="about_acknowledgements_mcmod">MC 百科（mcmod.cn）</string>
+    <string name="about_acknowledgements_mcmod_text">%s 使用了来自 MC 百科 的模组、整合包翻译</string>
+    <string name="about_acknowledgements_bangbang93_text">%s 使用了 BMCL API 镜像源</string>
     <string name="about_plugin_title">已加载的插件</string>
     <string name="about_library_title">额外引入的依赖项目</string>
     <!--  Url  -->
     <string name="url_wiki_minecraft_game_release">https://zh.minecraft.wiki/w/Java%%E7%%89%%88%s?variant=zh-cn</string>
     <string name="url_wiki_minecraft_game_snapshot">https://zh.minecraft.wiki/w/%s?variant=zh-cn</string>
-    <!--  仅限中国，中国地区访问 Modrinth 可能会不方便，所以使用 mcmod 中文百科平台，其他语言请使用 Modrinth 或者 CurseForge  -->
-    <string name="url_mod_custom_skin_loader">https://www.mcmod.cn/class/883.html</string>
 </resources>

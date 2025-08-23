@@ -12,10 +12,10 @@ import com.movtery.zalithlauncher.game.account.microsoft.toLocal
 import com.movtery.zalithlauncher.game.version.download.DownloadMode
 import com.movtery.zalithlauncher.game.version.download.MinecraftDownloader
 import com.movtery.zalithlauncher.game.version.installed.Version
-import com.movtery.zalithlauncher.state.ObjectStates
 import com.movtery.zalithlauncher.ui.activities.runGame
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import java.net.ConnectException
@@ -27,7 +27,8 @@ object LaunchGame {
 
     fun launchGame(
         context: Context,
-        version: Version
+        version: Version,
+        summitError: (ErrorViewModel.ThrowableMessage) -> Unit
     ) {
         if (isLaunching) return
 
@@ -45,8 +46,8 @@ object LaunchGame {
                 runGame(context, version)
             },
             onError = { message ->
-                ObjectStates.updateThrowable(
-                    ObjectStates.ThrowableMessage(
+                summitError(
+                    ErrorViewModel.ThrowableMessage(
                         title = context.getString(R.string.minecraft_download_failed),
                         message = message
                     )
@@ -90,8 +91,8 @@ object LaunchGame {
                         }
                     }
 
-                    ObjectStates.updateThrowable(
-                        ObjectStates.ThrowableMessage(
+                    summitError(
+                        ErrorViewModel.ThrowableMessage(
                             title = context.getString(R.string.account_logging_in_failed),
                             message = message
                         )

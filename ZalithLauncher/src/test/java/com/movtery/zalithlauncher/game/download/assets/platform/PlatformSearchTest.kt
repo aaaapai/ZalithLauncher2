@@ -8,10 +8,12 @@ import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthModLoaderCategory
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ProjectTypeFacet
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.VersionFacet
+import com.movtery.zalithlauncher.utils.file.calculateFileSha1
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertNotNull
 import org.junit.Test
+import java.io.File
 import java.nio.file.Paths
 
 class PlatformSearchJsonTest {
@@ -74,6 +76,19 @@ class PlatformSearchJsonTest {
         }
     }
 
+    @Test
+    fun testGetVersionByLocalFileFromCurseForge() = runBlocking(Dispatchers.IO) {
+        val files = listOf(
+            "F:\\Download\\geckolib-forge-1.21.8-5.2.2.jar"
+        )
+        files.forEach { file ->
+            val result = PlatformSearch.getVersionByLocalFileFromCurseForge(
+                file = File(file)
+            )
+            println(result.data.toString())
+        }
+    }
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Test
@@ -127,6 +142,19 @@ class PlatformSearchJsonTest {
             println("downloads = ${version.downloads}")
             println("files = ${version.files.joinToString(",") { it.fileName } }")
             println("-----------")
+        }
+    }
+
+    @Test
+    fun testGetVersionByLocalFileFromModrinth() = runBlocking(Dispatchers.IO) {
+        val files = listOf(
+            "F:\\Download\\geckolib-forge-1.21.8-5.2.2.jar"
+        )
+        files.forEach { file ->
+            val result = PlatformSearch.getVersionByLocalFileFromModrinth(
+                sha1 = calculateFileSha1(File(file))
+            )
+            println(result.toString())
         }
     }
 

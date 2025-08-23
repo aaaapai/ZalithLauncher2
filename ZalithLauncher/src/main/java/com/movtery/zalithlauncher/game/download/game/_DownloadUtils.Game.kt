@@ -4,13 +4,9 @@ import com.google.gson.JsonObject
 import com.movtery.zalithlauncher.game.download.game.models.LibraryComponents
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
-import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
 import com.movtery.zalithlauncher.utils.json.parseToJson
-import com.movtery.zalithlauncher.utils.logging.Logger.lError
-import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
 import java.io.File
-import java.io.IOException
 
 fun GameManifest.isOldVersion(): Boolean = !minecraftArguments.isNullOrEmpty()
 
@@ -29,45 +25,6 @@ fun String?.getJsonOrNull(tag: String): JsonObject? {
             return@let null
         }
         text.parseToJson()
-    }
-}
-
-fun copyLibraries(
-    from: File,
-    to: File,
-    onProgress: ((Float) -> Unit)? = null
-) {
-    val normalizedFrom = from.absoluteFile.normalize()
-    val normalizedTo = to.absoluteFile.normalize()
-
-    val allFiles = mutableListOf<File>()
-
-    normalizedFrom.walkTopDown().forEach { file ->
-        val targetPath = File(normalizedTo, file.relativeTo(normalizedFrom).path)
-        if (file.isDirectory) {
-            targetPath.mkdirs()
-        } else {
-            allFiles.add(file)
-        }
-    }
-
-    val fileCount = allFiles.size
-
-    if (fileCount == 0) {
-        onProgress?.invoke(1.0f)
-        return
-    }
-
-    allFiles.forEachIndexed { index, file ->
-        val targetFile = File(normalizedTo, file.relativeTo(normalizedFrom).path)
-        try {
-            targetFile.ensureParentDirectory()
-            file.copyTo(targetFile, overwrite = true)
-            lInfo("copied: ${file.path} -> ${targetFile.path}")
-        } catch (e: IOException) {
-            lError("Failed to copy: ${file.path} -> ${targetFile.path}", e)
-        }
-        onProgress?.invoke((index + 1).toFloat() / fileCount)
     }
 }
 

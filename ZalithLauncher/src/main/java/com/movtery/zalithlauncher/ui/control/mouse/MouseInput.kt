@@ -66,6 +66,14 @@ fun TouchpadLayout(
     val viewConfig = LocalViewConfiguration.current
     val interactionSource = remember { MutableInteractionSource() }
 
+    //确保 pointerInput 中总是调用到最新的回调，避免闭包捕获旧值
+    val currentControlMode by rememberUpdatedState(controlMode)
+    val currentLongPressTimeoutMillis by rememberUpdatedState(longPressTimeoutMillis)
+    val currentOnTap by rememberUpdatedState(onTap)
+    val currentOnLongPress by rememberUpdatedState(onLongPress)
+    val currentOnLongPressEnd by rememberUpdatedState(onLongPressEnd)
+    val currentOnPointerMove by rememberUpdatedState(onPointerMove)
+
     FocusableBox(
         modifier = modifier
             .hoverable(interactionSource)
@@ -73,6 +81,7 @@ fun TouchpadLayout(
                 coroutineScope {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
+                        down.consume()
                         if (down.type != PointerType.Touch) {
                             //过滤掉不是触摸的类型
                             return@awaitEachGesture
@@ -82,19 +91,23 @@ fun TouchpadLayout(
                         var isDragging = false
                         var longPressTriggered = false
                         val startPosition = down.position
-                        val longPressJob = if (controlMode == MouseControlMode.SLIDE) launch {
+                        val longPressJob = if (currentControlMode == MouseControlMode.SLIDE) launch {
                             //只在滑动点击模式下进行长按计时
-                            val timeout = if (longPressTimeoutMillis > 0) longPressTimeoutMillis else viewConfig.longPressTimeoutMillis
+                            val timeout = if (currentLongPressTimeoutMillis > 0) {
+                                currentLongPressTimeoutMillis
+                            } else {
+                                viewConfig.longPressTimeoutMillis
+                            }
                             delay(timeout)
                             if (!isDragging) {
                                 longPressTriggered = true
-                                onLongPress()
+                                currentOnLongPress()
                             }
                         } else null
 
-                        if (controlMode == MouseControlMode.CLICK) {
+                        if (currentControlMode == MouseControlMode.CLICK) {
                             //点击模式下，如果触摸，无论如何都应该更新指针位置
-                            onPointerMove(pointer.position)
+                            currentOnPointerMove(pointer.position)
                         }
 
                         drag(down.id) { change ->
@@ -102,7 +115,7 @@ fun TouchpadLayout(
                             val delta = change.positionChange()
                             val distanceFromStart = (change.position - startPosition).getDistance()
 
-                            if (controlMode == MouseControlMode.SLIDE) {
+                            if (currentControlMode == MouseControlMode.SLIDE) {
                                 if (distanceFromStart > viewConfig.touchSlop) {
                                     //超出了滑动检测距离，说明是真的在进行滑动
                                     longPressJob?.cancel() //取消长按计时
@@ -110,15 +123,15 @@ fun TouchpadLayout(
 
                                 if (isDragging || longPressTriggered) {
                                     pointer = change
-                                    onPointerMove(delta)
+                                    currentOnPointerMove(delta)
                                 }
                             } else {
                                 if (!longPressTriggered) {
                                     longPressTriggered = true
-                                    onLongPress()
+                                    currentOnLongPress()
                                 }
                                 pointer = change
-                                onPointerMove(change.position)
+                                currentOnPointerMove(change.position)
                             }
 
                             change.consume()
@@ -126,17 +139,17 @@ fun TouchpadLayout(
 
                         longPressJob?.cancel()
                         if (longPressTriggered) {
-                            onLongPressEnd()
+                            currentOnLongPressEnd()
                         } else {
-                            when (controlMode) {
+                            when (currentControlMode) {
                                 MouseControlMode.SLIDE -> {
                                     if (!isDragging && !longPressTriggered) {
-                                        onTap(pointer.position)
+                                        currentOnTap(pointer.position)
                                     }
                                 }
                                 MouseControlMode.CLICK -> {
                                     //未进入长按，算一次点击事件
-                                    onTap(pointer.position)
+                                    currentOnTap(pointer.position)
                                 }
                             }
                         }

@@ -5,7 +5,9 @@ import android.graphics.Paint
 import android.view.KeyEvent
 import android.view.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.IntRect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntSize
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withSave
@@ -13,11 +15,11 @@ import com.movtery.zalithlauncher.bridge.ZLBridge
 import com.movtery.zalithlauncher.game.input.AWTInputEvent
 import com.movtery.zalithlauncher.game.launch.JvmLauncher
 import com.movtery.zalithlauncher.ui.screens.game.JVMScreen
+import com.movtery.zalithlauncher.ui.screens.game.elements.LogState
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.viewmodel.EventViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class JVMHandler(
@@ -25,6 +27,11 @@ class JVMHandler(
     getWindowSize: () -> IntSize,
     onExit: (code: Int) -> Unit
 ) : AbstractHandler(HandlerType.JVM, getWindowSize, jvmLauncher, onExit) {
+
+    /**
+     * 日志展示状态
+     */
+    private var logState by mutableStateOf(LogState.CLOSE)
 
     override suspend fun execute(surface: Surface?, scope: CoroutineScope) {
         surface?.run {
@@ -89,7 +96,11 @@ class JVMHandler(
     }
 
     @Composable
-    override fun getComposableLayout() = @Composable {
-        JVMScreen()
+    override fun getComposableLayout(eventViewModel: EventViewModel): @Composable (() -> Unit) = @Composable {
+        JVMScreen(
+            logState = logState,
+            onLogStateChange = { logState = it },
+            eventViewModel = eventViewModel
+        )
     }
 }

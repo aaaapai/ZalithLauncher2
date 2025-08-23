@@ -2,9 +2,7 @@ package com.movtery.zalithlauncher
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
 import android.os.Process
 import android.util.Log
 import coil3.ImageLoader
@@ -20,17 +18,16 @@ import com.movtery.zalithlauncher.context.refreshContext
 import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.path.GamePathManager
-import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.path.PathManager
-import com.movtery.zalithlauncher.ui.activities.ErrorActivity
+import com.movtery.zalithlauncher.setting.loadAllSettings
+import com.movtery.zalithlauncher.ui.activities.showFatalError
 import com.movtery.zalithlauncher.ui.activities.showLauncherCrash
 import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.logging.Logger
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.utils.writeCrashFile
+import com.tencent.mmkv.MMKV
 import okio.Path.Companion.toOkioPath
-import java.io.PrintStream
-import java.text.DateFormat
-import java.util.Date
 import kotlin.properties.Delegates
 
 class ZLApplication : Application(), SingletonImageLoader.Factory {
@@ -49,17 +46,10 @@ class ZLApplication : Application(), SingletonImageLoader.Factory {
 
             lError("An exception occurred", throwable)
 
-            runCatching {
-                PrintStream(PathManager.FILE_CRASH_REPORT).use { stream ->
-                    stream.append("================ ${InfoDistributor.LAUNCHER_IDENTIFIER} Crash Report ================\n")
-                    stream.append("- Time: ${DateFormat.getDateTimeInstance().format(Date())}\n")
-                    stream.append("- Device: ${Build.PRODUCT} ${Build.MODEL}\n")
-                    stream.append("- Android Version: ${Build.VERSION.RELEASE}\n")
-                    stream.append("- Launcher Version: test\n")
-                    stream.append("===================== Crash Stack Trace =====================\n")
-                    stream.append(Log.getStackTraceString(throwable))
-                }
-            }.onFailure { t ->
+            writeCrashFile(
+                file = PathManager.FILE_CRASH_REPORT,
+                throwable = throwable
+            ) { t ->
                 lError("An exception occurred while saving the crash report", t)
             }
 
@@ -69,6 +59,9 @@ class ZLApplication : Application(), SingletonImageLoader.Factory {
 
         super.onCreate()
         runCatching {
+            MMKV.initialize(this)
+            loadAllSettings(this)
+
             Logger.initialize(this)
 
             initializeData()
@@ -82,12 +75,14 @@ class ZLApplication : Application(), SingletonImageLoader.Factory {
                     originalJNIDirectory.lastIndexOf("/")
                 ) + "/x86"
             }
-        }.onFailure {
-            val intent = Intent(this, ErrorActivity::class.java).apply {
-                putExtra(ErrorActivity.BUNDLE_THROWABLE, it)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }.onFailure { launchTh ->
+            writeCrashFile(
+                file = PathManager.FILE_CRASH_REPORT,
+                throwable = launchTh
+            ) {
+                Log.w("ZLApplication", "An exception occurred while saving the crash report", it)
             }
-            startActivity(intent)
+            showFatalError(this, launchTh)
         }
     }
 

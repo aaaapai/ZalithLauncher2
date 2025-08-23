@@ -7,23 +7,22 @@ import com.movtery.zalithlauncher.game.download.assets.platform.PlatformClasses
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeResourcePackCategory
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthFeatures
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthResourcePackCategory
-import com.movtery.zalithlauncher.ui.screens.content.download.DownloadResourcePackScreenKey
-import com.movtery.zalithlauncher.ui.screens.content.download.common.downloadResourcePackScreenKey
-import com.movtery.zalithlauncher.ui.screens.content.downloadScreenKey
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object SearchResourcePackScreenKey : NavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 
 @Composable
 fun SearchResourcePackScreen(
-    swapToDownload: (Platform, projectId: String) -> Unit = { _, _ -> }
+    mainScreenKey: NavKey?,
+    downloadScreenKey: NavKey?,
+    downloadResourcePackScreenKey: NavKey,
+    downloadResourcePackScreenCurrentKey: NavKey?,
+    swapToDownload: (Platform, projectId: String, iconUrl: String?) -> Unit = { _, _, _ -> }
 ) {
     SearchAssetsScreen(
-        parentScreenKey = DownloadResourcePackScreenKey,
+        mainScreenKey = mainScreenKey,
+        parentScreenKey = downloadResourcePackScreenKey,
         parentCurrentKey = downloadScreenKey,
-        screenKey = SearchResourcePackScreenKey,
-        currentKey = downloadResourcePackScreenKey,
+        screenKey = NormalNavKey.SearchResourcePack,
+        currentKey = downloadResourcePackScreenCurrentKey,
         platformClasses = PlatformClasses.RESOURCE_PACK,
         initialPlatform = Platform.MODRINTH,
         getCategories = { platform ->

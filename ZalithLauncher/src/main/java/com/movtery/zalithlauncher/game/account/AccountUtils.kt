@@ -15,15 +15,10 @@ import com.movtery.zalithlauncher.game.account.microsoft.MinecraftProfileExcepti
 import com.movtery.zalithlauncher.game.account.microsoft.NotPurchasedMinecraftException
 import com.movtery.zalithlauncher.game.account.microsoft.XboxLoginException
 import com.movtery.zalithlauncher.game.account.microsoft.toLocal
-import com.movtery.zalithlauncher.state.ObjectStates
-import com.movtery.zalithlauncher.ui.screens.content.WebViewScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.MicrosoftLoginOperation
-import com.movtery.zalithlauncher.ui.screens.content.navigateToWeb
-import com.movtery.zalithlauncher.ui.screens.main.elements.backToMainScreen
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenBackStack
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.copyText
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
@@ -78,7 +73,11 @@ fun isMicrosoftLogging() = TaskSystem.containsTask(MICROSOFT_LOGGING_TASK)
 
 fun microsoftLogin(
     context: Context,
-    updateOperation: (MicrosoftLoginOperation) -> Unit
+    toWeb: (url: String) -> Unit,
+    backToMain: () -> Unit,
+    checkIfInWebScreen: () -> Boolean,
+    updateOperation: (MicrosoftLoginOperation) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
     val task = Task.runTask(
         id = MICROSOFT_LOGGING_TASK,
@@ -94,12 +93,12 @@ fun microsoftLogin(
                     Toast.LENGTH_SHORT
                 ).show()
             }
-            mainScreenBackStack.navigateToWeb(deviceCode.verificationUrl)
+            toWeb(deviceCode.verificationUrl)
             task.updateProgress(-1f, R.string.account_microsoft_get_token, deviceCode.userCode)
             val tokenResponse = MicrosoftAuthenticator.getTokenResponse(deviceCode, coroutineContext) {
-                !WebViewScreenKey::class.java.isInstance(mainScreenKey)
+                !checkIfInWebScreen()
             }
-            mainScreenBackStack.backToMainScreen()
+            backToMain()
             val account = authAsync(
                 AuthType.Access,
                 tokenResponse.refreshToken,
@@ -134,8 +133,8 @@ fun microsoftLogin(
                     context.getString(R.string.error_unknown, errorMessage)
                 }
             }?.let { message ->
-                ObjectStates.updateThrowable(
-                    ObjectStates.ThrowableMessage(
+                summitError(
+                    ErrorViewModel.ThrowableMessage(
                         title = context.getString(R.string.account_logging_in_failed),
                         message = message
                     )
@@ -247,7 +246,12 @@ fun addOtherServer(
             val fullServerUrl = tryGetFullServerUrl(serverUrl)
             ensureActive()
             task.updateProgress(0.5f, R.string.account_other_login_getting_server_info)
-            AuthServerApi.getServeInfo(fullServerUrl)?.let { data ->
+            runCatching {
+                AuthServerApi.getServeInfo(fullServerUrl)
+            }.onFailure { th ->
+                lError("Failed to get server info", th)
+                onThrowable(th)
+            }.getOrNull()?.let { data ->
                 JSONObject(data).optJSONObject("meta")?.let { meta ->
                     if (AccountsManager.isAuthServerExists(fullServerUrl)) {
                         //确保服务器不重复

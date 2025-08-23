@@ -8,6 +8,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -45,7 +47,7 @@ import com.movtery.zalithlauncher.game.download.assets.platform.Platform
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformDisplayLabel
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformFilterCode
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformSortField
-import com.movtery.zalithlauncher.game.download.assets.type.allGameVersions
+import com.movtery.zalithlauncher.game.download.assets.utils.allGameVersions
 import com.movtery.zalithlauncher.ui.components.LittleTextLabel
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
@@ -111,7 +113,30 @@ fun SearchFilter(
                     onItemSelected = {
                         onPlatformChange(it!!)
                     },
-                    getItemName = { it.displayName },
+                    selectedLayout = { platform ->
+                        platform?.let {
+                            PlatformIdentifier(
+                                platform = it,
+                                shape = MaterialTheme.shapes.small
+                            )
+                        }
+                    },
+                    itemLayout = { platform ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                modifier = Modifier.size(14.dp),
+                                painter = painterResource(platform.getDrawable()),
+                                contentDescription = platform.displayName
+                            )
+                            Text(
+                                text = platform.displayName,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    },
                     title = stringResource(R.string.download_assets_filter_search_platform),
                     cancelable = false
                 )
@@ -204,6 +229,57 @@ private fun <E> FilterListLayout(
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     shadowElevation: Dp = 1.dp
 ) {
+    FilterListLayout(
+        modifier = modifier,
+        items = items,
+        selectedItem = selectedItem,
+        onItemSelected = onItemSelected,
+        selectedLayout = { item ->
+            LittleTextLabel(
+                text = item?.let { getItemName(it) } ?: stringResource(R.string.download_assets_filter_none),
+                shape = MaterialTheme.shapes.small
+            )
+        },
+        itemLayout = { item ->
+            Text(
+                text = getItemName(item),
+                style = MaterialTheme.typography.labelMedium
+            )
+        },
+        title = title,
+        cancelable = cancelable,
+        maxListHeight = maxListHeight,
+        shape = shape,
+        color = color,
+        contentColor = contentColor,
+        shadowElevation = shadowElevation
+    )
+}
+
+/**
+ * 过滤器列表UI
+ * @param items 可选的item
+ * @param selectedItem 当前选中的item
+ * @param onItemSelected 选中item时的回调
+ * @param selectedLayout 控制item的显示外观
+ * @param cancelable 是否允许取消选择（清除已选择的item）
+ */
+@Composable
+private fun <E> FilterListLayout(
+    modifier: Modifier = Modifier,
+    items: List<E>,
+    selectedItem: E?,
+    onItemSelected: (E?) -> Unit,
+    selectedLayout: @Composable ColumnScope.(E?) -> Unit,
+    itemLayout: @Composable ColumnScope.(E) -> Unit,
+    title: String,
+    cancelable: Boolean = true,
+    maxListHeight: Dp = 200.dp,
+    shape: Shape = MaterialTheme.shapes.large,
+    color: Color = itemLayoutColor(),
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    shadowElevation: Dp = 1.dp
+) {
     var expanded by remember { mutableStateOf(false) }
 
     Surface(
@@ -218,7 +294,8 @@ private fun <E> FilterListLayout(
                 modifier = Modifier.fillMaxWidth(),
                 items = items,
                 title = title,
-                selectedName = selectedItem?.let { getItemName(it) },
+                selected = selectedItem != null,
+                selectedItemLayout = { selectedLayout(selectedItem) },
                 expanded = expanded,
                 cancelable = cancelable,
                 onClick = { expanded = !expanded },
@@ -246,7 +323,7 @@ private fun <E> FilterListLayout(
                                         .fillMaxWidth()
                                         .padding(all = 4.dp),
                                     selected = selectedItem == item,
-                                    itemName = getItemName(item),
+                                    itemLayout = { itemLayout(item) },
                                     onClick = {
                                         if (expanded && selectedItem != item) {
                                             onItemSelected(item)
@@ -268,7 +345,8 @@ private fun <E> FilterListHeader(
     modifier: Modifier = Modifier,
     items: List<E>,
     title: String,
-    selectedName: String? = null,
+    selected: Boolean,
+    selectedItemLayout: @Composable ColumnScope.() -> Unit,
     expanded: Boolean,
     cancelable: Boolean = true,
     onClick: () -> Unit = {},
@@ -290,10 +368,7 @@ private fun <E> FilterListHeader(
                 text = title,
                 style = MaterialTheme.typography.titleSmall
             )
-            LittleTextLabel(
-                text = selectedName ?: stringResource(R.string.download_assets_filter_none),
-                shape = MaterialTheme.shapes.small
-            )
+            selectedItemLayout()
         }
 
         if (!items.isEmpty()) {
@@ -313,7 +388,7 @@ private fun <E> FilterListHeader(
                     imageVector = Icons.Rounded.ArrowDropDown,
                     contentDescription = stringResource(if (expanded) R.string.generic_expand else R.string.generic_collapse)
                 )
-                if (selectedName != null && cancelable) {
+                if (selected && cancelable) {
                     IconButton(
                         modifier = Modifier
                             .size(28.dp),
@@ -335,7 +410,7 @@ private fun <E> FilterListHeader(
 private fun FilterListItem(
     modifier: Modifier = Modifier,
     selected: Boolean,
-    itemName: String,
+    itemLayout: @Composable ColumnScope.() -> Unit,
     onClick: () -> Unit = {}
 ) {
     Row(
@@ -349,12 +424,8 @@ private fun FilterListItem(
             onClick = onClick
         )
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = itemName,
-                style = MaterialTheme.typography.labelMedium
-            )
-        }
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            content = itemLayout
+        )
     }
 }

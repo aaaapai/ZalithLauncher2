@@ -9,23 +9,22 @@ import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.model
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthFeatures
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthModpackCategory
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.modrinthModLoaderFilters
-import com.movtery.zalithlauncher.ui.screens.content.download.DownloadModPackScreenKey
-import com.movtery.zalithlauncher.ui.screens.content.download.common.downloadModPackScreenKey
-import com.movtery.zalithlauncher.ui.screens.content.downloadScreenKey
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object SearchModPackScreenKey : NavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 
 @Composable
 fun SearchModPackScreen(
-    swapToDownload: (Platform, projectId: String) -> Unit = { _, _ -> }
+    mainScreenKey: NavKey?,
+    downloadScreenKey: NavKey?,
+    downloadModPackScreenKey: NavKey,
+    downloadModPackScreenCurrentKey: NavKey?,
+    swapToDownload: (Platform, projectId: String, iconUrl: String?) -> Unit = { _, _, _ -> }
 ) {
     SearchAssetsScreen(
-        parentScreenKey = DownloadModPackScreenKey,
+        mainScreenKey = mainScreenKey,
+        parentScreenKey = downloadModPackScreenKey,
         parentCurrentKey = downloadScreenKey,
-        screenKey = SearchModPackScreenKey,
-        currentKey = downloadModPackScreenKey,
+        screenKey = NormalNavKey.SearchModPack,
+        currentKey = downloadModPackScreenCurrentKey,
         platformClasses = PlatformClasses.MOD_PACK,
         initialPlatform = Platform.MODRINTH,
         getCategories = { platform ->

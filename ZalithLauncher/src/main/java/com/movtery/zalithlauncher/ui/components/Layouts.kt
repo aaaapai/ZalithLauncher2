@@ -440,6 +440,7 @@ fun SwitchLayout(
     modifier: Modifier = Modifier,
     title: String,
     summary: String? = null,
+    enabled: Boolean = true,
     shape: Shape = RoundedCornerShape(22.0.dp),
     trailingIcon: @Composable (() -> Unit)? = null
 ) {
@@ -447,7 +448,7 @@ fun SwitchLayout(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape = shape)
-            .clickable { onCheckedChange(!checked) }
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
             .padding(all = 8.dp)
             .padding(bottom = 4.dp)
     ) {
@@ -455,6 +456,7 @@ fun SwitchLayout(
             modifier = Modifier
                 .weight(1f)
                 .padding(end = 16.dp)
+                .alpha(if (enabled) 1f else 0.5f)
         ) {
             TitleAndSummary(
                 title = title,
@@ -467,6 +469,7 @@ fun SwitchLayout(
         Switch(
             modifier = Modifier.align(Alignment.CenterVertically),
             checked = checked,
+            enabled = enabled,
             onCheckedChange = { value -> onCheckedChange(value) }
         )
     }

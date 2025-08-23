@@ -19,10 +19,7 @@ open class FabricLikeVersion(
     inherit = inherit
 ) {
     val loaderUrl: String
-        get() = getUrl(FabricVersions.loaderUrl, QuiltVersions.loaderUrl)
-
-    val gameUrl: String
-        get() = getUrl(FabricVersions.gameUrl, QuiltVersions.gameUrl)
+        get() = "${getUrl(FabricVersions.officialUrl, QuiltVersions.officialUrl)}/versions/loader"
 
     /**
      * 获取对应版本的版本 Json 下载地址

@@ -38,6 +38,7 @@ import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.components.InstallableItem
 import com.movtery.zalithlauncher.ui.base.BaseScreen
+import com.movtery.zalithlauncher.ui.components.MarqueeText
 import com.movtery.zalithlauncher.ui.components.ScalingActionButton
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
 import com.movtery.zalithlauncher.ui.screens.splash.elements.splashScreenKey
@@ -134,7 +135,7 @@ private fun ActionMenu(
                     onAgreeClick()
                 }
             ) {
-                Text(text = stringResource(R.string.splash_screen_agree))
+                MarqueeText(text = stringResource(R.string.splash_screen_agree))
             }
         }
     }

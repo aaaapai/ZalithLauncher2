@@ -17,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
@@ -27,29 +29,21 @@ import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.state.LocalColorThemeState
-import com.movtery.zalithlauncher.state.LocalCustomColorThemeState
-import com.movtery.zalithlauncher.state.MutableStates
-import com.movtery.zalithlauncher.state.getCustomColorFromSettings
+import com.movtery.zalithlauncher.setting.enums.MirrorSourceType
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.base.FullScreenComponentActivity
 import com.movtery.zalithlauncher.ui.components.ColorPickerDialog
 import com.movtery.zalithlauncher.ui.components.TitleAndSummary
-import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
-import com.movtery.zalithlauncher.ui.screens.content.settingsScreenKey
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.ui.theme.ColorThemeType
 import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.file.shareFile
 import com.movtery.zalithlauncher.utils.file.zipDirectory
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
-import kotlinx.serialization.Serializable
 import java.io.File
-
-@Serializable
-data object LauncherSettingsScreenKey: NavKey
 
 private sealed interface CustomColorOperation {
     data object None : CustomColorOperation
@@ -58,12 +52,16 @@ private sealed interface CustomColorOperation {
 }
 
 @Composable
-fun LauncherSettingsScreen() {
+fun LauncherSettingsScreen(
+    key: NestedNavKey.Settings,
+    settingsScreenKey: NavKey?,
+    mainScreenKey: NavKey?
+) {
     val context = LocalContext.current
 
     BaseScreen(
-        Triple(SettingsScreenKey, mainScreenKey, false),
-        Triple(LauncherSettingsScreenKey, settingsScreenKey, false)
+        Triple(key, mainScreenKey, false),
+        Triple(NormalNavKey.Settings.Launcher, settingsScreenKey, false)
     ) { isVisible ->
         Column(
             modifier = Modifier
@@ -72,8 +70,6 @@ fun LauncherSettingsScreen() {
                 .padding(all = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val currentColorThemeState = LocalColorThemeState.current
-
             val yOffset1 by swapAnimateDpAsState(
                 targetValue = (-40).dp,
                 swapIn = isVisible
@@ -112,9 +108,7 @@ fun LauncherSettingsScreen() {
                     onRadioClick = { enum ->
                         if (enum == ColorThemeType.CUSTOM) customColorOperation = CustomColorOperation.Dialog
                     }
-                ) { type ->
-                    currentColorThemeState.updateValue(type)
-                }
+                )
 
                 SwitchSettingsLayout(
                     unit = AllSettings.launcherFullScreen,
@@ -162,16 +156,9 @@ fun LauncherSettingsScreen() {
                     entries = TransitionAnimationType.entries,
                     getRadioEnable = { true },
                     getRadioText = { enum ->
-                        when (enum) {
-                            TransitionAnimationType.CLOSE -> stringResource(R.string.generic_close)
-                            TransitionAnimationType.BOUNCE -> stringResource(R.string.animate_type_bounce)
-                            TransitionAnimationType.JELLY_BOUNCE -> stringResource(R.string.animate_type_jelly_bounce)
-                            TransitionAnimationType.SLICE_IN -> stringResource(R.string.animate_type_slice_in)
-                        }
+                        stringResource(enum.textRes)
                     }
-                ) { type ->
-                    MutableStates.launcherAnimateType = type
-                }
+                )
             }
 
             val yOffset3 by swapAnimateDpAsState(
@@ -183,6 +170,20 @@ fun LauncherSettingsScreen() {
             SettingsBackground(
                 modifier = Modifier.offset { IntOffset(x = 0, y = yOffset3.roundToPx()) }
             ) {
+                ListSettingsLayout(
+                    unit = AllSettings.fetchModLoaderSource,
+                    items = MirrorSourceType.entries,
+                    title = stringResource(R.string.settings_launcher_mirror_modloader_title),
+                    getItemText = { stringResource(it.textRes) }
+                )
+
+                ListSettingsLayout(
+                    unit = AllSettings.fileDownloadSource,
+                    items = MirrorSourceType.entries,
+                    title = stringResource(R.string.settings_launcher_mirror_file_download_title),
+                    getItemText = { stringResource(it.textRes) }
+                )
+
                 SliderSettingsLayout(
                     unit = AllSettings.launcherLogRetentionDays,
                     title = stringResource(R.string.settings_launcher_log_retention_days_title),
@@ -231,19 +232,14 @@ private fun CustomColorOperation(
     when (customColorOperation) {
         is CustomColorOperation.None -> {}
         is CustomColorOperation.Dialog -> {
-            val customColorTheme = LocalCustomColorThemeState.current
             ColorPickerDialog(
-                initialColor = getCustomColorFromSettings(),
+                initialColor = Color(AllSettings.launcherCustomColor.getValue()),
                 realTimeUpdate = false,
-                onColorChanged = { color ->
-                    customColorTheme.updateValue(color)
-                },
                 onDismissRequest = {
                     updateOperation(CustomColorOperation.None)
                 },
                 onConfirm = { color ->
-                    customColorTheme.updateValue(color)
-                    customColorTheme.saveValue()
+                    AllSettings.launcherCustomColor.save(color.toArgb())
                     updateOperation(CustomColorOperation.None)
                 },
                 showAlpha = false,

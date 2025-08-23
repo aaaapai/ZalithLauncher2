@@ -7,7 +7,7 @@ import androidx.compose.runtime.setValue
 import com.movtery.zalithlauncher.database.AppDatabase
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.path.PathManager
-import com.movtery.zalithlauncher.setting.AllSettings.Companion.currentGamePathId
+import com.movtery.zalithlauncher.setting.AllSettings.currentGamePathId
 import com.movtery.zalithlauncher.utils.StoragePermissionsUtils.Companion.checkPermissions
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
@@ -70,6 +70,7 @@ object GamePathManager {
 
             if (!checkPermissions()) {
                 currentPath = defaultGamePath
+                saveDefaultPath()
             } else {
                 refreshCurrentPath()
             }
@@ -148,7 +149,7 @@ object GamePathManager {
 
     private fun saveCurrentPathUncheck(id: String) {
         if (currentGamePathId.getValue() == id) return
-        currentGamePathId.put(id).save()
+        currentGamePathId.save(id)
         refreshCurrentPath()
     }
 

@@ -14,10 +14,6 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
-import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
-import java.net.URLConnection
 import java.util.concurrent.TimeUnit
 
 class UrlManager {
@@ -26,13 +22,11 @@ class UrlManager {
         @JvmField
         val TIME_OUT = Pair(10000, TimeUnit.MILLISECONDS)
         const val URL_MCMOD: String = "https://www.mcmod.cn/"
-        const val URL_MINECRAFT: String = "https://www.minecraft.net/"
         const val URL_MINECRAFT_VERSION_REPOS: String = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
         const val URL_MINECRAFT_CHANGE_SKIN = "https://www.minecraft.net/msaprofile/mygames/editskin"
         const val URL_MINECRAFT_PURCHASE = "https://www.xbox.com/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj"
+        const val URL_PROJECT: String = "https://github.com/ZalithLauncher/ZalithLauncher2"
         const val URL_SUPPORT: String = "https://afdian.com/a/MovTery"
-        const val URL_FCL_RENDERER_PLUGIN: String = "https://github.com/ShirosakiMio/FCLRendererPlugin/releases/tag/Renderer"
-        const val URL_FCL_DRIVER_PLUGIN: String = "https://github.com/FCL-Team/FCLDriverPlugin/releases/tag/Turnip"
 
         val GLOBAL_CLIENT = HttpClient(CIO) {
             install(HttpTimeout) {
@@ -52,22 +46,6 @@ class UrlManager {
                     append(HttpHeaders.UserAgent, URL_USER_AGENT)
                 }
             }
-        }
-
-        @JvmStatic
-        fun createConnection(url: URL): URLConnection {
-            val connection = url.openConnection()
-            connection.setRequestProperty("User-Agent", URL_USER_AGENT)
-            connection.setConnectTimeout(TIME_OUT.first)
-            connection.setReadTimeout(TIME_OUT.first)
-
-            return connection
-        }
-
-        @JvmStatic
-        @Throws(IOException::class)
-        fun createHttpConnection(url: URL): HttpURLConnection {
-            return createConnection(url) as HttpURLConnection
         }
 
         @JvmStatic

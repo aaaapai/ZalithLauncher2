@@ -1,5 +1,6 @@
 package com.movtery.zalithlauncher.game.download.assets.platform
 
+import android.os.Parcelable
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeClassID
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ProjectTypeFacet
 
@@ -11,6 +12,10 @@ interface PlatformFilterCode {
 interface PlatformDisplayLabel {
     fun getDisplayName(): String
     fun index(): Int
+}
+
+interface ModLoaderDisplayLabel: Parcelable, PlatformDisplayLabel {
+    override fun describeContents(): Int = 0
 }
 
 enum class PlatformClasses(

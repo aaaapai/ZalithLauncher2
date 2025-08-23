@@ -12,12 +12,6 @@ enum class GestureActionType(val nameRes: Int) {
 }
 
 /**
- * 字符串设置项转换为手势控制枚举
- */
-fun String.toGestureButtonType(): GestureActionType =
-    GestureActionType.entries.find { it.name == this } ?: GestureActionType.MOUSE_RIGHT
-
-/**
  * 转换为实际的Lwjgl键值
  */
 fun GestureActionType.toAction(): Int =

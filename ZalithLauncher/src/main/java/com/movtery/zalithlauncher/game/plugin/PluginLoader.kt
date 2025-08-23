@@ -6,9 +6,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import com.movtery.zalithlauncher.game.plugin.driver.DriverPluginManager
 import com.movtery.zalithlauncher.game.plugin.ffmpeg.FFmpegPluginManager
-import com.movtery.zalithlauncher.game.plugin.renderer.RendererPlugin
 import com.movtery.zalithlauncher.game.plugin.renderer.RendererPluginManager
-import com.movtery.zalithlauncher.game.renderer.RendererInterface
+import com.movtery.zalithlauncher.game.renderer.RendererInterface.Companion.toInterface
 import com.movtery.zalithlauncher.game.renderer.Renderers
 
 /**
@@ -49,34 +48,13 @@ object PluginLoader {
         FFmpegPluginManager.loadPlugin(context) { apkPluginList.add(it) }
 
         if (RendererPluginManager.isAvailable()) {
-            val failedToLoadList: MutableList<RendererPlugin> = mutableListOf()
-            RendererPluginManager.getRendererList().forEach { rendererPlugin ->
-                val isSuccess = Renderers.addRenderer(
-                    object : RendererInterface {
-                        override fun getRendererId(): String = rendererPlugin.id
-
-                        override fun getUniqueIdentifier(): String = rendererPlugin.uniqueIdentifier
-
-                        override fun getRendererName(): String = rendererPlugin.displayName
-
-                        override fun getRendererSummary(): String? = rendererPlugin.summary
-
-                        override fun getMinMCVersion(): String? = rendererPlugin.minMCVer
-
-                        override fun getMaxMCVersion(): String? = rendererPlugin.maxMCVer
-
-                        override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { rendererPlugin.env }
-
-                        override fun getDlopenLibrary(): Lazy<List<String>> = lazy { rendererPlugin.dlopen }
-
-                        override fun getRendererLibrary(): String = rendererPlugin.glName
-
-                        override fun getRendererEGL(): String = rendererPlugin.eglName
-                    }
-                )
-                if (!isSuccess) failedToLoadList.add(rendererPlugin)
+            RendererPluginManager.getRendererList().filter { plugin ->
+                !Renderers.addRenderer(plugin.toInterface())
+            }.takeIf {
+                it.isNotEmpty()
+            }?.let { failedToLoadList ->
+                RendererPluginManager.removeRenderer(failedToLoadList)
             }
-            if (failedToLoadList.isNotEmpty()) RendererPluginManager.removeRenderer(failedToLoadList)
         }
 
         //全部已加载的插件

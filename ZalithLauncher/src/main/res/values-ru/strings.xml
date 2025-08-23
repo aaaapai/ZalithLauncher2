@@ -18,7 +18,6 @@
     <string name="generic_main_menu">Главное меню</string>
     <string name="generic_download">Скачать</string>
     <string name="generic_done">Готово</string>
-    <string name="generic_open">Открыть</string>
     <string name="generic_close">Закрыть</string>
     <string name="generic_clear">Очистить</string>
     <string name="generic_import">Импортировать</string>
@@ -43,7 +42,6 @@
     <string name="generic_file_size">Размер файла: %s</string>
     <!-- Launcher Version -->
     <string name="launcher_version_label_alpha">Альфа-версия: %s (только для демонстрации)</string>
-    <string name="launcher_version_label_beta">Бета-версия: %s (только для демонстрации)</string>
     <string name="launcher_version_debug_warning">Вы используете тестовую версию %s! Эта версия может быть нестабильной и предназначена в первую очередь для тестирования функций и раннего доступа. Не рекомендуется для длительного использования! Если вы столкнулись с проблемами во время тестирования, пожалуйста, сообщите о них через GitHub, и мы устраним их как можно скорее.</string>
     <string name="launcher_version_debug_warning_cant_close">Это предупреждение нельзя закрыть</string>
     <!-- Themes -->
@@ -124,12 +122,11 @@
     <string name="download_game_addon_preview">Предпросмотр</string>
     <string name="download_game_addon_stable">Стабильная</string>
     <string name="download_game_addon_debug">Отладочная</string>
-    <string name="download_game_addon_date">Дата выпуска: %s</string>
     <string name="download_game_addon_recommended">Рекомендуется %s</string>
     <string name="download_game_addon_not_installable">Не устанавливается автоматически</string>
     <string name="download_game_install_title">Установка игры</string>
     <string name="download_game_install_vanilla">Загрузка Vanilla %s</string>
-    <string name="download_game_install_base_download_file">Загрузка основного файла %s %s</string>
+    <string name="download_game_install_base_download_file">Загрузка основного файла %1$s %2$s</string>
     <string name="download_game_install_base_install">Установка %s</string>
     <string name="download_game_install_base_installing">Установка %s в фоновом режиме</string>
     <string name="download_game_install_optifine_fetch_download_url">Получение URL для загрузки OptiFine %s</string>
@@ -155,8 +152,6 @@
     <string name="game_button_mouse_right">Правая кнопка мыши</string>
     <string name="game_dialog_force_close_message">Вы уверены, что хотите принудительно закрыть игру и вернуться в главное меню?</string>
     <!-- Renderers -->
-    <string name="renderer_name_freedreno">Freedreno (Adreno, до 1.21.4)</string>
-    <string name="renderer_name_panfrost">Panfrost (Mali, до 1.21.4)</string>
     <string name="renderer_version_support">Поддержка версий MC:</string>
     <string name="renderer_version_unsupported_warning">Текущий рендерер %s не поддерживает эту версию игры. Продолжение использования может вызвать ошибки рендеринга или сбои! Вы уверены, что хотите продолжить?</string>
     <!-- Accounts -->
@@ -323,7 +318,6 @@
     <string name="versions_config_failed_to_save">Не удалось сохранить конфигурацию</string>
     <string name="saves_manage">Управление сохранениями</string>
     <string name="saves_manage_info">Информация о сохранении</string>
-    <string name="saves_manage_only_show_compatible">Показывать только совместимые сохранения</string>
     <string name="saves_manage_invalid">Недопустимое сохранение</string>
     <string name="saves_manage_gamemode">Режим игры: %s</string>
     <string name="saves_manage_gamemode_survival">Режим выживания</string>
@@ -348,7 +342,6 @@
     <string name="saves_manage_no_saves">Нет сохранений для этой версии</string>
     <string name="resource_pack_manage">Управление ресурс-паками</string>
     <string name="resource_pack_manage_info">Информация о ресурс-паке</string>
-    <string name="resource_pack_manage_only_show_valid">Показывать только действительные пакеты</string>
     <string name="resource_pack_manage_invalid">Недопустимый формат ресурс-пака</string>
     <string name="resource_pack_manage_type">Тип ресурс-пака: %s</string>
     <string name="resource_pack_manage_type_folder">Папка</string>
@@ -361,10 +354,10 @@
     <!-- Game -->
     <string name="minecraft_download_stat_download_task">Подготовка загрузок</string>
     <string name="minecraft_download_stat_verify_task">Подготовка проверок</string>
-    <string name="minecraft_download_downloading_game_files">Загрузка файлов \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_verifying_and_repairing_files">Проверка файлов \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_progress_retry_downloading_files">Повторная попытка загрузки \n(%d/%d, %s/%s)</string>
-    <string name="minecraft_download_progress_retry_verifying_files">Повторная попытка проверки \n(%d/%d, %s/%s)</string>
+    <string name="minecraft_download_downloading_game_files">Загрузка файлов \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_verifying_and_repairing_files">Проверка файлов \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_progress_retry_downloading_files">Повторная попытка загрузки \n(%1$d/%2$d, %3$s/%4$s)</string>
+    <string name="minecraft_download_progress_retry_verifying_files">Повторная попытка проверки \n(%1$d/%2$d, %3$s/%4$s)</string>
     <string name="minecraft_download_failed">Ошибка загрузки</string>
     <string name="minecraft_download_failed_retried">Попытки исчерпаны. Некоторые файлы не удалось скачать.</string>
     <string name="minecraft_download_failed_notfound">Некоторые зависимые файлы не удалось скачать. Если проблема сохраняется после нескольких попыток, возможно, в игре отсутствуют необходимые библиотечные файлы. Рекомендуется переустановить игру.</string>
@@ -417,7 +410,7 @@
     <string name="settings_game_log_buffer_flush_interval_summary">Установить, как часто обновляется буфер логов. Слишком частое или редкое обновление может повлиять на производительность</string>
     <string name="settings_control_mouse_physical_mouse_mode_title">Физическая мышь</string>
     <string name="settings_control_mouse_physical_mouse_mode_summary">При подключении физической мыши отключить виртуальный указатель мыши и использовать системный указатель мыши для управления</string>
-    <string name="settings_control_mouse_physical_mouse_warning">Если ваше устройство интерпретирует правый клик физической мыши как «Назад» или средний клик как «Домой», вы можете перейти в Настройки системы > Параметры разработчика и включить «Отключить мониторинг разрешений», это, вероятно, решит проблему.</string>
+    <string name="settings_control_mouse_physical_mouse_warning">Если ваше устройство интерпретирует правый клик физической мыши как «Назад» или средний клик как «Домой», вы можете перейти в Настройки системы &gt; Параметры разработчика и включить «Отключить мониторинг разрешений», это, вероятно, решит проблему.</string>
     <string name="settings_control_mouse_size_title">Размер виртуальной мыши</string>
     <string name="settings_control_mouse_sensitivity_title">Чувствительность виртуальной мыши</string>
     <string name="settings_control_mouse_control_mode_title">Режим управления</string>
@@ -454,5 +447,50 @@
     <!-- Url -->
     <string name="url_wiki_minecraft_game_release">https://minecraft.wiki/w/Java_Edition_%s</string>
     <string name="url_wiki_minecraft_game_snapshot">https://minecraft.wiki/w/Java_Edition_%s</string>
-    <string name="url_mod_custom_skin_loader">https://modrinth.com/mod/customskinloader</string>
+    <string name="generic_ignore">Игнорировать</string>
+    <string name="generic_authorization">Авторизация</string>
+    <string name="unit_day">День</string>
+    <string name="date_format">MMM d, yyyy, h:mm:ss a</string>
+    <string name="just_now">Прямо сейчас</string>
+    <string name="minutes_ago">%d минут назад</string>
+    <string name="hours_ago">%d час(-а) назад</string>
+    <string name="days_ago">%d день назад</string>
+    <string name="months_ago">%d месяц назад</string>
+    <string name="years_ago">%d год(-а) назад</string>
+    <string name="crash_share_logs">Поделиться журналом</string>
+    <string name="download_assets_filter_sort_field">Сортировать по</string>
+    <string name="download_assets_filter_category">Категория</string>
+    <string name="download_assets_filter_modloader">Загрузчик модов</string>
+    <string name="download_assets_filter_none">Ничего не выбрано</string>
+    <string name="download_assets_filter_sort_by_relevant">Релевантность</string>
+    <string name="download_assets_filter_sort_by_total_downloads">Всего загрузок</string>
+    <string name="download_assets_filter_sort_by_popularity">Популярность</string>
+    <string name="download_assets_filter_sort_by_recently_created">Недавно создано</string>
+    <string name="download_assets_filter_sort_by_recently_updated">Недавно обновленно</string>
+    <string name="download_assets_result_previous_page">Предыдущая страница</string>
+    <string name="download_assets_result_next_page">Следующая страница</string>
+    <string name="download_assets_failed_to_get_result">Не удалось получить результаты поиска: %s. Нажмите, чтобы повторить попытку.</string>
+    <string name="download_assets_failed_to_get_project">Не удалось получить информацию о проекте: %s. Нажмите, чтобы повторить попытку.</string>
+    <string name="download_assets_failed_to_get_versions">Не удалось получить список версий: %s. Нажмите, чтобы повторить попытку.</string>
+    <string name="download_assets_show_only_mc_release">Показывать только релизы MC</string>
+    <string name="download_assets_search_mc_versions">Поиск версий MC</string>
+    <string name="download_assets_dependency_projects">Зависимости</string>
+    <string name="download_assets_optional_projects">Дополнительные проекты</string>
+    <string name="download_assets_links">Ссылки по теме</string>
+    <string name="download_assets_project_link">Страница проекта</string>
+    <string name="download_assets_source_link">Посмотреть исходный код</string>
+    <string name="download_assets_issues_link">Сообщить о проблемах</string>
+    <string name="download_assets_wiki_link">Посмотреть вики</string>
+    <string name="download_assets_release_type_release">Стабильный</string>
+    <string name="download_assets_release_type_beta">Бета</string>
+    <string name="download_assets_release_type_alpha">Альфа</string>
+    <string name="download_assets_no_installed_versions">В настоящее время не установлена ни одна доступная версия игры, поэтому невозможно определить место загрузки ресурса. Сначала установите версию игры!</string>
+    <string name="download_assets_install_assets_for_versions">Для каких версий игры устанавливать?</string>
+    <string name="download_assets_install_progress_downloading">Загрузка и установка ресурсов\n%1$s\n (%2$s / %3$s)</string>
+    <string name="download_assets_install_progress_installing">Установка ресурсов\n%s</string>
+    <string name="download_assets_install_failed">Не удалось установить ресурсы!</string>
+    <string name="download_assets_category_worldgen">Генерация мира</string>
+    <string name="download_assets_category_biomes">Биомы</string>
+    <string name="download_assets_category_dimensions">Размеры</string>
+    <string name="generic_all">все</string>
 </resources>

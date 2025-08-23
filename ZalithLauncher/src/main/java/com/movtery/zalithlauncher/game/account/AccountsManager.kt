@@ -138,7 +138,7 @@ object AccountsManager {
      * 设置并保存当前账号
      */
     fun setCurrentAccount(account: Account) {
-        AllSettings.currentAccount.put(account.uniqueUUID).save()
+        AllSettings.currentAccount.save(account.uniqueUUID)
         refreshCurrentAccountState()
     }
 

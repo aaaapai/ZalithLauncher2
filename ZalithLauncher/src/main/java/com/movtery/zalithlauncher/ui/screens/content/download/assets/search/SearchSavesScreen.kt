@@ -5,23 +5,22 @@ import androidx.navigation3.runtime.NavKey
 import com.movtery.zalithlauncher.game.download.assets.platform.Platform
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformClasses
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeSavesCategory
-import com.movtery.zalithlauncher.ui.screens.content.download.DownloadSavesScreenKey
-import com.movtery.zalithlauncher.ui.screens.content.download.common.downloadSavesScreenKey
-import com.movtery.zalithlauncher.ui.screens.content.downloadScreenKey
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object SearchSavesScreenKey : NavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 
 @Composable
 fun SearchSavesScreen(
-    swapToDownload: (Platform, projectId: String) -> Unit = { _, _ -> }
+    mainScreenKey: NavKey?,
+    downloadScreenKey: NavKey?,
+    downloadSavesScreenKey: NavKey,
+    downloadSavesScreenCurrentKey: NavKey?,
+    swapToDownload: (Platform, projectId: String, iconUrl: String?) -> Unit = { _, _, _ -> }
 ) {
     SearchAssetsScreen(
-        parentScreenKey = DownloadSavesScreenKey,
+        mainScreenKey = mainScreenKey,
+        parentScreenKey = downloadSavesScreenKey,
         parentCurrentKey = downloadScreenKey,
-        screenKey = SearchSavesScreenKey,
-        currentKey = downloadSavesScreenKey,
+        screenKey = NormalNavKey.SearchSaves,
+        currentKey = downloadSavesScreenCurrentKey,
         platformClasses = PlatformClasses.SAVES,
         initialPlatform = Platform.CURSEFORGE,
         enablePlatform = false,

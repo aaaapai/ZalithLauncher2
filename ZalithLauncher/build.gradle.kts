@@ -256,7 +256,9 @@ dependencies {
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.toml4j)
     implementation(libs.maven.artifact)
+    implementation(libs.mmkv)
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*"))))
     //Safe
     implementation(libs.stringfog.xor)

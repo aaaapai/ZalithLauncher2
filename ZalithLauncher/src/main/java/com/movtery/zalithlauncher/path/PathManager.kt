@@ -18,6 +18,7 @@ class PathManager {
         lateinit var DIR_COMPONENTS: File
         lateinit var DIR_MOUSE_POINTER: File
         lateinit var DIR_CACHE_GAME_DOWNLOADER: File
+        lateinit var DIR_CACHE_MODPACK_DOWNLOADER: File
         lateinit var DIR_CACHE_APP_ICON: File
         lateinit var DIR_LAUNCHER_LOGS: File
         lateinit var DIR_IMAGE_CACHE: File
@@ -40,6 +41,7 @@ class PathManager {
             DIR_COMPONENTS = File(DIR_FILES_PRIVATE, "components")
             DIR_MOUSE_POINTER = File(DIR_FILES_PRIVATE, "mouse_pointer")
             DIR_CACHE_GAME_DOWNLOADER = File(DIR_CACHE, "temp_game")
+            DIR_CACHE_MODPACK_DOWNLOADER = File(DIR_CACHE, "temp_modpack")
             DIR_CACHE_APP_ICON = File(DIR_CACHE, "app_icons")
             DIR_LAUNCHER_LOGS = File(DIR_FILES_EXTERNAL, "logs")
             DIR_IMAGE_CACHE = File(DIR_CACHE, "images")
@@ -59,6 +61,7 @@ class PathManager {
             DIR_COMPONENTS.mkdirs()
             DIR_MOUSE_POINTER.mkdirs()
             DIR_CACHE_GAME_DOWNLOADER.mkdirs()
+            DIR_CACHE_MODPACK_DOWNLOADER.mkdirs()
             DIR_CACHE_APP_ICON.mkdirs()
             DIR_LAUNCHER_LOGS.mkdirs()
             DIR_IMAGE_CACHE.mkdirs()

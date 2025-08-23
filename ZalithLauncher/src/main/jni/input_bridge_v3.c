@@ -44,6 +44,9 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
         pojav_environ->method_accessAndroidClipboard = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "accessAndroidClipboard", "(ILjava/lang/String;)Ljava/lang/String;");
         pojav_environ->method_onGrabStateChanged = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onGrabStateChanged", "(Z)V");
         pojav_environ->isUseStackQueueCall = JNI_FALSE;
+        //ZL Invoker
+        pojav_environ->class_ZLInvoker = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->NewGlobalRef(pojav_environ->dalvikJNIEnvPtr_ANDROID,(*pojav_environ->dalvikJNIEnvPtr_ANDROID) ->FindClass(pojav_environ->dalvikJNIEnvPtr_ANDROID, "com/movtery/zalithlauncher/bridge/ZLNativeInvoker"));
+        pojav_environ->method_PutFpsValue = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->class_ZLInvoker, "putFpsValue", "(I)V");
     } else if (pojav_environ->dalvikJavaVMPtr != vm) {
         LOG_TO_I("<%s> %s", "Native", "Saving JVM environ...");
         pojav_environ->runtimeJavaVMPtr = vm;

@@ -4,7 +4,7 @@ import com.movtery.zalithlauncher.game.renderer.RendererInterface
 import com.movtery.zalithlauncher.path.PathManager
 import java.io.File
 
-class VirGLRenderer : RendererInterface {
+object VirGLRenderer : RendererInterface {
     override fun getRendererId(): String = "gallium_virgl"
 
     override fun getUniqueIdentifier(): String = "a3ccc1fe-de3f-4a81-8c45-2485181b63b3"

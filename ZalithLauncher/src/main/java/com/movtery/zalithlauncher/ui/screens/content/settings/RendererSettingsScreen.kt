@@ -31,27 +31,25 @@ import com.movtery.zalithlauncher.game.plugin.driver.DriverPluginManager
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 import com.movtery.zalithlauncher.game.renderer.Renderers
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.setting.scaleFactor
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SwitchLayout
-import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
-import com.movtery.zalithlauncher.ui.screens.content.settingsScreenKey
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.device.checkVulkanSupport
 import com.movtery.zalithlauncher.utils.isAdrenoGPU
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object RendererSettingsScreenKey: NavKey
 
 @Composable
-fun RendererSettingsScreen() {
+fun RendererSettingsScreen(
+    key: NestedNavKey.Settings,
+    settingsScreenKey: NavKey?,
+    mainScreenKey: NavKey?
+) {
     BaseScreen(
-        Triple(SettingsScreenKey, mainScreenKey, false),
-        Triple(RendererSettingsScreenKey, settingsScreenKey, false)
+        Triple(key, mainScreenKey, false),
+        Triple(NormalNavKey.Settings.Renderer, settingsScreenKey, false)
     ) { isVisible ->
         val context = LocalContext.current
 
@@ -105,8 +103,7 @@ fun RendererSettingsScreen() {
                     summary = stringResource(R.string.settings_renderer_resolution_scale_summary),
                     valueRange = 25f..300f,
                     suffix = "%",
-                    fineTuningControl = true,
-                    onValueChange = { scaleFactor = it / 100f }
+                    fineTuningControl = true
                 )
 
                 SwitchSettingsLayout(
@@ -143,7 +140,7 @@ fun RendererSettingsScreen() {
 
                     fun change(value1: Boolean) {
                         value = value1
-                        AllSettings.zinkPreferSystemDriver.put(value).save()
+                        AllSettings.zinkPreferSystemDriver.save(value)
                     }
 
                     SwitchLayout(

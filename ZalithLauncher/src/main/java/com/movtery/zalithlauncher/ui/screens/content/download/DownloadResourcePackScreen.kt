@@ -1,5 +1,6 @@
 package com.movtery.zalithlauncher.ui.screens.content.download
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -10,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
@@ -17,30 +19,29 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import com.movtery.zalithlauncher.game.download.assets.downloadSingleForVersions
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformClasses
+import com.movtery.zalithlauncher.game.version.installed.VersionFolders
 import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.download.DownloadAssetsScreen
-import com.movtery.zalithlauncher.ui.screens.content.download.assets.download.DownloadAssetsScreenKey
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.DownloadSingleOperation
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.search.SearchResourcePackScreen
-import com.movtery.zalithlauncher.ui.screens.content.download.assets.search.SearchResourcePackScreenKey
-import com.movtery.zalithlauncher.ui.screens.content.download.common.downloadModBackStack
-import com.movtery.zalithlauncher.ui.screens.content.download.common.downloadResourcePackBackStack
-import com.movtery.zalithlauncher.ui.screens.content.download.common.downloadResourcePackScreenKey
-import com.movtery.zalithlauncher.ui.screens.content.downloadScreenKey
 import com.movtery.zalithlauncher.ui.screens.navigateTo
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object DownloadResourcePackScreenKey: NestedNavKey {
-    override fun isLastScreen(): Boolean = downloadResourcePackBackStack.size <= 1
-}
+import com.movtery.zalithlauncher.ui.screens.onBack
+import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 
 @Composable
-fun DownloadResourcePackScreen() {
-    val currentKey = downloadResourcePackBackStack.lastOrNull()
-
-    LaunchedEffect(currentKey) {
-        downloadResourcePackScreenKey = currentKey
+fun DownloadResourcePackScreen(
+    key: NestedNavKey.DownloadResourcePack,
+    mainScreenKey: NavKey?,
+    downloadScreenKey: NavKey?,
+    downloadResourcePackScreenKey: NavKey?,
+    onCurrentKeyChange: (NavKey?) -> Unit,
+    summitError: (ErrorViewModel.ThrowableMessage) -> Unit
+) {
+    val backStack = key.backStack
+    val stackTopKey = backStack.lastOrNull()
+    LaunchedEffect(stackTopKey) {
+        onCurrentKeyChange(stackTopKey)
     }
 
     val context = LocalContext.current
@@ -55,48 +56,52 @@ fun DownloadResourcePackScreen() {
                 context = context,
                 info = info,
                 versions = versions,
-                folder = "resourcepacks"
+                folder = VersionFolders.RESOURCE_PACK.folderName,
+                summitError = summitError
             )
         }
     )
 
-    NavDisplay(
-        backStack = downloadResourcePackBackStack,
-        modifier = Modifier.fillMaxSize(),
-        onBack = {
-            val key = downloadResourcePackBackStack.lastOrNull()
-            if (key is NestedNavKey && !key.isLastScreen()) return@NavDisplay
-            downloadResourcePackBackStack.removeLastOrNull()
-        },
-        entryDecorators = listOf(
-            rememberSceneSetupNavEntryDecorator(),
-            rememberSavedStateNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator()
-        ),
-        entryProvider = entryProvider {
-            entry<SearchResourcePackScreenKey> {
-                SearchResourcePackScreen { platform, projectId ->
-                    downloadResourcePackBackStack.navigateTo(
-                        DownloadAssetsScreenKey(platform, projectId, PlatformClasses.RESOURCE_PACK)
+    if (backStack.isNotEmpty()) {
+        NavDisplay(
+            backStack = backStack,
+            modifier = Modifier.fillMaxSize(),
+            onBack = {
+                onBack(backStack)
+            },
+            entryDecorators = listOf(
+                rememberSceneSetupNavEntryDecorator(),
+                rememberSavedStateNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+            ),
+            entryProvider = entryProvider {
+                entry<NormalNavKey.SearchResourcePack> {
+                    SearchResourcePackScreen(
+                        mainScreenKey = mainScreenKey,
+                        downloadScreenKey = downloadScreenKey,
+                        downloadResourcePackScreenKey = key,
+                        downloadResourcePackScreenCurrentKey = downloadResourcePackScreenKey
+                    ) { platform, projectId, _ ->
+                        backStack.navigateTo(
+                            NormalNavKey.DownloadAssets(platform, projectId, PlatformClasses.RESOURCE_PACK)
+                        )
+                    }
+                }
+                entry<NormalNavKey.DownloadAssets> { assetsKey ->
+                    DownloadAssetsScreen(
+                        mainScreenKey = mainScreenKey,
+                        parentScreenKey = key,
+                        parentCurrentKey = downloadScreenKey,
+                        currentKey = downloadResourcePackScreenKey,
+                        key = assetsKey,
+                        onItemClicked = { info ->
+                            operation = DownloadSingleOperation.SelectVersion(info)
+                        }
                     )
                 }
             }
-            entry<DownloadAssetsScreenKey> { key ->
-                DownloadAssetsScreen(
-                    parentScreenKey = DownloadResourcePackScreenKey,
-                    parentCurrentKey = downloadScreenKey,
-                    currentKey = downloadResourcePackScreenKey,
-                    key = key,
-                    onItemClicked = { info ->
-                        operation = DownloadSingleOperation.SelectVersion(info)
-                    },
-                    onDependencyClicked = { dep ->
-                        downloadModBackStack.navigateTo(
-                            DownloadAssetsScreenKey(dep.platform, dep.projectID, PlatformClasses.RESOURCE_PACK)
-                        )
-                    }
-                )
-            }
-        }
-    )
+        )
+    } else {
+        Box(Modifier.fillMaxSize())
+    }
 }

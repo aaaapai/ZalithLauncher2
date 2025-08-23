@@ -131,8 +131,8 @@ class StoragePermissionsUtils {
             MaterialAlertDialogBuilder(context)
                 .setTitle(title)
                 .setMessage(message)
-                .setPositiveButton(R.string.generic_confirm) { _, _ -> requestPermissions.onRequest() }
-                .setNegativeButton(R.string.generic_cancel) { _, _ -> requestPermissions.onCancel() }
+                .setPositiveButton(R.string.generic_authorization) { _, _ -> requestPermissions.onRequest() }
+                .setNegativeButton(R.string.generic_ignore) { _, _ -> requestPermissions.onCancel() }
                 .setCancelable(false)
                 .show()
         }

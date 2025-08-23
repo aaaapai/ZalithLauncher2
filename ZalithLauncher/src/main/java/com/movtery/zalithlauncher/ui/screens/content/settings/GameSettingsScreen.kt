@@ -19,22 +19,21 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.multirt.RuntimesManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.base.BaseScreen
-import com.movtery.zalithlauncher.ui.screens.content.SettingsScreenKey
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.SettingsBackground
-import com.movtery.zalithlauncher.ui.screens.content.settingsScreenKey
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.platform.MemoryUtils.getMaxMemoryForSettings
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object GameSettingsScreenKey: NavKey
 
 @Composable
-fun GameSettingsScreen() {
+fun GameSettingsScreen(
+    key: NestedNavKey.Settings,
+    settingsScreenKey: NavKey?,
+    mainScreenKey: NavKey?
+) {
     BaseScreen(
-        Triple(SettingsScreenKey, mainScreenKey, false),
-        Triple(GameSettingsScreenKey, settingsScreenKey, false)
+        Triple(key, mainScreenKey, false),
+        Triple(NormalNavKey.Settings.Game, settingsScreenKey, false)
     ) { isVisible ->
         Column(
             modifier = Modifier
@@ -137,6 +136,12 @@ fun GameSettingsScreen() {
                         )
                     }
             ) {
+                SwitchSettingsLayout(
+                    unit = AllSettings.showLogAutomatic,
+                    title = stringResource(R.string.settings_game_show_log_automatic_title),
+                    summary = stringResource(R.string.settings_game_show_log_automatic_summary)
+                )
+
                 SliderSettingsLayout(
                     unit = AllSettings.logTextSize,
                     title = stringResource(R.string.settings_game_log_text_size_title),

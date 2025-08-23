@@ -102,7 +102,7 @@ open class JvmLauncher(
         return getGameHome()
     }
 
-    override fun getLogName(): String = "latest_jvm"
+    override fun getLogName(): String = LogName.JVM.fileName
 
     private fun getStartupNeeded(): Pair<Runtime, List<String>> {
         val args = jvmLaunchInfo.jvmArgs.splitPreservingQuotes()

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
 import com.movtery.zalithlauncher.game.version.installed.VersionInfo
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
@@ -167,7 +168,7 @@ class VersionInfoUtils {
                 when {
                     //Fabric
                     group == "net.fabricmc" && artifact == "fabric-loader" ->
-                        return VersionInfo.LoaderInfo("Fabric", version)
+                        return VersionInfo.LoaderInfo(ModLoader.FABRIC, version)
 
                     //Forge
                     group == "net.minecraftforge" && (artifact == "forge" || artifact == "fmlloader") -> {
@@ -183,7 +184,7 @@ class VersionInfoUtils {
                             }
                             else -> version
                         }
-                        return VersionInfo.LoaderInfo("Forge", forgeVersion)
+                        return VersionInfo.LoaderInfo(ModLoader.FORGE, forgeVersion)
                     }
 
                     //NeoForge
@@ -192,20 +193,20 @@ class VersionInfoUtils {
                             ?.getAsJsonArray("game")
                             ?.findNeoForgeVersion()
                             ?: version
-                        return VersionInfo.LoaderInfo("NeoForge", neoVersion)
+                        return VersionInfo.LoaderInfo(ModLoader.NEOFORGE, neoVersion)
                     }
 
                     //OptiFine
                     (group == "optifine" || group == "net.optifine") && artifact == "OptiFine" ->
-                        return VersionInfo.LoaderInfo("OptiFine", version)
+                        return VersionInfo.LoaderInfo(ModLoader.OPTIFINE, version)
 
                     //Quilt
                     group == "org.quiltmc" && artifact == "quilt-loader" ->
-                        return VersionInfo.LoaderInfo("Quilt", version)
+                        return VersionInfo.LoaderInfo(ModLoader.QUILT, version)
 
                     //LiteLoader
                     group == "com.mumfrey" && artifact == "liteloader" ->
-                        return VersionInfo.LoaderInfo("LiteLoader", version)
+                        return VersionInfo.LoaderInfo(ModLoader.LITE_LOADER, version)
                 }
             }
 

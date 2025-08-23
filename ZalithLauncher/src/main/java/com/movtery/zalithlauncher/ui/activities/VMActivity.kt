@@ -7,7 +7,6 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.SurfaceTexture
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.Surface
@@ -16,6 +15,7 @@ import android.view.TextureView.SurfaceTextureListener
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,7 +50,6 @@ import com.movtery.zalithlauncher.game.multirt.RuntimesManager
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.setting.scaleFactor
 import com.movtery.zalithlauncher.ui.base.BaseComponentActivity
 import com.movtery.zalithlauncher.ui.theme.ZalithLauncherTheme
 import com.movtery.zalithlauncher.utils.device.PhysicalMouseChecker
@@ -58,6 +57,7 @@ import com.movtery.zalithlauncher.utils.getDisplayFriendlyRes
 import com.movtery.zalithlauncher.utils.getParcelableSafely
 import com.movtery.zalithlauncher.utils.logging.Logger.lError
 import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
+import com.movtery.zalithlauncher.viewmodel.EventViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,9 +65,7 @@ import org.lwjgl.glfw.CallbackBridge
 import java.io.File
 import java.io.IOException
 
-class VMActivity : BaseComponentActivity(
-    shouldIgnoreNotch = AllSettings.gameFullScreen.getValue()
-), SurfaceTextureListener {
+class VMActivity : BaseComponentActivity(), SurfaceTextureListener {
     companion object {
         const val INTENT_RUN_GAME = "BUNDLE_RUN_GAME"
         const val INTENT_RUN_JAR = "INTENT_RUN_JAR"
@@ -75,18 +73,15 @@ class VMActivity : BaseComponentActivity(
         const val INTENT_JAR_INFO = "INTENT_JAR_INFO"
         private var isRunning = false
     }
-    private lateinit var displayMetrics: DisplayMetrics
+    private val eventViewModel: EventViewModel by viewModels()
 
     private var mTextureView: TextureView? = null
 
     private lateinit var launcher: Launcher
     private lateinit var handler: AbstractHandler
 
-    private var isRenderingStarted: Boolean = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val displayMetrics = getDisplayMetrics()
         //初始化物理鼠标连接检查器
         PhysicalMouseChecker.initChecker(this)
 
@@ -99,6 +94,7 @@ class VMActivity : BaseComponentActivity(
         }
 
         val getWindowSize = {
+            val displayMetrics = getDisplayMetrics()
             IntSize(displayMetrics.widthPixels, displayMetrics.heightPixels)
         }
 
@@ -132,6 +128,8 @@ class VMActivity : BaseComponentActivity(
             throw IllegalStateException("Unknown VM launch mode, or the launch mode was not set at all!")
         }
 
+        refreshWindowSize()
+
         window?.apply {
             setBackgroundDrawable(Color.BLACK.toDrawable())
             if (AllSettings.sustainedPerformance.getValue()) {
@@ -144,9 +142,21 @@ class VMActivity : BaseComponentActivity(
         if (!logFile.exists() && !logFile.createNewFile()) throw IOException("Failed to create a new log file")
         LoggerBridge.start(logFile.absolutePath)
 
+        lifecycleScope.launch {
+            //开始接收事件
+            eventViewModel.events.collect { event ->
+                when (event) {
+                    is EventViewModel.Event.Game.RefreshSize -> {
+                        refreshSize()
+                    }
+                    else -> { /* Ignore */ }
+                }
+            }
+        }
+
         setContent {
             ZalithLauncherTheme {
-                Screen(content = handler.getComposableLayout())
+                Screen(content = handler.getComposableLayout(eventViewModel))
             }
         }
     }
@@ -189,6 +199,13 @@ class VMActivity : BaseComponentActivity(
 
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val code = AllSettings.physicalKeyImeCode.state
+        if (code != null && event.keyCode == code) {
+            //用户按下了绑定呼出输入法的按键
+            //向Compose端发送事件，调出输入法
+            eventViewModel.sendEvent(EventViewModel.Event.Game.ShowIme)
+            return true
+        }
         event.device?.let {
             val source = event.source
             if (source and InputDevice.SOURCE_MOUSE_RELATIVE == InputDevice.SOURCE_MOUSE_RELATIVE ||
@@ -233,11 +250,10 @@ class VMActivity : BaseComponentActivity(
     }
 
     override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
-        if (!isRenderingStarted) {
-            isRenderingStarted = true
-            handler.onGraphicOutput()
-        }
+        handler.onGraphicOutput()
     }
+
+    override fun shouldIgnoreNotch(): Boolean = AllSettings.gameFullScreen.getValue()
 
     @Composable
     private fun Screen(
@@ -279,8 +295,8 @@ class VMActivity : BaseComponentActivity(
         }
     }
 
-    private fun refreshSize() {
-        displayMetrics = getDisplayMetrics()
+    private fun refreshWindowSize() {
+        val displayMetrics = getDisplayMetrics()
 
         val width = getDisplayPixels(displayMetrics.widthPixels)
         val height = getDisplayPixels(displayMetrics.heightPixels)
@@ -290,6 +306,10 @@ class VMActivity : BaseComponentActivity(
         }
         CallbackBridge.windowWidth = width
         CallbackBridge.windowHeight = height
+    }
+
+    private fun refreshSize() {
+        refreshWindowSize()
         mTextureView?.surfaceTexture?.apply {
             setDefaultBufferSize(CallbackBridge.windowWidth, CallbackBridge.windowHeight)
         } ?: run {
@@ -301,7 +321,7 @@ class VMActivity : BaseComponentActivity(
 
     private fun getDisplayPixels(pixels: Int): Int {
         return when (handler.type) {
-            HandlerType.GAME -> getDisplayFriendlyRes(pixels, scaleFactor)
+            HandlerType.GAME -> getDisplayFriendlyRes(pixels, AllSettings.resolutionRatio.state / 100f)
             HandlerType.JVM -> getDisplayFriendlyRes(pixels, 0.8f)
         }
     }

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="generic_cancel">ยกเลิก</string>
+    <string name="generic_confirm">ยืนยัน</string>
+    <string name="generic_error">ข้อผิดพลาด</string>
+    <string name="generic_warning">คำเตือน</string>
+    <string name="generic_back">กลับ</string>
+    <string name="generic_refresh">รีเฟรช</string>
+    <string name="generic_reset">รีเซ็ต</string>
+    <string name="generic_delete">ลบ</string>
+    <string name="generic_rename">เปลี่ยนชื่อ</string>
+    <string name="generic_copy">ก็อปปี้</string>
+    <string name="generic_paste">วาง</string>
+    <string name="generic_more">อื่นๆ</string>
+    <string name="generic_setting">การตั้งค่า</string>
+    <string name="generic_expand">ขยาย</string>
+    <string name="generic_main_menu">เมนูหลัก</string>
+    <string name="generic_download">ดาวโหลด</string>
+    <string name="generic_done">เสร็จแล้ว</string>
+    <string name="generic_close">ปิด</string>
+    <string name="generic_clear">เคลียร์</string>
+    <string name="generic_import">นำเข้า</string>
+    <string name="generic_enable">เปิดใช้งาน</string>
+    <string name="generic_disable">ปิดการใช้งาน</string>
+    <string name="generic_open_link">เปิดบน บราวเซอร์</string>
+    <string name="generic_cannot_empty">เนื้อหาไม่สามารถว่างเปล่าได้!</string>
+    <string name="generic_input_invalid_character">อักขระที่ไม่ถูกต้องในชื่อ: \"%s\"</string>
+    <string name="generic_input_failed_to_number">ไม่สามารถแยกข้อมูลอินพุตเป็นตัวเลขได้</string>
+    <string name="generic_input_too_small">ค่าไม่สามารถเล็กกว่า %s</string>
+    <string name="generic_input_too_large">ค่าไม่สามารถมากกว่า %s</string>
+    <string name="generic_unpacking">กำลังแกะ %s</string>
+    <string name="generic_unknown">ไม่ทราบ</string>
+    <string name="generic_follow_global">Global</string>
+    <string name="generic_custom">กำหนดเอง</string>
+    <string name="generic_search">ค้นหา</string>
+    <string name="generic_loading">กำลังโหลด</string>
+    <string name="generic_in_progress">กำลังดำเนินการ</string>
+    <string name="generic_ignore">ไม่สนใจ</string>
+    <string name="generic_authorization">การอนุญาต</string>
+    <string name="generic_file_name">ชื่อไฟล์: %s</string>
+    <string name="generic_file_size">ขนาดไฟล์: %s</string>
+</resources>

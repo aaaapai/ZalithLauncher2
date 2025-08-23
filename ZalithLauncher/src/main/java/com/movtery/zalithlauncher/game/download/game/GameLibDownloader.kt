@@ -57,8 +57,8 @@ class GameLibDownloader(
         }
 
         //仅加载处理支持库
-        downloader.loadLibraryDownloads(gameManifest, targetDir) { url, hash, targetFile, size, isDownloadable ->
-            scheduleDownload(url, hash, targetFile, size, isDownloadable)
+        downloader.loadLibraryDownloads(gameManifest, targetDir) { urls, hash, targetFile, size, isDownloadable ->
+            scheduleDownload(urls, hash, targetFile, size, isDownloadable)
         }
     }
 
@@ -112,7 +112,7 @@ class GameLibDownloader(
                         formatFileSize(currentFileSize), formatFileSize(totalFileSize) //文件大小
                     )
                     delay(100)
-                } catch (e: CancellationException) {
+                } catch (_: CancellationException) {
                     break //取消
                 }
             }
@@ -130,14 +130,14 @@ class GameLibDownloader(
     /**
      * 提交计划下载
      */
-    fun scheduleDownload(url: String, sha1: String?, targetFile: File, size: Long, isDownloadable: Boolean = true) {
+    fun scheduleDownload(urls: List<String>, sha1: String?, targetFile: File, size: Long, isDownloadable: Boolean = true) {
         if (isDownloadStarted) throw IllegalStateException("The download has already started; adding more download tasks is no longer meaningful.")
 
         totalFileCount.incrementAndGet()
         totalFileSize.addAndGet(size)
         allDownloadTasks.add(
             DownloadTask(
-                url = url,
+                urls = urls,
                 verifyIntegrity = true,
                 targetFile = targetFile,
                 sha1 = sha1,

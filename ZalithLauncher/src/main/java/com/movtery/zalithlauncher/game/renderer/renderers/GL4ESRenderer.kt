@@ -2,7 +2,7 @@ package com.movtery.zalithlauncher.game.renderer.renderers
 
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 
-class GL4ESRenderer : RendererInterface {
+object GL4ESRenderer : RendererInterface {
     override fun getRendererId(): String = "opengles3"
 
     override fun getUniqueIdentifier(): String = "8b52d82d-8f6d-4d3a-a767-dc93f8b72fc7"

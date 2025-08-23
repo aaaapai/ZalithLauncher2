@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,25 +20,36 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.bridge.ZLBridge
 import com.movtery.zalithlauncher.game.input.AWTCharSender
 import com.movtery.zalithlauncher.game.input.AWTInputEvent
-import com.movtery.zalithlauncher.setting.physicalMouseMode
-import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.TouchableButton
-import com.movtery.zalithlauncher.ui.control.input.TouchCharInput
-import com.movtery.zalithlauncher.ui.control.input.view.TouchCharInput
+import com.movtery.zalithlauncher.ui.control.input.TextInputMode
+import com.movtery.zalithlauncher.ui.control.input.textInputHandler
 import com.movtery.zalithlauncher.ui.control.mouse.VirtualPointerLayout
+import com.movtery.zalithlauncher.ui.screens.game.elements.ForceCloseOperation
 import com.movtery.zalithlauncher.ui.screens.game.elements.LogBox
-import com.movtery.zalithlauncher.utils.killProgress
+import com.movtery.zalithlauncher.ui.screens.game.elements.LogState
+import com.movtery.zalithlauncher.viewmodel.EventViewModel
+import kotlinx.coroutines.flow.filterIsInstance
 
 @Composable
-fun JVMScreen() {
-    var forceCloseDialog by remember { mutableStateOf(false) }
-    var enableLog by remember { mutableStateOf(false) }
+fun JVMScreen(
+    logState: LogState,
+    onLogStateChange: (LogState) -> Unit = {},
+    eventViewModel: EventViewModel
+) {
+    var forceCloseState by remember { mutableStateOf<ForceCloseOperation>(ForceCloseOperation.None) }
+    var textInputMode by remember { mutableStateOf(TextInputMode.DISABLE) }
 
-    val charInputRef = remember { mutableStateOf<TouchCharInput?>(null) }
+    ForceCloseOperation(
+        operation = forceCloseState,
+        onChange = { forceCloseState = it },
+        text = stringResource(R.string.game_dialog_force_close_message)
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         SimpleMouseControlLayout(
             modifier = Modifier.fillMaxSize(),
+            textInputMode = textInputMode,
+            onCloseInputMethod = { textInputMode = TextInputMode.DISABLE },
             sendMousePress = { ZLBridge.sendMousePress(AWTInputEvent.BUTTON1_DOWN_MASK) },
             sendMouseCodePress = { code, pressed ->
                 ZLBridge.sendMousePress(code, pressed)
@@ -51,60 +63,53 @@ fun JVMScreen() {
         )
 
         LogBox(
-            enableLog = enableLog,
+            enableLog = logState.value,
             modifier = Modifier.fillMaxSize()
-        )
-
-        TouchCharInput(
-            characterSender = AWTCharSender,
-            onViewReady = { charInputRef.value = it }
         )
 
         ButtonsLayout(
             modifier = Modifier
-                .alpha(alpha = if (enableLog) 0.5f else 1f)
+                .alpha(alpha = if (logState.value) 0.5f else 1f)
                 .fillMaxSize()
                 .padding(8.dp),
             changeKeyboard = {
-                charInputRef.value?.switchKeyboardState()
+                textInputMode = textInputMode.switch()
             },
             forceCloseClick = {
-                forceCloseDialog = true
+                forceCloseState = ForceCloseOperation.Show
             },
             changeLogOutput = {
-                enableLog = !enableLog
+                onLogStateChange(logState.next())
             }
         )
+    }
 
-        if (forceCloseDialog) {
-            SimpleAlertDialog(
-                title = stringResource(R.string.game_button_force_close),
-                text = stringResource(R.string.game_dialog_force_close_message),
-                onConfirm = {
-                    killProgress()
-                },
-                onDismiss = {
-                    forceCloseDialog = false
-                }
-            )
-        }
+    LaunchedEffect(Unit) {
+        eventViewModel.events
+            .filterIsInstance<EventViewModel.Event.Game.ShowIme>()
+            .collect {
+                textInputMode = TextInputMode.ENABLE
+            }
     }
 }
 
 @Composable
 private fun SimpleMouseControlLayout(
     modifier: Modifier = Modifier,
+    textInputMode: TextInputMode,
+    onCloseInputMethod: () -> Unit = {},
     sendMousePress: () -> Unit = {},
     sendMouseCodePress: (Int, Boolean) -> Unit = { _, _ -> },
     sendMouseLongPress: (Boolean) -> Unit = {},
     placeMouse: (mouseX: Float, mouseY: Float) -> Unit = { _, _ -> }
 ) {
-    //非实体鼠标控制 -> 抓取系统指针，使用虚拟鼠标
-    val requestPointerCapture = !physicalMouseMode
-
     VirtualPointerLayout(
-        modifier = modifier,
-        requestPointerCapture = requestPointerCapture,
+        modifier = modifier
+            .textInputHandler(
+                mode = textInputMode,
+                sender = AWTCharSender,
+                onCloseInputMethod = onCloseInputMethod
+            ),
         onTap = { sendMousePress() },
         onPointerMove = { placeMouse(it.x, it.y) },
         onLongPress = { sendMouseLongPress(true) },

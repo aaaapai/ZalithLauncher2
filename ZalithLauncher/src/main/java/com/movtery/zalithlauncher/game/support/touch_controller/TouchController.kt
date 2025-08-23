@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.util.fastForEach
 import androidx.core.content.getSystemService
 import androidx.core.view.inputmethod.EditorInfoCompat
-import com.movtery.zalithlauncher.game.input.EfficientAndroidLWJGLKeycode
 import com.movtery.zalithlauncher.game.input.LWJGLCharSender
 import com.movtery.zalithlauncher.game.support.touch_controller.ControllerProxy.proxyClient
 import kotlinx.coroutines.CancellationException
@@ -95,6 +94,7 @@ private class TouchControllerInputConnection(
     private var inBatchEdit: Int = 0
     private var delayedNewStateByBatchEdit: TextInputState? = null
     private var extractTextToken: Int? = null
+    private var hasZeroExtractToken = false
 
     private fun TextRange.isEmpty() = length == 0
     private fun String.removeRange(range: TextRange) =
@@ -172,8 +172,12 @@ private class TouchControllerInputConnection(
             state.composition.start,
             state.composition.end
         )
+        val extractedText = getExtractedText()
+        if (hasZeroExtractToken) {
+            inputMethodManager.updateExtractedText(view, 0, extractedText)
+        }
         extractTextToken?.let { token ->
-            inputMethodManager.updateExtractedText(view, token, getExtractedText())
+            inputMethodManager.updateExtractedText(view, token, extractedText)
         }
     }
 
@@ -385,7 +389,11 @@ private class TouchControllerInputConnection(
     }
 
     override fun getExtractedText(request: ExtractedTextRequest, flags: Int): ExtractedText {
-        this.extractTextToken = request.token
+        if (request.token == 0) {
+            hasZeroExtractToken = true
+        } else {
+            this.extractTextToken = request.token
+        }
         return getExtractedText()
     }
 
@@ -464,6 +472,7 @@ private class TouchControllerInputConnection(
     override fun reportFullscreenMode(enabled: Boolean): Boolean {
         if (!inputMethodManager.isFullscreenMode) {
             extractTextToken = null
+            hasZeroExtractToken = false
         }
         return true
     }
@@ -507,11 +516,7 @@ private class TouchControllerInputConnection(
             }
             updateState(TextInputState::doDelete)
         } else {
-            EfficientAndroidLWJGLKeycode.getIndexByKey(event.keyCode)
-                .takeIf { it >= 0 }
-                ?.let { index ->
-                    EfficientAndroidLWJGLKeycode.execKey(event, index)
-                }
+            LWJGLCharSender.sendOther(event)
         }
         return true
     }

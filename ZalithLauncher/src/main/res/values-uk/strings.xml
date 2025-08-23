@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="generic_cancel">Скасувати</string>
+    <string name="generic_confirm">Підтвердити</string>
+    <string name="generic_error">Помилка</string>
+    <string name="generic_back">Назад</string>
+    <string name="generic_refresh">Оновити</string>
+    <string name="generic_reset">Скинути налаштування</string>
+    <string name="generic_delete">Видалити</string>
+    <string name="generic_rename">Перейменувати</string>
+    <string name="generic_copy">Копіювати</string>
+    <string name="generic_paste">Вставити</string>
+    <string name="generic_more">Більше</string>
+    <string name="generic_setting">Налаштування</string>
+    <string name="generic_expand">Збільшити</string>
+    <string name="generic_collapse">Зменшити</string>
+    <string name="generic_main_menu">Головне меню</string>
+    <string name="generic_download">Завантажити</string>
+    <string name="generic_done">Зроблено</string>
+    <string name="generic_close">Закрити</string>
+    <string name="generic_clear">Очистити</string>
+    <string name="generic_import">Імпортувати</string>
+    <string name="generic_enable">Дозволити</string>
+    <string name="generic_disable">Вимкнути</string>
+    <string name="generic_open_link">Відкрити в браузері</string>
+    <string name="generic_cannot_empty">Зміст не може бути порожнім!</string>
+</resources>

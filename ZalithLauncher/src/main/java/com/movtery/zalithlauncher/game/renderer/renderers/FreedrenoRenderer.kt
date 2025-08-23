@@ -1,15 +1,13 @@
 package com.movtery.zalithlauncher.game.renderer.renderers
 
-import android.content.Context
-import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 
-class FreedrenoRenderer(private val context: Context) : RendererInterface {
+object FreedrenoRenderer : RendererInterface {
     override fun getRendererId(): String = "gallium_freedreno"
 
     override fun getUniqueIdentifier(): String = "1ad7249f-5784-4f00-bc72-174b3578ee46"
 
-    override fun getRendererName(): String = context.getString(R.string.renderer_name_freedreno)
+    override fun getRendererName(): String = "Freedreno (Adreno)"
 
     override fun getMaxMCVersion(): String = "1.21.4"
 

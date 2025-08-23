@@ -1,5 +1,6 @@
 package com.movtery.zalithlauncher.game.input
 
+import android.view.KeyEvent
 import android.view.MotionEvent
 import com.movtery.zalithlauncher.game.keycodes.LwjglGlfwKeycode
 import org.lwjgl.glfw.CallbackBridge
@@ -14,8 +15,32 @@ object LWJGLCharSender : CharacterSenderStrategy {
         CallbackBridge.sendKeyPress(LwjglGlfwKeycode.GLFW_KEY_ENTER.toInt())
     }
 
+    override fun sendLeft() {
+        CallbackBridge.sendKeyPress(LwjglGlfwKeycode.GLFW_KEY_LEFT.toInt())
+    }
+
+    override fun sendRight() {
+        CallbackBridge.sendKeyPress(LwjglGlfwKeycode.GLFW_KEY_RIGHT.toInt())
+    }
+
+    override fun sendUp() {
+        CallbackBridge.sendKeyPress(LwjglGlfwKeycode.GLFW_KEY_UP.toInt())
+    }
+
+    override fun sendDown() {
+        CallbackBridge.sendKeyPress(LwjglGlfwKeycode.GLFW_KEY_DOWN.toInt())
+    }
+
     override fun sendChar(character: Char) {
         CallbackBridge.sendChar(character, 0)
+    }
+
+    override fun sendOther(key: KeyEvent) {
+        EfficientAndroidLWJGLKeycode.getIndexByKey(key.keyCode)
+            .takeIf { it >= 0 }
+            ?.let { index ->
+                EfficientAndroidLWJGLKeycode.execKey(key, index)
+            }
     }
 
     /**

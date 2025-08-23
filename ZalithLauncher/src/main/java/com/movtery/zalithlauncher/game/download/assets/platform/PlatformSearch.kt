@@ -3,21 +3,22 @@ package com.movtery.zalithlauncher.game.download.assets.platform
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.CurseForgeSearchRequest
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.CurseForgeSearchResult
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeFile
+import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeFingerprintsMatches
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeProject
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeVersion
 import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeVersions
-import com.movtery.zalithlauncher.game.download.assets.platform.mcmod.models.McModSearch
-import com.movtery.zalithlauncher.game.download.assets.platform.mcmod.models.McModSearchRes
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.ModrinthSearchRequest
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.ModrinthSearchResult
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthSingleProject
 import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthVersion
 import com.movtery.zalithlauncher.info.InfoDistributor
+import com.movtery.zalithlauncher.utils.file.MurmurHash2Incremental
 import com.movtery.zalithlauncher.utils.network.httpGet
 import com.movtery.zalithlauncher.utils.network.httpPostJson
 import com.movtery.zalithlauncher.utils.network.withRetry
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.Parameters
-import kotlinx.serialization.json.Json
+import java.io.File
 
 object PlatformSearch {
     /**
@@ -32,8 +33,6 @@ object PlatformSearch {
      */
     const val MODRINTH_API = "https://api.modrinth.com/v2"
 
-    const val COLORMC_API = "https://mc1.coloryr.com"
-
     /**
      * 向 CurseForge 平台发送搜索请求
      * @param request 搜索请求
@@ -41,8 +40,9 @@ object PlatformSearch {
      */
     suspend fun searchWithCurseforge(
         request: CurseForgeSearchRequest,
-        apiKey: String = InfoDistributor.CURSEFORGE_API
-    ): CurseForgeSearchResult = withRetry("PlatformSearch:CurseForge_search") {
+        apiKey: String = InfoDistributor.CURSEFORGE_API,
+        retry: Int = 3
+    ): CurseForgeSearchResult = withRetry("PlatformSearch:CurseForge_search", maxRetries = retry) {
         httpGet(
             url = "$CURSEFORGE_API/mods/search",
             headers = listOf("x-api-key" to apiKey),
@@ -56,8 +56,9 @@ object PlatformSearch {
      */
     suspend fun getProjectFromCurseForge(
         projectID: String,
-        apiKey: String = InfoDistributor.CURSEFORGE_API
-    ): CurseForgeProject = withRetry("PlatformSearch:CurseForge_getProject") {
+        apiKey: String = InfoDistributor.CURSEFORGE_API,
+        retry: Int = 3
+    ): CurseForgeProject = withRetry("PlatformSearch:CurseForge_getProject", maxRetries = retry) {
         httpGet(
             url = "$CURSEFORGE_API/mods/$projectID",
             headers = listOf("x-api-key" to apiKey)
@@ -74,8 +75,9 @@ object PlatformSearch {
         projectID: String,
         apiKey: String = InfoDistributor.CURSEFORGE_API,
         index: Int = 0,
-        pageSize: Int = 100
-    ): CurseForgeVersions = withRetry("PlatformSearch:CurseForge_getVersions") {
+        pageSize: Int = 100,
+        retry: Int = 3
+    ): CurseForgeVersions = withRetry("PlatformSearch:CurseForge_getVersions", maxRetries = retry) {
         httpGet(
             url = "$CURSEFORGE_API/mods/$projectID/files",
             headers = listOf("x-api-key" to apiKey),
@@ -95,7 +97,8 @@ object PlatformSearch {
     suspend fun getAllVersionsFromCurseForge(
         projectID: String,
         apiKey: String = InfoDistributor.CURSEFORGE_API,
-        pageSize: Int = 100
+        pageSize: Int = 100,
+        retry: Int = 3
     ): List<CurseForgeFile> {
         val allFiles = mutableListOf<CurseForgeFile>()
         var index = 0
@@ -105,7 +108,8 @@ object PlatformSearch {
                 projectID = projectID,
                 apiKey = apiKey,
                 index = index,
-                pageSize = pageSize
+                pageSize = pageSize,
+                retry
             )
             val files = response.data
             allFiles.addAll(files)
@@ -125,11 +129,25 @@ object PlatformSearch {
     suspend fun getVersionFromCurseForge(
         projectID: String,
         fileID: String,
-        apiKey: String = InfoDistributor.CURSEFORGE_API
-    ): CurseForgeVersion = withRetry("PlatformSearch:CurseForge_getVersion") {
+        apiKey: String = InfoDistributor.CURSEFORGE_API,
+        retry: Int = 3
+    ): CurseForgeVersion = withRetry("PlatformSearch:CurseForge_getVersion", maxRetries = retry) {
         httpGet(
             url = "$CURSEFORGE_API/mods/$projectID/files/$fileID",
             headers = listOf("x-api-key" to apiKey)
+        )
+    }
+
+    suspend fun getVersionByLocalFileFromCurseForge(
+        file: File,
+        apiKey: String = InfoDistributor.CURSEFORGE_API,
+        retry: Int = 1
+    ): CurseForgeFingerprintsMatches = withRetry("PlatformSearch:CurseForge_getVersionByLocalFile", maxRetries = retry) {
+        val hash = MurmurHash2Incremental.computeHash(file, byteToSkip = listOf(0x9, 0xa, 0xd, 0x20))
+        httpPostJson(
+            url = "$CURSEFORGE_API/fingerprints",
+            headers = listOf("x-api-key" to apiKey),
+            body = mapOf("fingerprints" to listOf(hash))
         )
     }
 
@@ -138,8 +156,9 @@ object PlatformSearch {
      * @param request 搜索请求
      */
     suspend fun searchWithModrinth(
-        request: ModrinthSearchRequest
-    ): ModrinthSearchResult = withRetry("PlatformSearch:Modrinth_search") {
+        request: ModrinthSearchRequest,
+        retry: Int = 3
+    ): ModrinthSearchResult = withRetry("PlatformSearch:Modrinth_search", maxRetries = retry) {
         httpGet(
             url = "$MODRINTH_API/search",
             parameters = request.toParameters()
@@ -150,8 +169,9 @@ object PlatformSearch {
      * 在 Modrinth 平台获取项目详细信息
      */
     suspend fun getProjectFromModrinth(
-        projectID: String
-    ): ModrinthSingleProject = withRetry("PlatformSearch:Modrinth_getProject") {
+        projectID: String,
+        retry: Int = 3
+    ): ModrinthSingleProject = withRetry("PlatformSearch:Modrinth_getProject", maxRetries = retry) {
         httpGet(
             url = "$MODRINTH_API/project/$projectID"
         )
@@ -161,25 +181,27 @@ object PlatformSearch {
      * 获取 Modrinth 项目的所有版本
      */
     suspend fun getVersionsFromModrinth(
-        projectID: String
-    ): List<ModrinthVersion> = withRetry("PlatformSearch:Modrinth_getVersions") {
+        projectID: String,
+        retry: Int = 3
+    ): List<ModrinthVersion> = withRetry("PlatformSearch:Modrinth_getVersions", maxRetries = retry) {
         httpGet(
             url = "$MODRINTH_API/project/$projectID/version"
         )
     }
 
-    /**
-     * 向ColorMC API发送获取模组信息请求
-     */
-    suspend fun getMcmodModInfo(
-        type: Int,
-        ids: Set<String>,
-        mctype: Int
-    ): McModSearchRes = withRetry("PlatformSearch:Mcmod_modinfo") {
-        val obj = McModSearch(type, ids, mctype)
-        httpPostJson<McModSearchRes>(
-            url = "$COLORMC_API/findmod",
-            body = obj
-        )
+    suspend fun getVersionByLocalFileFromModrinth(
+        sha1: String,
+        retry: Int = 1
+    ): ModrinthVersion? = withRetry("PlatformSearch:Modrinth_getVersionByLocalFile", maxRetries = retry) {
+        try {
+            httpGet(
+                url = "$MODRINTH_API/version_file/$sha1",
+                parameters = Parameters.build {
+                    append("algorithm", "sha1")
+                }
+            )
+        } catch (_: ClientRequestException) {
+            return@withRetry null
+        }
     }
 }

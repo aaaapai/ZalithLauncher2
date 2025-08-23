@@ -1,5 +1,6 @@
 package com.movtery.zalithlauncher.game.version.download
 
+import com.movtery.zalithlauncher.game.addons.mirror.mapMirrorableUrls
 import com.movtery.zalithlauncher.game.path.getAssetsHome
 import com.movtery.zalithlauncher.game.path.getLibrariesHome
 import com.movtery.zalithlauncher.game.path.getResourcesHome
@@ -90,11 +91,11 @@ class BaseMinecraftDownloader(
         gameManifest: GameManifest,
         clientName: String,
         mcFolder: File = versionsTarget,
-        scheduleDownload: (url: String, hash: String?, targetFile: File, size: Long) -> Unit
+        scheduleDownload: (urls: List<String>, hash: String?, targetFile: File, size: Long) -> Unit
     ) {
         val clientFile = getVersionJarPath(clientName, mcFolder)
         gameManifest.downloads?.client?.let { client ->
-            scheduleDownload(client.url, client.sha1, clientFile, client.size)
+            scheduleDownload(client.url.mapMirrorableUrls(), client.sha1, clientFile, client.size)
         }
     }
 
@@ -103,7 +104,7 @@ class BaseMinecraftDownloader(
         assetIndex: AssetIndexJson?,
         resourcesTargetDir: File = resourcesTarget,
         assetsTargetDir: File = assetsTarget,
-        scheduleDownload: (url: String, hash: String?, targetFile: File, size: Long) -> Unit
+        scheduleDownload: (urls: List<String>, hash: String?, targetFile: File, size: Long) -> Unit
     ) {
         assetIndex?.objects?.forEach { (path, objectInfo) ->
             val hashedPath = "${objectInfo.hash.substring(0, 2)}/${objectInfo.hash}"
@@ -113,7 +114,7 @@ class BaseMinecraftDownloader(
             } else {
                 File(targetPath, "objects/${hashedPath}".replace("/", File.separator))
             }
-            scheduleDownload("$MINECRAFT_RES$hashedPath", objectInfo.hash, targetFile, objectInfo.size)
+            scheduleDownload("$MINECRAFT_RES$hashedPath".mapMirrorableUrls(), objectInfo.hash, targetFile, objectInfo.size)
         }
     }
 
@@ -121,7 +122,7 @@ class BaseMinecraftDownloader(
     fun loadLibraryDownloads(
         gameManifest: GameManifest,
         targetDir: File = librariesTarget,
-        scheduleDownload: (url: String, hash: String?, targetFile: File, size: Long, isDownloadable: Boolean) -> Unit
+        scheduleDownload: (urls: List<String>, hash: String?, targetFile: File, size: Long, isDownloadable: Boolean) -> Unit
     ) {
         gameManifest.libraries?.let { libraries ->
             processLibraries { libraries }
@@ -151,7 +152,7 @@ class BaseMinecraftDownloader(
                     Quadruple(library.sha1, url, library.size, isDownloadable)
                 }
 
-                scheduleDownload(url, sha1, File(targetDir, artifactPath), size, isDownloadable)
+                scheduleDownload(url.mapMirrorableUrls(), sha1, File(targetDir, artifactPath), size, isDownloadable)
             }
         }
     }

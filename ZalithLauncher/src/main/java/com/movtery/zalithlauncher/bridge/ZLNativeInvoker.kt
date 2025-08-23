@@ -71,6 +71,11 @@ object ZLNativeInvoker {
     }
 
     @JvmStatic
+    fun putFpsValue(fps: Int) {
+        ZLBridgeStates.currentFPS = fps
+    }
+
+    @JvmStatic
     fun jvmExit(exitCode: Int, isSignal: Boolean) {
         staticLauncher?.onExit?.invoke(exitCode, isSignal)
         staticLauncher = null

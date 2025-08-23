@@ -135,7 +135,7 @@ private suspend fun installNewForgeHMCLWay(
                                     .removePrefix("/")
                                     .replace("\\", "/")
                                 zip.extractEntryToFile(item, dest.toFile())
-                                lInfo("Extracting item %item to directory $dest")
+                                lInfo("Extracting item $item to directory $dest")
                                 dest.toString()
                             }
                         )?.let {
@@ -161,7 +161,7 @@ private suspend fun installNewForgeHMCLWay(
 
     val processors: List<ForgeLikeInstallProcessor> = installProfile["processors"]
         ?.asJsonArray
-        ?.let { GSON.fromJson<List<ForgeLikeInstallProcessor>>(it, object : TypeToken<List<ForgeLikeInstallProcessor>>() {}.type) }
+        ?.let { GSON.fromJson(it, object : TypeToken<List<ForgeLikeInstallProcessor>>() {}.type) }
         ?: return@withContext
 
     runProcessors(
@@ -350,7 +350,7 @@ private suspend fun runProcessors(
             require(it.keys.none { key -> key == null } && it.values.none { v -> v == null }) {
                 "Invalid forge installation configuration"
             }
-            lInfo("Parsed output mappings for ${processor.javaClass.simpleName}: ${it.entries.joinToString("\n")}")
+            lInfo("Parsed output mappings for ${processor.javaClass.simpleName}: ${it.entries.joinToString("\n") { entry -> "${entry.key} = ${entry.value}" }}")
         }
 
         val anyMissing = outputs.any { (key, expectedHash) ->

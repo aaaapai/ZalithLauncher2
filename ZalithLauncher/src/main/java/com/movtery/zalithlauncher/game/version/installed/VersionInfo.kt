@@ -2,6 +2,7 @@ package com.movtery.zalithlauncher.game.version.installed
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
 import com.movtery.zalithlauncher.utils.getInt
 import com.movtery.zalithlauncher.utils.toBoolean
 
@@ -23,12 +24,8 @@ class VersionInfo(
     fun getInfoString(): String {
         val infoList = mutableListOf<String>().apply {
             add(minecraftVersion)
-            loaderInfo?.let { info ->
-                when {
-                    info.name.isNotBlank() && info.version.isNotBlank() -> add("${info.name} - ${info.version}")
-                    info.name.isNotBlank() -> add(info.name)
-                    info.version.isNotBlank() -> add(info.version)
-                }
+            loaderInfo?.takeIf { it.version.isNotBlank() }?.let { info ->
+                add("${info.loader.displayName} - ${info.version}")
             }
         }
         return infoList.joinToString(", ")
@@ -63,11 +60,11 @@ class VersionInfo(
     )
 
     data class LoaderInfo(
-        val name: String,
+        val loader: ModLoader,
         val version: String
     ): Parcelable {
         constructor(parcel: Parcel) : this(
-            parcel.readString() ?: "",
+            ModLoader.valueOf(parcel.readString()!!),
             parcel.readString() ?: ""
         )
 
@@ -75,13 +72,13 @@ class VersionInfo(
          * 通过加载器名称，获得对应的环境变量键名
          */
         fun getLoaderEnvKey(): String? {
-            return when(name) {
-                "OptiFine" -> "INST_OPTIFINE"
-                "Forge" -> "INST_FORGE"
-                "NeoForge" -> "INST_NEOFORGE"
-                "Fabric" -> "INST_FABRIC"
-                "Quilt" -> "INST_QUILT"
-                "LiteLoader" -> "INST_LITELOADER"
+            return when(loader) {
+                ModLoader.OPTIFINE -> "INST_OPTIFINE"
+                ModLoader.FORGE -> "INST_FORGE"
+                ModLoader.NEOFORGE -> "INST_NEOFORGE"
+                ModLoader.FABRIC -> "INST_FABRIC"
+                ModLoader.QUILT -> "INST_QUILT"
+                ModLoader.LITE_LOADER -> "INST_LITELOADER"
                 else -> null
             }
         }
@@ -89,7 +86,7 @@ class VersionInfo(
         override fun describeContents(): Int = 0
 
         override fun writeToParcel(dest: Parcel, flags: Int) {
-            dest.writeString(name)
+            dest.writeString(loader.name)
             dest.writeString(version)
         }
 

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.outlined.ImportContacts
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -50,9 +51,13 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.download.assets.platform.Platform
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformClasses
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformProject
+import com.movtery.zalithlauncher.game.download.assets.platform.curseforge.models.CurseForgeProject
 import com.movtery.zalithlauncher.game.download.assets.platform.getProject
 import com.movtery.zalithlauncher.game.download.assets.platform.getVersions
-import com.movtery.zalithlauncher.game.download.assets.type.RELEASE_REGEX
+import com.movtery.zalithlauncher.game.download.assets.platform.modrinth.models.ModrinthSingleProject
+import com.movtery.zalithlauncher.game.download.assets.utils.ModTranslations
+import com.movtery.zalithlauncher.game.download.assets.utils.RELEASE_REGEX
+import com.movtery.zalithlauncher.game.download.assets.utils.getMcmodTitle
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.ContentCheckBox
 import com.movtery.zalithlauncher.ui.components.IconTextButton
@@ -60,7 +65,8 @@ import com.movtery.zalithlauncher.ui.components.ScalingLabel
 import com.movtery.zalithlauncher.ui.components.ShimmerBox
 import com.movtery.zalithlauncher.ui.components.SimpleTextInputField
 import com.movtery.zalithlauncher.ui.components.itemLayoutColor
-import com.movtery.zalithlauncher.ui.screens.content.DownloadScreenKey
+import com.movtery.zalithlauncher.ui.screens.NestedNavKey
+import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.AssetsIcon
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.AssetsVersionItemLayout
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.DownloadAssetsState
@@ -72,25 +78,19 @@ import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.Ve
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.mapToInfos
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.mapWithVersions
 import com.movtery.zalithlauncher.ui.screens.content.download.assets.elements.toInfo
-import com.movtery.zalithlauncher.ui.screens.main.elements.mainScreenKey
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
+import com.movtery.zalithlauncher.utils.isChinese
 import com.movtery.zalithlauncher.utils.network.NetWorkUtils
 import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 
-@Serializable
-data class DownloadAssetsScreenKey(
-    val platform: Platform,
-    val projectId: String,
-    val classes: PlatformClasses
-): NavKey
-
-private class ScreenViewModel(
+private class DownloadScreenViewModel(
     private val platform: Platform,
     private val projectId: String,
-    private val classes: PlatformClasses
+    private val classes: PlatformClasses,
+    /** 项目icon链接（下载整合包专用） */
+    val iconUrl: String? = null
 ): ViewModel() {
     //版本
     private var _versionsList by mutableStateOf<List<VersionInfoMap>>(emptyList())
@@ -125,7 +125,7 @@ private class ScreenViewModel(
                 projectID = projectId,
                 platform = platform,
                 onSuccess = { result ->
-                    val infos: List<DownloadVersionInfo> = result.mapToInfos(projectId) { info ->
+                    val infos: List<DownloadVersionInfo> = result.mapToInfos(projectId, iconUrl) { info ->
                         if (classes != PlatformClasses.MOD) return@mapToInfos //暂时仅支持模组获取依赖
                         info.dependencies.forEach { dependency ->
                             cacheDependencyProject(
@@ -134,7 +134,7 @@ private class ScreenViewModel(
                             )
                         }
                     }
-                    _versionsList = infos.mapWithVersions()
+                    _versionsList = infos.mapWithVersions(classes)
                     versionsResult = DownloadAssetsState.Success(_versionsList.filterInfos())
                 },
                 onError = {
@@ -145,7 +145,7 @@ private class ScreenViewModel(
     }
 
     //项目信息
-    var projectResult by mutableStateOf<DownloadAssetsState<DownloadProjectInfo>>(DownloadAssetsState.Getting())
+    var projectResult by mutableStateOf<DownloadAssetsState<Triple<DownloadProjectInfo, ModTranslations, ModTranslations.McMod?>>>(DownloadAssetsState.Getting())
 
     fun getProject() {
         viewModelScope.launch {
@@ -154,7 +154,18 @@ private class ScreenViewModel(
                 projectID = projectId,
                 platform = platform,
                 onSuccess = { result ->
-                    projectResult = DownloadAssetsState.Success(result.toInfo(classes))
+                    val info = result.toInfo(classes)
+                    val mod = ModTranslations.getTranslationsByRepositoryType(classes)
+                    val mcmod = when (result) {
+                        is ModrinthSingleProject -> {
+                            mod.getModBySlugId(result.slug)
+                        }
+                        is CurseForgeProject -> {
+                            mod.getModBySlugId(result.data.slug)
+                        }
+                        else -> error("Unknown result type $result")
+                    }
+                    projectResult = DownloadAssetsState.Success(Triple(info, mod, mcmod))
                 },
                 onError = { state, _ ->
                     projectResult = state
@@ -209,15 +220,16 @@ private class ScreenViewModel(
 
 @Composable
 private fun rememberDownloadAssetsViewModel(
-    key: DownloadAssetsScreenKey
-): ScreenViewModel {
+    key: NormalNavKey.DownloadAssets
+): DownloadScreenViewModel {
     return viewModel(
         key = key.toString()
     ) {
-        ScreenViewModel(
+        DownloadScreenViewModel(
             platform = key.platform,
             projectId = key.projectId,
-            classes = key.classes
+            classes = key.classes,
+            iconUrl = key.iconUrl
         )
     }
 }
@@ -229,19 +241,20 @@ private fun rememberDownloadAssetsViewModel(
  */
 @Composable
 fun DownloadAssetsScreen(
+    mainScreenKey: NavKey?,
     parentScreenKey: NavKey,
     parentCurrentKey: NavKey?,
     currentKey: NavKey?,
-    key: DownloadAssetsScreenKey,
+    key: NormalNavKey.DownloadAssets,
     onItemClicked: (DownloadVersionInfo) -> Unit = {},
     onDependencyClicked: (DownloadVersionInfo.Dependency) -> Unit = {}
 ) {
-    val viewModel: ScreenViewModel = rememberDownloadAssetsViewModel(key)
+    val viewModel: DownloadScreenViewModel = rememberDownloadAssetsViewModel(key)
 
     BaseScreen(
         levels1 = listOf(
-            Pair(DownloadScreenKey::class.java, mainScreenKey),
-            Pair(DownloadAssetsScreenKey::class.java, currentKey)
+            Pair(NestedNavKey.Download::class.java, mainScreenKey),
+            Pair(NormalNavKey.DownloadAssets::class.java, currentKey)
         ),
         Triple(parentScreenKey, parentCurrentKey, false)
     ) { isVisible ->
@@ -285,7 +298,7 @@ fun DownloadAssetsScreen(
 @Composable
 private fun Versions(
     modifier: Modifier = Modifier,
-    viewModel: ScreenViewModel,
+    viewModel: DownloadScreenViewModel,
     onReload: () -> Unit = {},
     onItemClicked: (DownloadVersionInfo) -> Unit = {},
     onDependencyClicked: (DownloadVersionInfo.Dependency) -> Unit = {}
@@ -398,7 +411,7 @@ private fun Versions(
 @Composable
 private fun ProjectInfo(
     modifier: Modifier = Modifier,
-    projectResult: DownloadAssetsState<DownloadProjectInfo>,
+    projectResult: DownloadAssetsState<Triple<DownloadProjectInfo, ModTranslations, ModTranslations.McMod?>>,
     onReload: () -> Unit = {}
 ) {
     Card(
@@ -449,7 +462,7 @@ private fun ProjectInfo(
                 }
             }
             is DownloadAssetsState.Success -> {
-                val info = result.result
+                val (info, mod, mcmod) = result.result
 
                 LazyColumn(
                     contentPadding = PaddingValues(all = 12.dp),
@@ -476,7 +489,7 @@ private fun ProjectInfo(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
-                                    text = info.title,
+                                    text = mcmod.getMcmodTitle(info.title),
                                     style = MaterialTheme.typography.titleMedium,
                                     textAlign = TextAlign.Center
                                 )
@@ -509,8 +522,8 @@ private fun ProjectInfo(
                                         onClick = { NetWorkUtils.openLink(context, url) },
                                         iconSize = 18.dp,
                                         painter = when (info.platform) {
-                                            Platform.CURSEFORGE -> painterResource(R.drawable.ic_curseforge)
-                                            Platform.MODRINTH -> painterResource(R.drawable.ic_modrinth)
+                                            Platform.CURSEFORGE -> painterResource(R.drawable.img_platform_curseforge)
+                                            Platform.MODRINTH -> painterResource(R.drawable.img_platform_modrinth)
                                         },
                                         text = stringResource(R.string.download_assets_project_link)
                                     )
@@ -537,6 +550,14 @@ private fun ProjectInfo(
                                         iconSize = 18.dp,
                                         imageVector = Icons.Outlined.ImportContacts,
                                         text = stringResource(R.string.download_assets_wiki_link)
+                                    )
+                                }
+                                mcmod?.takeIf { isChinese() }?.let { mod.getMcmodUrl(it) }?.let { url ->
+                                    IconTextButton(
+                                        onClick = { NetWorkUtils.openLink(context, url) },
+                                        iconSize = 18.dp,
+                                        imageVector = Icons.Outlined.Link,
+                                        text = "MC 百科" //品牌名不需要翻译，硬编码
                                     )
                                 }
                             }

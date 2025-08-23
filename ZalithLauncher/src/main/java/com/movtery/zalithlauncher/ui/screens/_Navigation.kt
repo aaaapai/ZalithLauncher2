@@ -3,8 +3,25 @@ package com.movtery.zalithlauncher.ui.screens
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 
-interface NestedNavKey: NavKey {
-    fun isLastScreen(): Boolean
+/**
+ * 兼容嵌套NavDisplay的返回事件处理
+ */
+fun onBack(currentBackStack: NavBackStack) {
+    val key = currentBackStack.lastOrNull()
+    when (key) {
+        //普通的屏幕，直接退出当前堆栈的上层
+        is NormalNavKey -> currentBackStack.removeLastOrNull()
+        is NestedNavKey -> {
+            if (key.backStack.size <= 1) {
+                //嵌套屏幕的堆栈处于最后一个屏幕的状态
+                //可以退出当前堆栈的上层了
+                currentBackStack.removeLastOrNull()
+            } else {
+                //退出子堆栈的上层屏幕
+                key.backStack.removeLastOrNull()
+            }
+        }
+    }
 }
 
 fun NavBackStack.navigateOnce(key: NavKey) {
@@ -28,9 +45,12 @@ fun NavBackStack.navigateTo(screenKey: NavKey, useClassEquality: Boolean = false
 }
 
 /**
- * 清除所有栈，并假如指定的key
+ * 清除所有栈，并加入指定的key
  */
 fun NavBackStack.clearWith(navKey: NavKey) {
-    clear()
-    add(navKey)
+    //批量替换内容，避免 Nav3 看到空帧
+    this.apply {
+        clear()
+        add(navKey)
+    }
 }

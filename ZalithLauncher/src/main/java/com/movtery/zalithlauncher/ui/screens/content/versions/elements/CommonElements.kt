@@ -1,5 +1,6 @@
 package com.movtery.zalithlauncher.ui.screens.content.versions.elements
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
@@ -9,18 +10,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.gif.GifDecoder
+import coil3.request.ImageRequest
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.ui.components.SimpleEditDialog
 import com.movtery.zalithlauncher.ui.screens.content.elements.isFilenameInvalid
+
+/** 加载状态 */
+sealed interface LoadingState {
+    data object None : LoadingState
+    /** 正在加载 */
+    data object Loading : LoadingState
+}
 
 /**
  * Minecraft 的 `§` 颜色占位符，参考 [Minecraft Wiki](https://zh.minecraft.wiki/w/%E6%A0%BC%E5%BC%8F%E5%8C%96%E4%BB%A3%E7%A0%81#%E9%A2%9C%E8%89%B2%E4%BB%A3%E7%A0%81)
@@ -64,18 +81,21 @@ val MINECRAFT_COLOR_FORMAT = mapOf(
  */
 @Composable
 fun MinecraftColorTextNormal(
+    modifier: Modifier = Modifier,
     inputText: String,
     style: TextStyle,
     maxLines: Int = Int.MAX_VALUE
 ) {
     if (inputText.contains("§")) {
         MinecraftColorText(
+            modifier = modifier,
             inputText = inputText,
             fontSize = style.fontSize,
             maxLines = maxLines
         )
     } else {
         Text(
+            modifier = modifier,
             text = inputText,
             style = style,
             maxLines = maxLines
@@ -89,6 +109,7 @@ fun MinecraftColorTextNormal(
  */
 @Composable
 fun MinecraftColorText(
+    modifier: Modifier = Modifier,
     inputText: String,
     fontSize: TextUnit = TextUnit.Unspecified,
     maxLines: Int = Int.MAX_VALUE
@@ -100,7 +121,7 @@ fun MinecraftColorText(
     val offsetFactor = 1f / 16f
     val offsetDp = with(density) { (fontSize.toPx() * offsetFactor).toDp() }
 
-    Row {
+    Row(modifier = modifier) {
         segments.forEach { (text, style) ->
             Box {
                 //背景层
@@ -232,4 +253,55 @@ fun FileNameInputDialog(
             }
         }
     )
+}
+
+@Composable
+fun ByteArrayIcon(
+    modifier: Modifier = Modifier,
+    triggerRefresh: Any? = null,
+    defaultIcon: Int = R.drawable.ic_unknown_pack,
+    icon: ByteArray?,
+    colorFilter: ColorFilter? = null
+) {
+    val context = LocalContext.current
+
+    val imageLoader = remember(triggerRefresh, context) {
+        ImageLoader.Builder(context)
+            .components { add(GifDecoder.Factory()) }
+            .build()
+    }
+
+    val (model, defaultRes) = remember(triggerRefresh, context) {
+        val default = null to defaultIcon
+        when {
+            icon == null -> default //不存在则使用默认
+            else -> {
+                val model = ImageRequest.Builder(context)
+                    .data(icon)
+                    .build()
+                model to null
+            }
+        }
+    }
+
+    if (model != null) {
+        AsyncImage(
+            modifier = modifier,
+            model = model,
+            imageLoader = imageLoader,
+            contentDescription = null,
+            alignment = Alignment.Center,
+            contentScale = ContentScale.Fit,
+            colorFilter = colorFilter
+        )
+    } else {
+        Image(
+            modifier = modifier,
+            painter = painterResource(id = defaultRes!!),
+            contentDescription = null,
+            alignment = Alignment.Center,
+            contentScale = ContentScale.Fit,
+            colorFilter = colorFilter
+        )
+    }
 }

@@ -3,8 +3,7 @@
 [![QQ](https://img.shields.io/badge/QQ-blue)](https://qm.qq.com/q/2MVxS0B29y)
 [![Sponsor](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors)](https://afdian.com/a/MovTery)
 
-[English](README.md)  
-[繁體中文](README_ZH_TW.md)
+[English](README.md) | [繁體中文](README_ZH_TW.md)
 
 **Zalith Launcher 2** 是一个全新设计、面向 **Android 设备** 的 [Minecraft: Java Edition](https://www.minecraft.net/) 启动器。项目使用 [PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/tree/v3_openjdk/app_pojavlauncher/src/main/jni) 作为启动核心，采用 **Jetpack Compose** 与 **Material Design 3** 构建现代化 UI 体验。  
 我们目前正在搭建自己的官方网站 [zalithlauncher.cn](https://zalithlauncher.cn)  
@@ -28,6 +27,7 @@
 * [x] 启动器基础框架（主题、动画、设置等）
 * [x] 启动并渲染 Minecraft 游戏
 * [x] 游戏版本下载与安装
+* [x] 整合包下载与自动安装
 * [x] 模组下载与自动安装
 * [x] 资源包下载与自动安装
 * [x] 存档下载与安装功能
@@ -37,49 +37,19 @@
 * [x] 自定义游戏安装目录
 * [x] 账号系统：微软 OAuth 登录、离线账号、认证服务器支持
 * [x] Java 环境管理
-* [x] 内容管理器：存档 / 资源包 管理界面
+* [x] 内容管理器：存档 / 资源包 / 光影包 / 模组 管理界面
 
 ### 🛠️ 开发中 / 计划中功能
 
 * [ ] 完整的控制系统（自定义控制布局，管理控制布局等）
-* [ ] 游戏版本下载扩展内容：
-    * [ ] OptiFine 搭配 OptiFabric 与 Fabric 进行安装
-    * [ ] Fabric 搭配 Fabric API 模组进行安装
-    * [ ] Quilt 搭配 Quilted Fabric API 模组进行安装
-* [ ] 整合包下载与自动安装
-* [ ] 内容管理器：模组 / 光影包 管理界面
 * [ ] 手柄控制支持
 
 
 
 ## 🌐 语言与翻译支持
 
-### Zalith Launcher 2 当前提供以下两种语言支持：
-
-* **英语**（默认）
-* **简体中文**
-
-这两种语言是项目**官方维护并确保完整性**的语言。
-
-### Zalith Launcher 2 社区提供的语言支持：
-
-我们欢迎社区为其他语言贡献翻译！
-
-* **土耳其语** - 作者：Star1xr
-* **繁体中文** - 作者：HongyiHank
-* **俄语** - 作者：warrior-genius
-
-### 📌 为什么只保证英语与简体中文？
-
-* 项目是**面向全球用户**的，因此需要提供默认的英文界面；然而，由于开发者并非母语为英语的人士，主要依靠 AI 辅助翻译完成英文内容，可能存在轻微误差。
-   * 若对英文翻译有异议，请反馈翻译内容所在的行数，并给出您的意见~ [`values/strings.xml`](./ZalithLauncher/src/main/res/values/strings.xml)
-* 开发者 [@MovTery](https://github.com/MovTery) 是中国开发者，能够保证**简体中文**翻译的质量和完整性。
-* 出于人力限制，其他语言的完整性暂时无法保证，需依赖社区贡献。
-
-### ✍️ 如何参与翻译？
-
 我们正在使用 Weblate 平台翻译 Zalith Launcher 2，欢迎您前往我们的 [Weblate 项目](https://hosted.weblate.org/projects/zalithlauncher2) 参与翻译！  
-感谢每一位语言贡献者的支持，让 Zalith Launcher 2 更加多语、更加全球化！  
+感谢每一位语言贡献者的支持，让 Zalith Launcher 2 更加多语、更加全球化！
 
 
 

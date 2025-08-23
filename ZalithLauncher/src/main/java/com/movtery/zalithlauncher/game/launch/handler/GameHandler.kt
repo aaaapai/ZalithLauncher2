@@ -5,6 +5,9 @@ import android.content.Context
 import android.view.KeyEvent
 import android.view.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import com.movtery.zalithlauncher.bridge.ZLBridge
@@ -18,12 +21,16 @@ import com.movtery.zalithlauncher.game.launch.MCOptions
 import com.movtery.zalithlauncher.game.launch.loadLanguage
 import com.movtery.zalithlauncher.game.skin.SkinModelType
 import com.movtery.zalithlauncher.game.version.installed.Version
+import com.movtery.zalithlauncher.game.version.installed.VersionFolders
 import com.movtery.zalithlauncher.info.InfoDistributor
 import com.movtery.zalithlauncher.ui.screens.game.GameScreen
+import com.movtery.zalithlauncher.ui.screens.game.elements.LogState
+import com.movtery.zalithlauncher.ui.screens.game.elements.LogState.Companion.mutableStateOfLog
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.zipDirRecursive
 import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
+import com.movtery.zalithlauncher.viewmodel.EventViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,6 +56,13 @@ class GameHandler(
     private val _inputArea = MutableStateFlow<IntRect?>(null)
     override val inputArea = _inputArea.asStateFlow()
 
+    private var isGameRendering by mutableStateOf(false)
+
+    /**
+     * 日志展示状态
+     */
+    private var logState by mutableStateOfLog()
+
     override suspend fun execute(surface: Surface?, scope: CoroutineScope) {
         ZLBridge.setupBridgeWindow(surface)
 
@@ -73,6 +87,13 @@ class GameHandler(
     }
 
     override fun onGraphicOutput() {
+        if (!isGameRendering) {
+            isGameRendering = true
+            //游戏已经开始渲染，如果日志状态为渲染前显示，则在这里关闭日志
+            if (logState == LogState.SHOW_BEFORE_LOADING) {
+                logState = LogState.CLOSE
+            }
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -110,10 +131,15 @@ class GameHandler(
 
     @SuppressLint("ClickableViewAccessibility")
     @Composable
-    override fun getComposableLayout() = @Composable {
+    override fun getComposableLayout(eventViewModel: EventViewModel): @Composable (() -> Unit) = @Composable {
         GameScreen(
+            version = version,
+            isGameRendering = isGameRendering,
+            logState = logState,
+            onLogStateChange = { logState = it },
             isTouchProxyEnabled = isTouchProxyEnabled,
             onInputAreaRectUpdated = { _inputArea.value = it },
+            eventViewModel = eventViewModel
         )
     }
 
@@ -193,7 +219,7 @@ class GameHandler(
 
         runCatching {
             val resourcePackFile = File(
-                File(version.getGameDir(), "resourcepacks").ensureDirectory(),
+                File(version.getGameDir(), VersionFolders.RESOURCE_PACK.folderName).ensureDirectory(),
                 "ZLSkin-pack.zip"
             )
             if (resourcePackFile.exists() && !resourcePackFile.delete()) throw IOException("Cannot clear an existing skin pack!")
