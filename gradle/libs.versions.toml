@@ -1,7 +1,5 @@
 [versions]
-agp = "8.11.0"
-#noinspection NewerVersionAvailable
-bytehook = "1.0.10"
+agp = "8.12.0-alpha08"
 coilCompose = "3.3.0"
 compress = "1.28.0"
 commonsCodec = "1.19.0"
@@ -58,12 +56,12 @@ androidx-lifecycle-viewmodel-nav3 = { module = "androidx.lifecycle:lifecycle-vie
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+symbol-processing = { module = "com.google.devtools.ksp:symbol-processing", version.ref = "ksp" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-bytehook = { module = "com.bytedance:bytehook", version.ref = "bytehook" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilCompose" }
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coilCompose" }

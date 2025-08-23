@@ -11,8 +11,11 @@ import com.movtery.zalithlauncher.utils.string.StringUtils.Companion.stripColorC
 import com.movtery.zalithlauncher.utils.string.isBiggerOrEqualTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import net.querz.nbt.io.NBTUtil
-import net.querz.nbt.tag.CompoundTag
+import io.github.ensgijs.nbt.tag.Tag
+import io.github.ensgijs.nbt.tag.*
+import io.github.ensgijs.nbt.tag.CompoundTag
+import io.github.ensgijs.nbt.io.BinaryNbtHelpers
+import io.github.ensgijs.nbt.io.*
 import org.apache.commons.io.FileUtils
 import java.io.File
 
@@ -131,7 +134,7 @@ suspend fun parseLevelDatFile(saveFile: File, levelDatFile: File): SaveData = wi
     runCatching {
         if (!levelDatFile.exists()) error("The ${levelDatFile.absolutePath} file does not exist!")
 
-        val compound: CompoundTag = NBTUtil.read(levelDatFile, true).tag as? CompoundTag
+        val compound: CompoundTag = BinaryNbtHelpers.read(levelDatFile, CompressionType.GZIP).tag as? CompoundTag
             ?: error("Failed to read the level.dat file as a CompoundTag.")
         val data: CompoundTag = compound.asCompoundTag("Data")
             ?: error("Data entry not found in the NBT structure tree.")

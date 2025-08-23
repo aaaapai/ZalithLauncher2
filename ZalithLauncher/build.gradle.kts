@@ -1,5 +1,9 @@
 import com.android.build.api.variant.FilterConfiguration.FilterType.ABI
 import com.android.build.gradle.tasks.MergeSourceSetFolders
+import com.android.build.api.dsl.ExternalNativeBuild
+import org.gradle.api.Project
+import org.gradle.api.file.Directory
+import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
@@ -49,12 +53,17 @@ android {
     namespace = zalithPackageName
     compileSdk = 36
 
+    tasks.withType<JavaCompile>().configureEach {
+        options.isFork = true
+    }
+
     signingConfigs {
         create("releaseBuild") {
-            storeFile = file("zalith_launcher.jks")
-            storePassword = getKeyFromLocal("STORE_PASSWORD", ".store_password.txt")
-            keyAlias = "movtery_zalith"
-            keyPassword = getKeyFromLocal("KEY_PASSWORD", ".key_password.txt")
+            storeFile = file("../debug-key.jks")
+            storePassword = "FCL-Debug"
+            keyAlias = "FCL-Debug"
+            keyPassword = "FCL-Debug"
+
         }
         create("debugBuild") {
             storeFile = file("zalith_launcher_debug.jks")
@@ -68,7 +77,8 @@ android {
         applicationId = zalithPackageName
         applicationIdSuffix = ".v2"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
+        vectorDrawables.useSupportLibrary = true
         versionCode = launcherVersionCode
         versionName = launcherVersionName
         manifestPlaceholders["launcher_name"] = launcherAPPName
@@ -136,7 +146,7 @@ android {
         }
     }
 
-    ndkVersion = "25.2.9519653"
+    ndkVersion = "28.1.13356709"
 
     externalNativeBuild {
         ndkBuild {
@@ -152,11 +162,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
     buildFeatures {
         compose = true
@@ -235,7 +245,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.material.color.utilities)
     //Utils
-    implementation(libs.bytehook)
     implementation(libs.gson)
     implementation(libs.commons.io)
     implementation(libs.commons.codec)
@@ -250,19 +259,15 @@ dependencies {
     implementation(libs.toml4j)
     implementation(libs.maven.artifact)
     implementation(libs.mmkv)
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*"))))
     //Safe
     implementation(libs.stringfog.xor)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.sqlcipher.android)
+    // 显式声明所需版本
     ksp(libs.androidx.room.compiler)
+
     //Support
     implementation(libs.proxy.client.android)
-    //Test
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
 }
