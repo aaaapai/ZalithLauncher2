@@ -352,7 +352,11 @@ fun runJar(
     jreName: String? = null,
     customArgs: String? = null
 ) {
-    RuntimesManager.getExactJreName(8) ?: run {
+    // 直接获取可用的JRE，不限制版本
+    val availableVersions = RuntimesManager.getAvailableJreVersions()
+    jreName = availableVersions.firstOrNull()?.let { RuntimesManager.getExactJreName(it) } ?: run {
+       Toast.makeText(context, R.string.multirt_no_java, Toast.LENGTH_SHORT).show()
+       return
     }
     val jvmArgsPrefix = customArgs?.let { "$it " } ?: ""
     val jvmArgs = "$jvmArgsPrefix-jar ${jarFile.absolutePath}"
