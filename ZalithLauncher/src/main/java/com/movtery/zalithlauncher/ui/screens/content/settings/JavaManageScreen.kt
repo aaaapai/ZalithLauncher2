@@ -250,8 +250,8 @@ private fun RuntimeOperation(
             (context as? Activity)?.let { activity ->
             val jreName = AllSettings.javaRuntime.takeIf { AllSettings.autoPickJavaRuntime.getValue() }?.getValue()
                 JvmLauncher.executeJarWithUri(activity, runtimeOperation.uri, jreName)
-            updateOperation(RuntimeOperation.None)
             }
+            updateOperation(RuntimeOperation.None)
         }
     }
 }
