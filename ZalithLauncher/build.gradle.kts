@@ -64,6 +64,7 @@ android {
             keyAlias = "movtery_zalith_debug"
             keyPassword = defaultKeyPassword
             enableV3Signing = true
+            enableV4Signing = true
         }
     }
 
