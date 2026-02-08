@@ -63,6 +63,7 @@ android {
             storePassword = defaultStorePassword
             keyAlias = "movtery_zalith_debug"
             keyPassword = defaultKeyPassword
+            enableV3Signing = true
         }
     }
 
@@ -70,7 +71,7 @@ android {
         applicationId = zalithPackageName
         applicationIdSuffix = ".v2"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = launcherVersionCode
         versionName = launcherVersionName
         manifestPlaceholders["launcher_name"] = launcherAPPName
@@ -80,7 +81,7 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            signingConfig = signingConfigs.getByName("releaseBuild")
+            signingConfig = signingConfigs.getByName("debugBuild")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
