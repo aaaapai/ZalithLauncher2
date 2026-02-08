@@ -142,7 +142,7 @@ android {
         }
     }
 
-    ndkVersion = "25.2.9519653"
+    ndkVersion = "29.0.14206865"
 
     externalNativeBuild {
         ndkBuild {
@@ -158,11 +158,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "25"
     }
     buildFeatures {
         compose = true
