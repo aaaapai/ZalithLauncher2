@@ -1,6 +1,7 @@
 package com.movtery.zalithlauncher.game.version.multiplayer
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.github.steveice10.opennbt.tag.builtin.ByteTag
@@ -23,9 +24,9 @@ import java.util.Base64
 data class ServerData(
     var name: String,
     var originIp: String,
-    val texturePackStatus: TexturePackStatus = TexturePackStatus.PROMPT,
-    val acceptedCodeOfConduct: Boolean? = null,
-    val icon: ByteArray? = null
+    var texturePackStatus: TexturePackStatus = TexturePackStatus.PROMPT,
+    var acceptedCodeOfConduct: Boolean? = null,
+    var icon: ByteArray? = null
 ) {
     enum class TexturePackStatus(
         val storageCode: Int?
@@ -44,13 +45,19 @@ data class ServerData(
         data object Failed : Operation
     }
 
-    var uiIcon by mutableStateOf<Any?>(icon)
+    var refreshUI by mutableIntStateOf(0)
         private set
 
     var operation by mutableStateOf<Operation>(Operation.Loading)
         private set
 
-    suspend fun load() {
+    /**
+     * 尝试 Ping 这个服务器
+     * @param requestSave 请求保存整个服务器列表
+     */
+    suspend fun load(
+        requestSave: (reason: String) -> Unit = {}
+    ) {
         withContext(Dispatchers.Main) {
             operation = Operation.Loading
         }
@@ -61,8 +68,19 @@ data class ServerData(
             val resolvedAddress = ip.resolve()
             val result = pingServer(resolvedAddress)
 
+            val icon0 = result.status.favicon?.icon
+            //检查远端返回的图标是否和本地保存的不同
+            val isDifferentIcon = icon0 != null && !icon0.contentEquals(icon)
+            //如果不同，则应用新的图标，并发起保存请求
+            if (isDifferentIcon) {
+                icon = icon0
+                withContext(Dispatchers.Main) {
+                    refreshUI++
+                }
+                requestSave("save new icon")
+            }
+
             withContext(Dispatchers.Main) {
-                uiIcon = result.status.favicon ?: icon
                 operation = Operation.Loaded(result)
             }
         }.onFailure {
@@ -105,8 +123,6 @@ data class ServerData(
         if (originIp != other.originIp) return false
         if (texturePackStatus != other.texturePackStatus) return false
         if (!icon.contentEquals(other.icon)) return false
-        if (uiIcon != other.uiIcon) return false
-        if (operation != other.operation) return false
 
         return true
     }
@@ -117,8 +133,6 @@ data class ServerData(
         result = 31 * result + originIp.hashCode()
         result = 31 * result + texturePackStatus.hashCode()
         result = 31 * result + (icon?.contentHashCode() ?: 0)
-        result = 31 * result + (uiIcon?.hashCode() ?: 0)
-        result = 31 * result + operation.hashCode()
         return result
     }
 }

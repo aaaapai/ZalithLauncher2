@@ -20,6 +20,8 @@ package com.movtery.zalithlauncher.game.account
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
@@ -351,13 +353,14 @@ fun addOtherServer(
 /**
  * 获取账号类型名称
  */
-fun getAccountTypeName(context: Context, account: Account): String {
+@Composable
+fun getAccountTypeName(account: Account): String {
     return if (account.isMicrosoftAccount()) {
-        context.getString(R.string.account_type_microsoft)
+        stringResource(R.string.account_type_microsoft)
     } else if (account.isAuthServerAccount()) {
         account.accountType ?: "Unknown"
     } else {
-        context.getString(R.string.account_type_local)
+        stringResource(R.string.account_type_local)
     }
 }
 

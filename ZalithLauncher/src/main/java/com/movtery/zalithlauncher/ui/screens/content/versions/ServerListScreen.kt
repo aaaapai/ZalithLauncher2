@@ -119,24 +119,21 @@ import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionChu
 import com.movtery.zalithlauncher.utils.animation.getAnimateTween
 import com.movtery.zalithlauncher.utils.animation.swapAnimateDpAsState
 import com.movtery.zalithlauncher.utils.copyText
+import com.movtery.zalithlauncher.utils.logging.Logger.lInfo
 import com.movtery.zalithlauncher.utils.string.isEmptyOrBlank
 import com.movtery.zalithlauncher.utils.string.isNotEmptyOrBlank
 import com.movtery.zalithlauncher.utils.string.stripColorCodes
 import com.movtery.zalithlauncher.viewmodel.LaunchGameViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.LinkedList
 
 private sealed interface ServerListOperation {
     /** 服务器列表刷新中 */
@@ -156,11 +153,11 @@ private sealed interface ServerDataOperation {
 }
 
 private class ServerListViewModel(
+    val gamePath: File,
     val serverData: File
 ) : ViewModel() {
     var operation by mutableStateOf<ServerListOperation>(ServerListOperation.Loading)
 
-    private val internalServers = mutableListOf<ServerData>()
     private val _servers = MutableStateFlow<List<ServerData>?>(emptyList())
     val servers = _servers.asStateFlow()
 
@@ -171,15 +168,13 @@ private class ServerListViewModel(
      */
     var searchName by mutableStateOf("")
 
-    /** 作为标记，记录哪些服务器已被加载 */
-    private val serversToLoad = mutableListOf<ServerData>()
-    private val loadQueue = LinkedList<ServerData>()
-    private val semaphore = Semaphore(8) //一次最多允许同时加载8个服务器
-    private var initialQueueSize = 0
-    private val queueMutex = Mutex()
+    /**
+     * 所有正在加载中的服务器
+     */
+    private val allLoadingServer = mutableMapOf<ServerData, Job>()
 
     private var refreshJob: Job? = null
-    private var saveJob: Job? = null
+    private var saveJobQueue = mutableListOf<Job>()
     private val dataMutex = Mutex()
 
     private var searchJob: Job? = null
@@ -197,17 +192,30 @@ private class ServerListViewModel(
     }
 
     private suspend fun loadServerSuspend() {
-        internalServers.clear()
-
         withContext(Dispatchers.Main) {
             operation = ServerListOperation.Loading
             _servers.update { emptyList() }
         }
 
+        //取消所有的加载任务
+        allLoadingServer.forEach { (_, job) ->
+            job.cancel()
+        }
+        allLoadingServer.clear()
+
         allServers.loadServers(serverData)
 
         withContext(Dispatchers.Main) {
             operation = ServerListOperation.LoadedData
+            reloadServerList()
+        }
+    }
+
+    /**
+     * 仅重载当前的服务器列表
+     */
+    private suspend fun reloadServerList() {
+        withContext(Dispatchers.Main) {
             _servers.update {
                 if (allServers.serverList.isEmpty()) {
                     null
@@ -234,51 +242,79 @@ private class ServerListViewModel(
      * @param serverAddress 服务器地址
      */
     fun addServer(
-        gamePath: File,
         serverName: String,
         serverAddress: String
     ) {
         saveServers(
-            gamePath = gamePath
-        ) {
-            val data = ServerData(name = serverName, originIp = serverAddress)
-            allServers.addServer(data)
-        }
+            reason = "added server",
+            beforeSave = {
+                val data = ServerData(name = serverName, originIp = serverAddress)
+                allServers.addServer(data)
+            }
+        )
     }
 
     /**
      * 删除一个服务器
      */
     fun deleteServer(
-        gamePath: File,
         data: ServerData
     ) {
         saveServers(
-            gamePath = gamePath
-        ) {
-            allServers.removeServer(data)
-        }
+            reason = "deleted server",
+            beforeSave = {
+                allServers.removeServer(data)
+                allLoadingServer[data]?.cancel()
+                allLoadingServer.remove(data)
+            }
+        )
+    }
+
+    /**
+     * 编辑过一个服务器
+     */
+    fun editedServer(
+        data: ServerData
+    ) {
+        saveServers(
+            reason = "edited server",
+            beforeSave = {
+                allLoadingServer[data]?.cancel()
+                allLoadingServer.remove(data)
+            },
+            afterSave = {
+                //未对服务器列表做增删，所以需要手动刷新这个服务器
+                loadServer(data, true)
+            }
+        )
     }
 
     /**
      * 保存服务器列表
+     * @param reason 保存服务器列表的理由，方便日志定位
      * @param gamePath 指定 servers.dat 文件的保存目录
      * @param beforeSave 在保存前可以进行的操作
+     * @param beforeSave 在保存后可以进行的操作
      */
-    fun saveServers(
-        gamePath: File,
-        beforeSave: suspend () -> Unit = {}
+    private fun saveServers(
+        reason: String? = null,
+        reload: Boolean = true,
+        beforeSave: suspend () -> Unit = {},
+        afterSave: suspend () -> Unit = {}
     ) {
-        saveJob?.cancel()
-        saveJob = viewModelScope.launch(Dispatchers.IO) {
+        val job = viewModelScope.launch(Dispatchers.IO) {
             dataMutex.withLock {
+                lInfo("Saving server list, reason = $reason, reload UI? = $reload")
+
                 withContext(Dispatchers.Main) { saving = true }
                 beforeSave()
                 allServers.save(gamePath)
-                loadServerSuspend()
+                if (reload) reloadServerList()
+                afterSave()
                 withContext(Dispatchers.Main) { saving = false }
             }
         }
+        saveJobQueue.add(job)
     }
 
     private fun filteredServers(): List<ServerData> {
@@ -298,68 +334,27 @@ private class ServerListViewModel(
         }
     }
 
-    private fun startQueueProcessor() {
-        viewModelScope.launch {
-            while (true) {
-                try {
-                    ensureActive()
-                } catch (_: Exception) {
-                    break //取消
-                }
-
-                val server = queueMutex.withLock {
-                    loadQueue.poll()
-                } ?: run {
-                    delay(100)
-                    continue
-                }
-
-                semaphore.acquire()
-
-                launch {
-                    try {
-                        server.load()
-                    } finally {
-                        semaphore.release()
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * 尝试 Ping 服务器
+     * @param isRefresh 是否强制刷新该服务器
      */
     fun loadServer(
         server: ServerData,
         isRefresh: Boolean = false
     ) {
         if (isRefresh) {
-            viewModelScope.launch {
-                queueMutex.withLock {
-                    loadQueue.removeAll { it == server }
-                    loadQueue.addFirst(server) //加入队头优先执行
-                }
-            }
-            if (serversToLoad.contains(server)) return //已在加载列表
-            serversToLoad.add(server)
-            return
+            allLoadingServer[server]?.cancel()
+            allLoadingServer.remove(server)
         }
 
-        if (serversToLoad.contains(server)) return
+        if (server in allLoadingServer) return
 
-        serversToLoad.add(server)
-        viewModelScope.launch {
-            queueMutex.withLock {
-                val canJoin = loadQueue.size <= (initialQueueSize / 2)
-                if (canJoin || loadQueue.none { it == server }) {
-                    loadQueue.add(server)
-                    serversToLoad.add(server)
-                    //若当前是新一轮任务，更新初始队列总数
-                    if (initialQueueSize == 0 || canJoin) {
-                        initialQueueSize = loadQueue.size
-                    }
-                }
+        allLoadingServer[server] = viewModelScope.launch {
+            server.load { reason ->
+                saveServers(
+                    reason = reason,
+                    reload = false
+                )
             }
         }
     }
@@ -380,17 +375,21 @@ private class ServerListViewModel(
 
     init {
         loadServer()
-        startQueueProcessor()
     }
 
     override fun onCleared() {
         refreshJob?.cancel()
         refreshJob = null
+        searchJob?.cancel()
+        searchJob = null
+        saveJobQueue.forEach { it.cancel() }
+        saveJobQueue.clear()
     }
 }
 
 @Composable
 private fun rememberServerListViewModel(
+    gamePath: File,
     serverData: File,
     version: Version
 ): ServerListViewModel {
@@ -398,6 +397,7 @@ private fun rememberServerListViewModel(
         key = version.toString() + "_" + "ServerList"
     ) {
         ServerListViewModel(
+            gamePath = gamePath,
             serverData = serverData
         )
     }
@@ -408,7 +408,7 @@ private fun ServerDataOperation(
     operation: ServerDataOperation,
     onChange: (ServerDataOperation) -> Unit,
     onAddServer: (name: String, ip: String) -> Unit,
-    onEditedServer: () -> Unit,
+    onEditedServer: (ServerData) -> Unit,
     onDeleteServer: (ServerData) -> Unit
 ) {
     when (operation) {
@@ -453,7 +453,7 @@ private fun ServerDataOperation(
                 onApply = { name, ip ->
                     data.name = name
                     data.originIp = ip
-                    onEditedServer()
+                    onEditedServer(data)
                 }
             )
         }
@@ -486,6 +486,7 @@ fun ServerListScreen(
         val context = LocalContext.current
 
         val viewModel = rememberServerListViewModel(
+            gamePath = version.getGameDir(),
             serverData = dataFile,
             version = version
         )
@@ -500,19 +501,17 @@ fun ServerListScreen(
             onChange = { viewModel.dataOperation = it },
             onAddServer = { name, ip ->
                 viewModel.addServer(
-                    gamePath = version.getGameDir(),
                     serverName = name,
                     serverAddress = ip
                 )
             },
-            onEditedServer = {
-                viewModel.saveServers(
-                    gamePath = version.getGameDir()
+            onEditedServer = { data ->
+                viewModel.editedServer(
+                    data = data
                 )
             },
             onDeleteServer = { server ->
                 viewModel.deleteServer(
-                    gamePath = version.getGameDir(),
                     data = server
                 )
             }
@@ -1037,21 +1036,12 @@ private fun ServerIcon(
     val density = LocalDensity.current
     val pxSize = with(density) { size.roundToPx() }
 
-    val imageRequest = remember(server.uiIcon, pxSize) {
-        val builder = ImageRequest.Builder(context)
-
-        if (server.uiIcon == null) {
-            //如果服务器没有提供可用的图标，则使用本地缓存的图标
-            builder.data(server.icon)
-                .size(pxSize) //固定大小
-                .crossfade(true)
-        } else {
-            builder.data(server.uiIcon)
-                .size(pxSize)
-                .crossfade(true)
-        }
-
-        builder.build()
+    val imageRequest = remember(server.refreshUI, pxSize) {
+        ImageRequest.Builder(context)
+            .data(server.icon)
+            .size(pxSize) //固定大小
+            .crossfade(true)
+            .build()
     }
 
     val painter = rememberAsyncImagePainter(

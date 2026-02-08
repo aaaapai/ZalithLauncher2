@@ -25,13 +25,15 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.nio.charset.StandardCharsets
+import java.util.Base64
 
 @Serializable
 data class StatusResponse(
     val description: ServerDescription? = null,
     val players: Players,
     val version: Version,
-    val favicon: String? = null,
+    val favicon: Favicon? = null,
     val enforcesSecureChat: Boolean = false
 ) {
     companion object {
@@ -66,6 +68,34 @@ data class Version(
     val protocol: Int
 )
 
+private const val ICON_BYTE_PREFIX = "data:image/png;base64,"
+
+@Serializable(with = Favicon.FaviconSerializer::class)
+class Favicon(
+    val icon: ByteArray
+) {
+    object FaviconSerializer : KSerializer<Favicon> {
+        private val delegateSerializer = serializer()
+
+        override val descriptor: SerialDescriptor = delegateSerializer.descriptor
+
+        override fun serialize(encoder: Encoder, value: Favicon) {
+            val base64 = Base64.getEncoder().encode(value.icon)
+            val base64String = String(base64, StandardCharsets.UTF_8)
+            encoder.encodeString(ICON_BYTE_PREFIX + base64String)
+        }
+
+        override fun deserialize(decoder: Decoder): Favicon {
+            val string = decoder.decodeString()
+            //Minecraft 要求必须以这个格式进行解析
+            require(string.startsWith(ICON_BYTE_PREFIX))
+            val base64 = string.substring(ICON_BYTE_PREFIX.length).replace("\n", "")
+            val icon = Base64.getDecoder().decode(base64.toByteArray())
+            return Favicon(icon)
+        }
+    }
+}
+
 object StatusResponseSerializer : KSerializer<StatusResponse> {
     private val delegateSerializer = StatusResponse.serializer()
 
@@ -80,7 +110,7 @@ object StatusResponseSerializer : KSerializer<StatusResponse> {
         val description = jsonObject["description"]?.let { parseDescriptionFromJson(it) }
         val players = GLOBAL_JSON.decodeFromJsonElement(Players.serializer(), jsonObject["players"]!!)
         val version = GLOBAL_JSON.decodeFromJsonElement(Version.serializer(), jsonObject["version"]!!)
-        val favicon = jsonObject["favicon"]?.jsonPrimitive?.contentOrNull
+        val favicon = jsonObject["favicon"]?.let { GLOBAL_JSON.decodeFromJsonElement(Favicon.serializer(), it) }
         val enforcesSecureChat = jsonObject["enforcesSecureChat"]?.jsonPrimitive?.booleanOrNull ?: false
 
         return StatusResponse(

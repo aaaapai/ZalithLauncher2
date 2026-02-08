@@ -237,58 +237,68 @@ fun GamePathOperation(
     changeState: (GamePathOperation) -> Unit,
     submitError: (ErrorViewModel.ThrowableMessage) -> Unit
 ) {
-    runCatching {
-        when(gamePathOperation) {
-            is GamePathOperation.None -> {}
-            is GamePathOperation.AddNewPath -> {
-                NameEditPathDialog(
-                    onDismissRequest = { changeState(GamePathOperation.None) },
-                    onConfirm = { value ->
-                        if (GamePathManager.containsPath(gamePathOperation.path)) {
-                            changeState(GamePathOperation.PathExists)
-                        } else {
-                            GamePathManager.addNewPath(title = value, path = gamePathOperation.path)
-                            changeState(GamePathOperation.None)
-                        }
-                    }
+    val errorText = stringResource(R.string.versions_manage_game_path_error_title)
+    fun doRunCatching(block: () -> Unit) {
+        runCatching {
+            block()
+        }.onFailure { e ->
+            submitError(
+                ErrorViewModel.ThrowableMessage(
+                    title = errorText,
+                    message = e.getMessageOrToString()
                 )
-            }
-            is GamePathOperation.RenamePath -> {
-                NameEditPathDialog(
-                    initValue = gamePathOperation.item.title,
-                    onDismissRequest = { changeState(GamePathOperation.None) },
-                    onConfirm = { value ->
-                        GamePathManager.modifyTitle(gamePathOperation.item, value)
-                        changeState(GamePathOperation.None)
-                    }
-                )
-            }
-            is GamePathOperation.DeletePath -> {
-                SimpleAlertDialog(
-                    title = stringResource(R.string.versions_manage_game_path_delete_title),
-                    text = stringResource(R.string.versions_manage_game_path_delete_message),
-                    onDismiss = { changeState(GamePathOperation.None) },
-                    onConfirm = {
-                        GamePathManager.removePath(gamePathOperation.item)
-                        changeState(GamePathOperation.None)
-                    }
-                )
-            }
-            is GamePathOperation.PathExists -> {
-                SimpleAlertDialog(
-                    title = stringResource(R.string.versions_manage_game_path_exists_title),
-                    text = stringResource(R.string.versions_manage_game_path_exists_message),
-                    onDismiss = { changeState(GamePathOperation.None) }
-                )
-            }
-        }
-    }.onFailure { e ->
-        submitError(
-            ErrorViewModel.ThrowableMessage(
-                title = stringResource(R.string.versions_manage_game_path_error_title),
-                message = e.getMessageOrToString()
             )
-        )
+        }
+    }
+    when (gamePathOperation) {
+        is GamePathOperation.None -> {}
+        is GamePathOperation.AddNewPath -> {
+            NameEditPathDialog(
+                onDismissRequest = { changeState(GamePathOperation.None) },
+                onConfirm = { value ->
+                    if (GamePathManager.containsPath(gamePathOperation.path)) {
+                        changeState(GamePathOperation.PathExists)
+                    } else {
+                        doRunCatching {
+                            GamePathManager.addNewPath(title = value, path = gamePathOperation.path)
+                        }
+                        changeState(GamePathOperation.None)
+                    }
+                }
+            )
+        }
+        is GamePathOperation.RenamePath -> {
+            NameEditPathDialog(
+                initValue = gamePathOperation.item.title,
+                onDismissRequest = { changeState(GamePathOperation.None) },
+                onConfirm = { value ->
+                    doRunCatching {
+                        GamePathManager.modifyTitle(gamePathOperation.item, value)
+                    }
+                    changeState(GamePathOperation.None)
+                }
+            )
+        }
+        is GamePathOperation.DeletePath -> {
+            SimpleAlertDialog(
+                title = stringResource(R.string.versions_manage_game_path_delete_title),
+                text = stringResource(R.string.versions_manage_game_path_delete_message),
+                onDismiss = { changeState(GamePathOperation.None) },
+                onConfirm = {
+                    doRunCatching {
+                        GamePathManager.removePath(gamePathOperation.item)
+                    }
+                    changeState(GamePathOperation.None)
+                }
+            )
+        }
+        is GamePathOperation.PathExists -> {
+            SimpleAlertDialog(
+                title = stringResource(R.string.versions_manage_game_path_exists_title),
+                text = stringResource(R.string.versions_manage_game_path_exists_message),
+                onDismiss = { changeState(GamePathOperation.None) }
+            )
+        }
     }
 }
 

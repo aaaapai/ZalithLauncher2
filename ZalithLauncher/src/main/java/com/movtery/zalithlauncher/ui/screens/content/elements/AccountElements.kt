@@ -255,8 +255,6 @@ fun AccountAvatar(
     refreshKey: Any? = null,
     onClick: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-
     Box(
         modifier = modifier
             .clip(shape = MaterialTheme.shapes.extraLarge)
@@ -292,7 +290,7 @@ fun AccountAvatar(
             if (account != null) {
                 Text(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = getAccountTypeName(context, account),
+                    text = getAccountTypeName(account),
                     style = MaterialTheme.typography.labelSmall
                 )
             }
@@ -379,10 +377,9 @@ fun AccountItem(
                     .align(Alignment.CenterVertically)
                     .weight(1f)
             ) {
-                val context = LocalContext.current
                 Text(text = account.username)
                 Text(
-                    text = getAccountTypeName(context, account),
+                    text = getAccountTypeName(account),
                     style = MaterialTheme.typography.labelMedium
                 )
             }

@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.UiComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import com.movtery.zalithlauncher.setting.AllSettings
@@ -80,7 +81,7 @@ fun BackgroundCard(
     border: BorderStroke? = null,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable @UiComposable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = modifier,
@@ -105,7 +106,7 @@ fun CardTitleLayout(
     alpha: Float = 0.5f,
     color: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    content: @Composable () -> Unit
+    content: @Composable @UiComposable () -> Unit
 ) {
     val influencedColor = influencedByBackgroundColor(
         color = color.copy(alpha = alpha),
