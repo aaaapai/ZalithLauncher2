@@ -25,6 +25,9 @@
 #define ELF_XWORD Elf64_Xword
 #define ELF_DYN Elf64_Dyn
 
+int page_size = getpagesize();
+#define PAGE_SIZE page_size
+
 typedef void* (*loader_dlopen_t)(const char* filename, int flags, const void* caller_addr);
 typedef struct android_namespace_t* (*ld_android_create_namespace_t)(
     const char* name, const char* ld_library_path, const char* default_library_path, uint64_t type,
