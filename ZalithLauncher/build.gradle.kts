@@ -255,7 +255,6 @@ dependencies {
     implementation(project(":ColorPicker"))
     implementation(project(":Terracotta"))
     //Utils
-    implementation(libs.bytehook)
     implementation(libs.gson)
     implementation(libs.commons.io)
     implementation(libs.commons.codec)
@@ -276,7 +275,7 @@ dependencies {
     implementation(libs.mmkv)
     implementation(libs.fishnet)
     implementation(libs.process.phoenix)
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*"))))
     //Safe
     implementation(libs.stringfog.xor)
     implementation(libs.androidx.room.runtime)
