@@ -42,11 +42,6 @@ jobs:
           distribution: "temurin"
           java-version: "25"
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@main
-        with:
-          add-job-summary: "on-failure"
-
       - name: Build APK for ${{ matrix.arch }}
         run: |
           chmod +x gradlew
