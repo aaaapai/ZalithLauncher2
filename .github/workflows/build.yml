@@ -49,29 +49,35 @@ jobs:
 
       - name: Fix Prefab Cache
         run: |
-         # 清理可能损坏的缓存
-         find ~/.gradle/caches/ -name "bytehook" -type d | while read dir; do
-           if [ -d "$dir" ]; then
-             echo "Checking $dir"
-             mkdir -p "$dir/prefab/modules/bytehook/abi/arm64-v8a"
-             if [ ! -f "$dir/prefab/modules/bytehook/abi/arm64-v8a/abi.json" ]; then
-               cat > "$dir/prefab/modules/bytehook/abi/arm64-v8a/abi.json" << EOF
-               {
-                 "abi": "arm64-v8a",
-                 "api": 26,
-                 "ndk": 29,
-                 "stl": "system"
-               }
-               EOF
-               echo "Created abi.json in $dir"
-             fi
-           fi
+          # 清理可能损坏的缓存
+          find ~/.gradle/caches/ -name "bytehook" -type d | while read dir; do
+            if [ -d "$dir" ]; then
+              echo "Checking $dir"
+              # 确保 prefab 目录存在
+              mkdir -p "$dir/prefab/modules/bytehook/abi/arm64-v8a"
+              # 创建缺失的 abi.json 文件
+              if [ ! -f "$dir/prefab/modules/bytehook/abi/arm64-v8a/abi.json" ]; then
+                cat > "$dir/prefab/modules/bytehook/abi/arm64-v8a/abi.json" << 'EOF'
+{
+  "abi": "arm64-v8a",
+  "api": 26,
+  "ndk": 29,
+  "stl": "system"
+}
+EOF
+                echo "Created abi.json in $dir"
+              fi
+            fi
           done
+
+      - name: Clean build
+        run: |
+          chmod +x gradlew
+          ./gradlew clean
 
       - name: Build APK for ${{ matrix.arch }}
         run: |
-          chmod +x gradlew
-          ./gradlew ZalithLauncher:assemble${{ inputs.variant }} -Darch=${{ matrix.arch }} --debug --scan --stacktrace --info
+          ./gradlew ZalithLauncher:assemble${{ inputs.variant }} -Darch=${{ matrix.arch }} --stacktrace --info
 
       - name: Upload Release APK for ${{ matrix.arch }}
         if: inputs.variant == 'Release'
