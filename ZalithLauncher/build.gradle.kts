@@ -10,7 +10,6 @@ plugins {
     id("kotlin-parcelize")
     id("stringfog")
 }
-apply(plugin = "stringfog")
 
 val zalithPackageName = "com.movtery.zalithlauncher"
 val launcherAPPName = project.findProperty("launcher_app_name") as? String ?: error("The \"launcher_app_name\" property is not set in gradle.properties.")
