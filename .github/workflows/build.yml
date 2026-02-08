@@ -47,6 +47,27 @@ jobs:
         with:
           add-job-summary: "on-failure"
 
+      - name: Fix Prefab Cache
+        run: |
+         # 清理可能损坏的缓存
+         find ~/.gradle/caches/ -name "bytehook" -type d | while read dir; do
+           if [ -d "$dir" ]; then
+             echo "Checking $dir"
+             mkdir -p "$dir/prefab/modules/bytehook/abi/arm64-v8a"
+             if [ ! -f "$dir/prefab/modules/bytehook/abi/arm64-v8a/abi.json" ]; then
+               cat > "$dir/prefab/modules/bytehook/abi/arm64-v8a/abi.json" << EOF
+               {
+                 "abi": "arm64-v8a",
+                 "api": 26,
+                 "ndk": 29,
+                 "stl": "system"
+               }
+               EOF
+               echo "Created abi.json in $dir"
+             fi
+           fi
+          done
+
       - name: Build APK for ${{ matrix.arch }}
         run: |
           chmod +x gradlew
