@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     kotlin("android")
+    alias(libs.plugins.kotlin.compose)
     id("kotlinx-serialization")
 }
 
