@@ -144,7 +144,8 @@ android {
         }
     }
 
-    ndkVersion = "29.0.14206865"
+
+    ndkPath = "/usr/local/lib/android/sdk/ndk/29.0.14206865"
 
     externalNativeBuild {
         ndkBuild {
