@@ -159,8 +159,8 @@ int pojavInitOpenGL() {
     {
         pojav_environ->config_renderer = RENDERER_VIRGL;
         setenv("GALLIUM_DRIVER", "virpipe", 1);
-        setenv("LIBGL_EGL", "libEGL_angle.so", 1);
-        setenv("LIBGL_GLES", "libGLESv2_angle.so", 1);
+        //setenv("LIBGL_EGL", "libEGL_angle.so", 1);
+        //setenv("LIBGL_GLES", "libGLESv2_angle.so", 1);
         setenv("OSMESA_NO_FLUSH_FRONTBUFFER", "1", false);
         setenv("MESA_GL_VERSION_OVERRIDE", "4.6", 1);
         setenv("MESA_GLSL_VERSION_OVERRIDE", "460", 1);
