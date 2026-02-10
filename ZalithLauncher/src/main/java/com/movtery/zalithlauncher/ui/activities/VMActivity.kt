@@ -311,6 +311,7 @@ class VMActivity : BaseAppCompatActivity(), SurfaceHolder.Callback {
 
     private val vmViewModel: VMViewModel by viewModels()
 
+    private var mTextureView: View? = null
     private var mSurfaceView: SurfaceView? = null
     private var mScreenSize: IntSize = IntSize.Zero
     private var mSurfaceHolder: SurfaceHolder? = null
@@ -515,16 +516,21 @@ class VMActivity : BaseAppCompatActivity(), SurfaceHolder.Callback {
         }
     }
     
-    private fun refreshScreenSize() {
-         val holder = mSurfaceHolder ?: return
-        val surface = holder.surface ?: return        lifecycleScope.launch(Dispatchers.Main) {
+    private fun refreshScreenSize(): Unit = lifecycleScope.launch(Dispatchers.Main) {
+        val surface = mSurfaceHolder?.surface ?: return@launch
+        lifecycleScope.launch(Dispatchers.Main) {
             refreshWindowSize(surface, mScreenSize)
         }
     }
 
-    private fun refreshWindowSize(surface: android.view.Surface?, screenSize: IntSize): IntSize {
+    private fun refreshWindowSize(surface: Surface?, screenSize: IntSize): IntSize {
         fun getDisplayPixels(pixels: Int): Int {
             return withHandler {
+                val type = try {
+                    type
+                } catch (e: UninitializedPropertyAccessException) {
+                    return getDisplayFriendlyRes(pixels, 1.0f)
+                }
                 when (type) {
                     HandlerType.GAME -> getDisplayFriendlyRes(pixels, 
                         AllSettings.resolutionRatio.getValue().toFloat() / 100f)
@@ -537,6 +543,7 @@ class VMActivity : BaseAppCompatActivity(), SurfaceHolder.Callback {
         val windowHeight = getDisplayPixels(screenSize.height)
         
         // 设置 Surface 缓冲区大小
+        mSurfaceHolder?.surface ?: return IntSize(windowWidth, windowHeight)
         mSurfaceHolder?.setFixedSize(windowWidth, windowHeight)
         
         ZLBridgeStates.onWindowChange()
@@ -705,6 +712,8 @@ class VMActivity : BaseAppCompatActivity(), SurfaceHolder.Callback {
                     },
                 onSurfaceCreated = { holder ->
                     mSurfaceHolder = holder
+                    holder.removeCallback(this@VMActivity)
+    
                     // 处理 Surface 创建
                     if (vmViewModel.isRunning) {
                         ZLBridge.setupBridgeWindow(holder.surface)
@@ -752,6 +761,8 @@ class VMActivity : BaseAppCompatActivity(), SurfaceHolder.Callback {
             factory = { ctx ->
                 SurfaceView(ctx).apply {
                     mSurfaceView = this
+                    setZOrderOnTop(true)
+                    holder.setFormat(PixelFormat.TRANSLUCENT)
                     holder.addCallback(object : SurfaceHolder.Callback {
                         override fun surfaceCreated(holder: SurfaceHolder) {
                             onSurfaceCreated(holder)
@@ -770,13 +781,12 @@ class VMActivity : BaseAppCompatActivity(), SurfaceHolder.Callback {
                             onSurfaceDestroyed(holder)
                         }
                     })
-                    setZOrderOnTop(true)
-                    holder.setFormat(PixelFormat.TRANSLUCENT)
                 }
             },
             modifier = modifier,
             update = { view ->
-                // 更新逻辑（如果需要）
+                view.setZOrderOnTop(true)
+                view.holder.setFormat(PixelFormat.TRANSLUCENT)
             }
         )
     }
