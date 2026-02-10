@@ -37,8 +37,8 @@ LOCAL_SRC_FILES := \
     lwjgl_dlopen_hook.c
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-LOCAL_CFLAGS += -DADRENO_POSSIBLE
-LOCAL_LDLIBS += -lEGL -lGLESv2
+LOCAL_CFLAGS += -DADRENO_POSSIBLE -O3 -mllvm -polly -flto=thin -fdata-sections -ffunction-sections -fmerge-all-constants
+LOCAL_LDLIBS += -lEGL -lGLESv2 -flto=thin -fuse-ld=lld -Wl,--gc-sections -Wl,--as-needed
 endif
 include $(BUILD_SHARED_LIBRARY)
 
@@ -52,12 +52,12 @@ include $(BUILD_SHARED_LIBRARY)
 
 
 include $(CLEAR_VARS)
-LOCAL_LDLIBS := -ldl -llog -landroid
+LOCAL_LDLIBS := -ldl -llog -landroid -Wl,--as-needed -Wl,--gc-sections -fuse-ld=lld -flto=thin
 LOCAL_MODULE := driver_helper
 LOCAL_SRC_FILES := \
     driver_helper/driver_helper.c \
     driver_helper/nsbypass.c
-LOCAL_CFLAGS += -g -rdynamic
+LOCAL_CFLAGS += -g -rdynamic -O1 -flto=thin -fdata-sections -ffunction-sections -fmerge-all-constants
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 LOCAL_CFLAGS += -DADRENO_POSSIBLE
@@ -71,7 +71,7 @@ LOCAL_MODULE := linkerhook
 LOCAL_SRC_FILES := \
     linkerhook/linkerhook.cpp \
     linkerhook/linkerns.c
-LOCAL_LDFLAGS := -z global
+LOCAL_LDFLAGS := -fuse-ld=lld -Wl,--as-needed -Wl,--gc-sections -z global
 include $(BUILD_SHARED_LIBRARY)
 
 
