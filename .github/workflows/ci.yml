@@ -6,7 +6,6 @@ on:
 
 jobs:
   Build:
-    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/build.yml
     with:
       variant: Release
