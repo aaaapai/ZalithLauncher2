@@ -24,21 +24,27 @@ static OSMesaContext virgl_context;
 void *egl_make_current(void *window) {
     if (pojav_environ->config_renderer == RENDERER_VIRGL)
     {
+        EGLContext context = (EGLContext)window;
+        
         EGLBoolean success = eglMakeCurrent_p(
                 potatoBridge.eglDisplay,
-                window==0 ? (EGLSurface *) 0 : potatoBridge.eglSurface,
-                window==0 ? (EGLSurface *) 0 : potatoBridge.eglSurface,
-                /* window==0 ? EGL_NO_CONTEXT : */ (EGLContext *) window
+                window == 0 ? EGL_NO_SURFACE : potatoBridge.eglSurface,
+                window == 0 ? EGL_NO_SURFACE : potatoBridge.eglSurface,
+                window == 0 ? EGL_NO_CONTEXT : context
         );
 
-        if (success == EGL_FALSE)
-            printf("EGLBridge: Error: eglMakeCurrent() failed: %p\n", eglGetError_p());
-        else printf("EGLBridge: eglMakeCurrent() succeed!\n");
+        if (success == EGL_FALSE) {
+            EGLint error = eglGetError_p();
+            printf("EGLBridge: Error: eglMakeCurrent() failed: 0x%x\n", error);
+            return NULL;
+        }
+        
+        printf("EGLBridge: eglMakeCurrent() succeed!\n");
 
-    
         printf("VirGL: vtest_main = %p\n", vtest_main_p);
         printf("VirGL: Calling VTest server's main function\n");
-        vtest_main_p(3, (const char*[]){"vtest", "--no-loop-or-fork", "--use-gles", NULL, NULL});
+        
+        return vtest_main_p(3, (char*[]){"vtest", "--no-loop-or-fork", "--use-gles", NULL, NULL});
     } else {
         return NULL;
     }
@@ -93,7 +99,7 @@ int virglInit() {
             EGL_ALPHA_SIZE, 8,
             // Minecraft required on initial 24
             EGL_DEPTH_SIZE, 24,
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
             EGL_NONE
     };
 
