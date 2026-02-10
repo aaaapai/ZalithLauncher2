@@ -124,11 +124,8 @@ class GameHandler(
     override fun shouldIgnoreKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP && (event.flags and KeyEvent.FLAG_CANCELED) != 0) return false
 
-        //这一段可能用不到了，VMActivity已经在onBackPressedDispatcher绑定了一个监听器
-        if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
-            eventViewModel.sendEvent(EventViewModel.Event.Game.OnBack)
-            return false
-        }
+        if (AllSettings.gamepadControl.state && event.isGamepadKeyEvent()) return true
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) return true
 
         if ((event.flags and KeyEvent.FLAG_SOFT_KEYBOARD) == KeyEvent.FLAG_SOFT_KEYBOARD) {
             if (event.keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -136,8 +133,6 @@ class GameHandler(
                 return false
             }
         }
-
-        if (AllSettings.gamepadControl.state && event.isGamepadKeyEvent()) return true
 
         EfficientAndroidLWJGLKeycode.getIndexByKey(event.keyCode).takeIf { it >= 0 }?.let { index ->
             EfficientAndroidLWJGLKeycode.execKey(event, index)

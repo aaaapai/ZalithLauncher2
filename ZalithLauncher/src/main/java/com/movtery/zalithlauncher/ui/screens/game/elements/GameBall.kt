@@ -43,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.ui.components.FloatingBall
@@ -58,6 +59,9 @@ fun DraggableGameBall(
     onClick: () -> Unit = {}
 ) {
     FloatingBall(
+        modifier = Modifier.focusProperties {
+            canFocus = false
+        },
         position = position,
         onPositionChanged = onPositionChanged,
         onClick = onClick,

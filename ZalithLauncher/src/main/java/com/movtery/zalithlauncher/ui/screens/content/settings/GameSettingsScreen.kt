@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -103,16 +104,20 @@ fun GameSettingsScreen(
                         .fillMaxWidth()
                         .offset { IntOffset(x = 0, y = yOffset.roundToPx()) }
                 ) {
-                    ListSettingsCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        position = CardPosition.Top,
-                        unit = AllSettings.javaRuntime,
-                        items = RuntimesManager.getRuntimes().filter { it.isCompatible() },
-                        title = stringResource(R.string.settings_game_java_runtime_title),
-                        summary = stringResource(R.string.settings_game_java_runtime_summary),
-                        getItemText = { it.name },
-                        getItemId = { it.name }
-                    )
+                    val runtimes = remember { RuntimesManager.getRuntimes() }
+
+                    if (runtimes.isNotEmpty()) {
+                        ListSettingsCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            position = CardPosition.Top,
+                            unit = AllSettings.javaRuntime,
+                            items = RuntimesManager.getRuntimes().filter { it.isCompatible() },
+                            title = stringResource(R.string.settings_game_java_runtime_title),
+                            summary = stringResource(R.string.settings_game_java_runtime_summary),
+                            getItemText = { it.name },
+                            getItemId = { it.name }
+                        )
+                    }
 
                     SwitchSettingsCard(
                         modifier = Modifier.fillMaxWidth(),

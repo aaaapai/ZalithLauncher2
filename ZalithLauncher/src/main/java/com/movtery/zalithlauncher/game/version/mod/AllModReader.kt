@@ -27,19 +27,20 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 
 const val READER_PARALLELISM = 8
 
 class AllModReader(val modsDir: File) {
-    private val tasks = mutableListOf<ReadTask>()
+    val resultsMutex = Mutex()
 
-    private fun scanFiles() {
-        tasks.clear()
-        val files = modsDir.listFiles()?.filter { !it.isDirectory } ?: return
-        files.forEach { file ->
-            tasks.add(ReadTask(file))
+    private fun scanFiles(): List<ReadTask> {
+        val files = modsDir.listFiles()?.filter { !it.isDirectory } ?: return emptyList()
+        return files.map { file ->
+            ReadTask(file)
         }
     }
 
@@ -49,7 +50,7 @@ class AllModReader(val modsDir: File) {
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun readAllMods(): List<RemoteMod> = withContext(Dispatchers.IO) {
         //扫描文件，封装任务
-        scanFiles()
+        val tasks = scanFiles()
 
         val results = mutableListOf<RemoteMod>()
         val taskChannel = Channel<ReadTask>(Channel.UNLIMITED)
@@ -58,7 +59,7 @@ class AllModReader(val modsDir: File) {
             launch(Dispatchers.IO) {
                 for (task in taskChannel) {
                     val mod = task.execute()
-                    synchronized(results) {
+                    resultsMutex.withLock {
                         results.add(mod)
                     }
                 }
