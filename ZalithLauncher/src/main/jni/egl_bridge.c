@@ -47,6 +47,7 @@ struct PotatoBridge potatoBridge;
 
 void* loadTurnipVulkan();
 void calculateFPS();
+void* gbuffer;
 
 EXTERNAL_API void pojavTerminate() {
     printf("EGLBridge: Terminating\n");
