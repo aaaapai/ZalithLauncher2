@@ -116,8 +116,7 @@
             android:name=".terracotta.TerracottaVPNService"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:exported="true"
-            android:process=":game"
-            android:foregroundServiceType="connectedDevice|dataSync"
+            android:foregroundServiceType="connectedDevice|dataSync|specialUse"
             tools:ignore="VpnServicePolicy">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
