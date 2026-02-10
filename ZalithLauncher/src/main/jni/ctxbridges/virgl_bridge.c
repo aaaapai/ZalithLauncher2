@@ -36,7 +36,7 @@ void *egl_make_current(void *window) {
         if (success == EGL_FALSE) {
             EGLint error = eglGetError_p();
             printf("EGLBridge: Error: eglMakeCurrent() failed: 0x%x\n", error);
-            return NULL;
+            return nullptr;
         }
         
         printf("EGLBridge: eglMakeCurrent() succeed!\n");
@@ -44,9 +44,10 @@ void *egl_make_current(void *window) {
         printf("VirGL: vtest_main = %p\n", vtest_main_p);
         printf("VirGL: Calling VTest server's main function\n");
         
-        return vtest_main_p(3, (char*[]){"vtest", "--no-loop-or-fork", "--use-gles", NULL, NULL});
+        vtest_main_p(3, (char*[]){"vtest", "--no-loop-or-fork", "--use-gles", NULL, NULL});
+        return nullptr;
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -75,7 +76,7 @@ int virglInit() {
     if (pojav_environ->config_renderer != RENDERER_VIRGL)
         return 0;
 
-    if (potatoBridge.eglDisplay == NULL || potatoBridge.eglDisplay == EGL_NO_DISPLAY)
+    if (potatoBridge.eglDisplay == nullptr || potatoBridge.eglDisplay == EGL_NO_DISPLAY)
     {
         potatoBridge.eglDisplay = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
         if (potatoBridge.eglDisplay == EGL_NO_DISPLAY)
@@ -159,7 +160,7 @@ int virglInit() {
     pthread_create(&t, NULL, egl_make_current, (void *)ctx);
     usleep(100*1000); // need enough time for the server to init
 
-    if (OSMesaCreateContext_p == NULL)
+    if (OSMesaCreateContext_p == nullptr)
     {
         printf("OSMDroid: %s\n",dlerror());
         return 0;
@@ -171,13 +172,13 @@ int virglInit() {
 void *virglCreateContext(void *contextSrc) {
     printf("OSMDroid: generating context\n");
 
-    OSMesaContext osmesa_share = NULL;
-    if (contextSrc != NULL) osmesa_share = contextSrc;
+    OSMesaContext osmesa_share = nullptr;
+    if (contextSrc != nullptr) osmesa_share = contextSrc;
 
     OSMesaContext context = OSMesaCreateContext_p(OSMESA_RGBA, osmesa_share);
-    if (context == NULL) {
+    if (context == nullptr) {
         printf("[ VirGL Bridge ] OSMesaContext is Null!!!\n");
-        return NULL;
+        return nullptr;
     }
 
     virgl_context = context;
