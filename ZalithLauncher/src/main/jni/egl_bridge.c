@@ -252,24 +252,26 @@ void* maybe_load_vulkan() {
     return (void*) strtoul(getenv("VULKAN_PTR"), NULL, 0x10);
 }
 
-static unsigned int frameCount = 0;
+static int frameCount = 0;
 static int fps = 0;
-static unsigned int lastSecond = 0;
-void calculateFPS(void) {
-    static unsigned int counter = 0;
-    static time_t last_check = 0;
-    
-    counter++;
-    
-    if ((counter & 0x7F) == 0) {
-        time_t now = time(NULL);
-        if (now != last_check) {
-            last_check = now;
-            fps = counter;
-            counter = 0;
-        }
+static time_t lastTime = 0;
+
+void calculateFPS() {
+    frameCount++;
+    time_t currentTime = time(NULL);
+
+    if (currentTime != lastTime) {
+        lastTime = currentTime;
+        fps = frameCount;
+        frameCount = 0;
     }
 }
+
+EXTERNAL_API JNIEXPORT jint JNICALL
+Java_org_lwjgl_glfw_CallbackBridge_getCurrentFps(JNIEnv *env, jclass clazz) {
+    return fps;
+}
+
 EXTERNAL_API JNIEXPORT jint JNICALL
 Java_org_lwjgl_glfw_CallbackBridge_getCurrentFps(JNIEnv *env, jclass clazz) {
     return fps;
