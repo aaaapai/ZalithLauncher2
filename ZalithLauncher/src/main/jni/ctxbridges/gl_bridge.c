@@ -112,7 +112,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
                             eglGetError_p());
-        free(bundle);
+        je_free(bundle);
         return NULL;
     }
     } else if (!strncmp(getenv("POJAV_RENDERER"), "opengles1", 9)) {
@@ -120,7 +120,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
                             eglGetError_p());
-        free(bundle);
+        je_free(bundle);
         return NULL;
     }
     } else if (!strncmp(getenv("POJAV_RENDERER"), "opengles3_desktopgl", 19)) {
@@ -128,7 +128,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
                             eglGetError_p());
-        free(bundle);
+        je_free(bundle);
         return NULL;
     }
     } else {
@@ -136,7 +136,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
                             eglGetError_p());
-        free(bundle);
+        je_free(bundle);
         return NULL;
     } 
     }
@@ -145,7 +145,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s",
                             "eglChooseConfig_p() found no matching config");
-        free(bundle);
+        je_free(bundle);
         return NULL;
     }
 
@@ -183,7 +183,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglCreateContext_p() finished with error: %04x",
                             eglGetError_p());
-        free(bundle);
+        je_free(bundle);
         return NULL;
     }
     return bundle;
