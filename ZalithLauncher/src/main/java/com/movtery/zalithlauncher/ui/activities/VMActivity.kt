@@ -681,13 +681,10 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
                     },
                 factory = { context ->
                     TextureView(context).apply {
-                        setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
-                    
+
                         isOpaque = true
                         alpha = 1.0f
-                    
-                        setWillNotCacheDrawing(true)
-                    
+
                         surfaceTextureListener = this@VMActivity
                     }.also { view ->
                     mTextureView = view
