@@ -18,7 +18,8 @@ class LogHighlighter(
     val timeColor: Color = Color(0xFF6E7C83),
     val stringColor: Color = Color(0xFF6AAB73),
     val numberColor: Color = Color(0xFFC67CBA),
-    val packageColor: Color = Color(0xFFC67CBA)
+    val packageColor: Color = Color(0xFFC67CBA),
+    val linkColor: Color = Color(0xFFC67CBA)
 ) {
     fun highlight(logText: String): AnnotatedString {
         return runCatching {
@@ -66,16 +67,40 @@ class LogHighlighter(
 
             //字符串
             if (logText[i] == '"' || logText[i] == '\'') {
-                val quote = logText[i]
-                val end = findClosingQuote(logText, i, quote)
+                fun styleString(): Boolean {
+                    val quote = logText[i]
+                    val end = findClosingQuote(logText, i, quote)
 
-                if (end != -1) {
-                    withStyle(SpanStyle(color = stringColor)) {
-                        append(logText.substring(i, end + 1))
+                    if (end != -1) {
+                        withStyle(SpanStyle(color = stringColor)) {
+                            append(logText.substring(i, end + 1))
+                        }
+                        i = end + 1
+                        return true
                     }
-                    i = end + 1
+                    return false
+                }
+
+                if (logText[i] == '\'') {
+                    //单引号字符串开始前要求必须为空格
+                    logText.getOrNull(i - 1)?.let { before ->
+                        if (before == ' ' && styleString()) {
+                            continue
+                        }
+                    }
+                } else if (styleString()) {
                     continue
                 }
+            }
+
+            //网站链接
+            val linkMatch = matchWebLink(logText, i)
+            if (linkMatch != null) {
+                withStyle(SpanStyle(color = linkColor)) {
+                    append(linkMatch)
+                }
+                i += linkMatch.length
+                continue
             }
 
             //时间
@@ -175,6 +200,45 @@ class LogHighlighter(
         return name.endsWith("Exception") || name.endsWith("Error")
     }
 
+    /**
+     * 匹配网站链接
+     */
+    private fun matchWebLink(
+        text: String,
+        start: Int
+    ): String? {
+        if (
+            !text.startsWith("http://", start) &&
+            !text.startsWith("https://", start)
+        ) {
+            return null
+        }
+
+        var i = start
+        val n = text.length
+
+        while (i < n) {
+            val c = text[i]
+            if (
+                c.isWhitespace() ||
+                c == '"' ||
+                c == '\'' ||
+                c == '<' ||
+                c == '>' ||
+                c == '(' ||
+                c == ')'
+            ) {
+                break
+            }
+            i++
+        }
+
+        return if (i > start) {
+            text.substring(start, i)
+        } else {
+            null
+        }
+    }
 
     /**
      * 查找结束引号，用于判断是否为完整字符串
