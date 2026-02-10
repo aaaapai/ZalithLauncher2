@@ -13,6 +13,11 @@ LOCAL_PATH := $(HERE_PATH)
 
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := JEMALLOC
+LOCAL_SRC_FILES := jemalloc/$(TARGET_ARCH_ABI)/libjemalloc.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
 LOCAL_LDLIBS := -ldl -llog -landroid
 LOCAL_MODULE := pojavexec
 LOCAL_SHARED_LIBRARIES := driver_helper
@@ -37,6 +42,7 @@ LOCAL_SRC_FILES := \
     lwjgl_dlopen_hook.c
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+LOCAL_SHARED_LIBRARIES := JEMALLOC
 LOCAL_CFLAGS += -std=gnu23 -DADRENO_POSSIBLE
 LOCAL_LDLIBS += -lEGL -lGLESv2
 endif
