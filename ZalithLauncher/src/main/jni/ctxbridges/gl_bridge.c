@@ -4,6 +4,7 @@
 #include <android/native_window_jni.h>
 #include <string.h>
 #include <malloc.h>
+#include "../jemalloc/jemalloc.h"
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <stdbool.h>
@@ -56,7 +57,7 @@ static void gl4esi_get_display_dimensions(int* width, int* height) {
 }
 
 gl_render_window_t* gl_init_context(gl_render_window_t *share) {
-    gl_render_window_t* bundle = malloc(sizeof(gl_render_window_t));
+    gl_render_window_t* bundle = je_malloc(sizeof(gl_render_window_t));
     memset(bundle, 0, sizeof(gl_render_window_t));
     EGLint egl_attributes[] = { EGL_BLUE_SIZE, 8,
                     EGL_GREEN_SIZE, 8,
