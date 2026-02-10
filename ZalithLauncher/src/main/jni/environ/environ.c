@@ -19,7 +19,7 @@ __attribute__((constructor)) void env_init() {
         memset(pojav_environ, 0 , sizeof(struct pojav_environ_s));
         if(asprintf(&strptr_env, "%p", pojav_environ) == -1) abort();
         setenv("POJAV_ENVIRON", strptr_env, 1);
-        free(strptr_env);
+        je_free(strptr_env);
     }else{
         __android_log_print(ANDROID_LOG_INFO, "Environ", "Found existing environ: %s", strptr_env);
         pojav_environ = (void*) strtoul(strptr_env, NULL, 0x10);
