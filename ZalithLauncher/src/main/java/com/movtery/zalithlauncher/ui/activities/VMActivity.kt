@@ -291,7 +291,7 @@ class VMViewModel : ViewModel() {
     }
 }
 
-class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
+class VMActivity : BaseAppCompatActivity(), SurfaceHolder.Callback {
     private val errorViewModel: ErrorViewModel by viewModels()
 
     private val eventViewModel: EventViewModel by viewModels()
@@ -302,8 +302,9 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
 
     private val vmViewModel: VMViewModel by viewModels()
 
-    private var mTextureView: TextureView? = null
+    private var mSurfaceView: SurfaceView? = null
     private var mScreenSize: IntSize = IntSize.Zero
+    private var mSurfaceHolder: SurfaceHolder? = null
 
     private inline fun <T> withHandler(block: AbstractHandler.() -> T): T {
         return vmViewModel.session.handler.block()
@@ -470,12 +471,14 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
 
     override fun onResume() {
         super.onResume()
+        mSurfaceView?.visibility = View.VISIBLE
         withHandler { onResume() }
         CallbackBridge.nativeSetWindowAttrib(LwjglGlfwKeycode.GLFW_HOVERED, 1)
     }
 
     override fun onPause() {
         super.onPause()
+        mSurfaceView?.visibility = View.GONE
         withHandler { onPause() }
         CallbackBridge.nativeSetWindowAttrib(LwjglGlfwKeycode.GLFW_HOVERED, 0)
     }
@@ -511,22 +514,26 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
         }
     }
 
-    private fun refreshWindowSize(surface: SurfaceTexture?, screenSize: IntSize): IntSize {
+    private fun refreshWindowSize(surface: Surface?, screenSize: IntSize): IntSize {
         fun getDisplayPixels(pixels: Int): Int {
             return withHandler {
                 when (type) {
-                    HandlerType.GAME -> getDisplayFriendlyRes(pixels, AllSettings.resolutionRatio.getValue().toFloat() / 100f)
+                    HandlerType.GAME -> getDisplayFriendlyRes(pixels, 
+                        AllSettings.resolutionRatio.getValue().toFloat() / 100f)
                     HandlerType.JVM -> getDisplayFriendlyRes(pixels, 0.8f)
                 }
             }
         }
-
+        
         val windowWidth = getDisplayPixels(screenSize.width)
         val windowHeight = getDisplayPixels(screenSize.height)
-        surface?.setDefaultBufferSize(windowWidth, windowHeight)
+        
+        // 设置 Surface 缓冲区大小
+        mSurfaceHolder?.setFixedSize(windowWidth, windowHeight)
+        
         ZLBridgeStates.onWindowChange()
         CallbackBridge.sendUpdateWindowSize(windowWidth, windowHeight)
-
+        
         return IntSize(windowWidth, windowHeight)
     }
 
@@ -610,19 +617,22 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
         return true
     }
 
-    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+    override fun surfaceCreated(holder: SurfaceHolder) {
         if (vmViewModel.isRunning) {
-            ZLBridge.setupBridgeWindow(Surface(surface))
+            ZLBridge.setupBridgeWindow(Surface(holder.surface))
             return
         }
         vmViewModel.isRunning = true
-
+        
         withHandler { mIsSurfaceDestroyed = false }
-        val currentSize = refreshWindowSize(surface, IntSize(width, height))
+        val currentSize = refreshWindowSize(Surface(holder.surface), 
+                                           IntSize(holder.surfaceFrame.width(), 
+                                                   holder.surfaceFrame.height()))
+        
         lifecycleScope.launch(Dispatchers.Default) {
             withHandler {
                 execute(
-                    surface = Surface(surface),
+                    surface = Surface(holder.surface),
                     screenSize = currentSize,
                     scope = lifecycleScope
                 )
@@ -630,17 +640,21 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
         }
     }
 
-    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        //refreshWindowSize(Surface(holder.surface), IntSize(width, height))
     }
 
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+    /*override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
         withHandler { mIsSurfaceDestroyed = true }
         return true
+    }*/
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
+        withHandler { mIsSurfaceDestroyed = true }
     }
 
-    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+    /*override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
         withHandler { onGraphicOutput() }
-    }
+    }*/
 
     override fun getWindowMode(): WindowMode {
         return if (AllSettings.gameFullScreen.getValue()) {
@@ -656,20 +670,22 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
     ) {
         val imeInsets = WindowInsets.ime
         val inputArea by withHandler { inputArea }.collectAsStateWithLifecycle()
-
+        
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
         ) {
             val screenSize = rememberBoxSize()
-
+            
             LaunchedEffect(screenSize) {
                 mScreenSize = screenSize
-                refreshScreenSize()
+                mSurfaceHolder?.let { holder ->
+                    refreshWindowSize(Surface(holder.surface), screenSize)
+                }
             }
-
-            AndroidView(
+            
+            GameSurfaceView(
                 modifier = Modifier
                     .fillMaxSize()
                     .absoluteOffset {
@@ -679,19 +695,33 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener {
                         val bottomPadding = (imeHeight - bottomDistance).coerceAtLeast(0)
                         IntOffset(0, -bottomPadding)
                     },
-                factory = { context ->
-                    TextureView(context).apply {
-
-                        isOpaque = true
-                        alpha = 1.0f
-
-                        surfaceTextureListener = this@VMActivity
-                    }.also { view ->
-                    mTextureView = view
+                onSurfaceCreated = { surface ->
+                    // 处理 Surface 创建
+                    if (vmViewModel.isRunning) {
+                        ZLBridge.setupBridgeWindow(surface)
+                    } else {
+                        vmViewModel.isRunning = true
+                        withHandler { mIsSurfaceDestroyed = false }
+                        lifecycleScope.launch(Dispatchers.Default) {
+                            withHandler {
+                                execute(
+                                    surface = surface,
+                                    screenSize = screenSize,
+                                    scope = lifecycleScope
+                                )
+                            }
+                        }
                     }
+                },
+                onSurfaceChanged = { surface, width, height ->
+                    refreshWindowSize(surface, IntSize(width, height))
+                },
+                onSurfaceDestroyed = {
+                    withHandler { mIsSurfaceDestroyed = true }
                 }
             )
-
+            
+            // 保持 UI 控件渲染在 SurfaceView 之上
             content()
         }
     }
