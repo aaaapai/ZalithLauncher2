@@ -9,6 +9,7 @@
 #include <dlfcn.h>
 #include <assert.h>
 #include <malloc.h>
+#include "../jemalloc/jemalloc.h"
 #include <stdlib.h>
 #include "environ/environ.h"
 #include "virgl_bridge.h"
@@ -55,7 +56,7 @@ bool loadSymbolsVirGL() {
     dlsym_OSMesa();
     dlsym_EGL();
 
-    char *fileName = calloc(1, 1024);
+    char *fileName = je_calloc(1, 1024);
 
     sprintf(fileName, "%s/libvirgl_test_server.so", getenv("POJAV_NATIVEDIR"));
     void *handle = dlopen(fileName, RTLD_LAZY);
@@ -67,7 +68,7 @@ bool loadSymbolsVirGL() {
     vtest_main_p = dlsym(handle, "vtest_main");
     vtest_swap_buffers_p = dlsym(handle, "vtest_swap_buffers");
 
-    free(fileName);
+    je_free(fileName);
 
     return true;
 }
