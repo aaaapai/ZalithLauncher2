@@ -46,7 +46,7 @@ EGLConfig config;
 struct PotatoBridge potatoBridge;
 
 void* loadTurnipVulkan();
-void calculateFPS() __attribute__((optimize("O3")));
+void calculateFPS();
 void* gbuffer;
 
 EXTERNAL_API void pojavTerminate() {
