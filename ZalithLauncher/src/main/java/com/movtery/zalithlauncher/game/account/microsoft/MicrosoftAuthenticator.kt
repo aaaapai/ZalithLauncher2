@@ -74,7 +74,7 @@ import java.util.UUID
 import kotlin.coroutines.CoroutineContext
 
 private val SCOPES = listOf("XboxLive.signin", "offline_access", "openid", "profile", "email")
-private const val TENANT = "/consumers"
+private const val TENANT = "/common"
 
 const val MICROSOFT_AUTH_URL = "https://login.microsoftonline.com"
 const val LIVE_AUTH_URL = "https://login.live.com"
