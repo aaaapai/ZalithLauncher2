@@ -74,7 +74,6 @@ import java.util.UUID
 import kotlin.coroutines.CoroutineContext
 
 private val SCOPES = listOf("XboxLive.signin", "offline_access", "openid", "profile", "email")
-private const val TENANT = "/common"
 
 const val MICROSOFT_AUTH_URL = "https://login.microsoftonline.com"
 const val LIVE_AUTH_URL = "https://login.live.com"
@@ -89,10 +88,13 @@ const val MINECRAFT_SERVICES_URL = "https://api.minecraftservices.com"
 suspend fun fetchDeviceCodeResponse(context: CoroutineContext): DeviceCodeResponse = coroutineScope {
     withRetry {
         submitForm(
-            url = "$MICROSOFT_AUTH_URL/common/oauth2/v2.0/devicecode",
+            // 🔥 关键修复：使用正确的端点格式
+            url = "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode",
             parameters = Parameters.build {
                 append("client_id", InfoDistributor.OAUTH_CLIENT_ID)
                 append("scope", SCOPES.joinToString(" "))
+                // 🔥 对于公共客户端ID，需要明确指定租户类型
+                append("response_type", "device_code")
             },
             context = context
         )
@@ -122,12 +124,14 @@ suspend fun getTokenResponse(
 
         try {
             val response: JsonObject = submitForm(
-                "$MICROSOFT_AUTH_URL$TENANT/oauth2/v2.0/token",
+                // 🔥 关键修复：使用正确的token端点
+                "https://login.microsoftonline.com/consumers/oauth2/v2.0/token",
                 parameters = Parameters.build {
                     append("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
                     append("device_code", codeResponse.deviceCode)
                     append("client_id", InfoDistributor.OAUTH_CLIENT_ID)
-                    // append("tenant", TENANT)
+                    // 🔥 重要：添加client_secret（即使为空，某些端点需要）
+                    append("client_secret", "")
                 },
                 context = context
             )
@@ -158,9 +162,16 @@ suspend fun getTokenResponse(
 
 private suspend fun handleClientRequestException(e: ClientRequestException, interval: Long) {
     val errorBody = e.response.safeBodyAsJson<JsonObject>()
-    when (errorBody["error"]?.jsonPrimitive?.content) {
+    val error = errorBody["error"]?.jsonPrimitive?.content
+    val errorDesc = errorBody["error_description"]?.jsonPrimitive?.content
+    
+    lDebug("Device code polling error: $error - $errorDesc")
+    
+    when (error) {
         "authorization_pending" -> Unit /* 正常情况，继续轮询 */
         "slow_down" -> lDebug("Slowing down polling to ${interval + 1000}ms")
+        "expired_token" -> throw HttpRequestTimeoutException("Device code expired", 0)
+        "authorization_declined" -> throw CancellationException("User declined authorization")
         else -> throw e
     }
 }
