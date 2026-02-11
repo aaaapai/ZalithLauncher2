@@ -1,6 +1,3 @@
-#pragma clang optimize on
-#pragma clang optimize "O3"
-
 #include <jni.h>
 #include <assert.h>
 #include <dlfcn.h>
@@ -49,7 +46,7 @@ EGLConfig config;
 struct PotatoBridge potatoBridge;
 
 void* loadTurnipVulkan();
-void calculateFPS();
+void calculateFPS() __attribute__((optimize("O3")));
 void* gbuffer;
 
 EXTERNAL_API void pojavTerminate() {
@@ -299,5 +296,3 @@ JNIEXPORT JNICALL jlong
 Java_org_lwjgl_opengl_GL_getGraphicsBufferAddr(JNIEnv *env, jobject thiz) {
     return (jlong) &gbuffer;
 }
-
-#pragma clang optimize off
