@@ -44,6 +44,7 @@ LOCAL_SRC_FILES := \
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 LOCAL_CFLAGS += -std=gnu23 -DADRENO_POSSIBLE
 LOCAL_LDLIBS += -lEGL -lGLESv2
+LOCAL_CFLAGS_egl_bridge.c := -O3 -ffast-math -mllvm -polly
 endif
 include $(BUILD_SHARED_LIBRARY)
 
