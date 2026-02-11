@@ -1,3 +1,6 @@
+#pragma clang optimize on
+#pragma clang optimize "O3"
+
 #include <jni.h>
 #include <assert.h>
 #include <dlfcn.h>
@@ -296,3 +299,5 @@ JNIEXPORT JNICALL jlong
 Java_org_lwjgl_opengl_GL_getGraphicsBufferAddr(JNIEnv *env, jobject thiz) {
     return (jlong) &gbuffer;
 }
+
+#pragma clang optimize off
