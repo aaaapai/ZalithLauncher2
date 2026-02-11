@@ -64,81 +64,21 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
                     EGL_RED_SIZE, 8,
                     EGL_ALPHA_SIZE, 8,
                     EGL_DEPTH_SIZE, 24,
-                    EGL_SURFACE_TYPE,
-                    EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
-                    EGL_RENDERABLE_TYPE,
-                    EGL_OPENGL_ES2_BIT,
-                    EGL_NONE
-                    };
-    EGLint egl_attributes_gles3[] = { EGL_BLUE_SIZE, 8,
-                    EGL_GREEN_SIZE, 8,
-                    EGL_RED_SIZE, 8,
-                    EGL_ALPHA_SIZE, 8,
-                    EGL_DEPTH_SIZE, 24,
                     EGL_BUFFER_SIZE, 32,
                     EGL_SURFACE_TYPE,
                     EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
                     EGL_RENDERABLE_TYPE,
-                    EGL_OPENGL_ES3_BIT,
-                    EGL_NONE
-                    };
-    EGLint egl_attributes_gles1[] = { EGL_BLUE_SIZE, 8,
-                    EGL_GREEN_SIZE, 8,
-                    EGL_RED_SIZE, 8,
-                    EGL_ALPHA_SIZE, 8,
-                    EGL_DEPTH_SIZE, 24,
-                    EGL_SURFACE_TYPE,
-                    EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
-                    EGL_RENDERABLE_TYPE,
-                    EGL_OPENGL_ES_BIT,
-                    EGL_NONE
-                    };
-    EGLint egl_attributes_desktopgl[] = { EGL_BLUE_SIZE, 8,
-                    EGL_GREEN_SIZE, 8,
-                    EGL_RED_SIZE, 8,
-                    EGL_ALPHA_SIZE, 8,
-                    EGL_DEPTH_SIZE, 24,
-                    EGL_BUFFER_SIZE, 32,
-                    EGL_SURFACE_TYPE,
-                    EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
-                    EGL_RENDERABLE_TYPE,
-                    EGL_OPENGL_BIT,
+                    EGL_OPENGL_ES3_BIT|EGL_OPENGL_ES2_BIT|EGL_OPENGL_ES_BIT|EGL_OPENGL_BIT,
                     EGL_NONE
                     };
     EGLint num_configs = 0;
 
-    if (!strncmp(getenv("POJAV_RENDERER"), "opengles3", 9)) {
-    if (eglChooseConfig_p(g_EglDisplay, egl_attributes_gles3, NULL, 0, &num_configs) != EGL_TRUE)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
-                            eglGetError_p());
-        je_free(bundle);
-        return NULL;
-    }
-    } else if (!strncmp(getenv("POJAV_RENDERER"), "opengles1", 9)) {
-    if (eglChooseConfig_p(g_EglDisplay, egl_attributes_gles1, NULL, 0, &num_configs) != EGL_TRUE)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
-                            eglGetError_p());
-        je_free(bundle);
-        return NULL;
-    }
-    } else if (!strncmp(getenv("POJAV_RENDERER"), "opengles3_desktopgl", 19)) {
-    if (eglChooseConfig_p(g_EglDisplay, egl_attributes_desktopgl, NULL, 0, &num_configs) != EGL_TRUE)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
-                            eglGetError_p());
-        je_free(bundle);
-        return NULL;
-    }
-    } else {
     if (eglChooseConfig_p(g_EglDisplay, egl_attributes, NULL, 0, &num_configs) != EGL_TRUE)
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
                             eglGetError_p());
         je_free(bundle);
         return NULL;
-    } 
     }
 
     if (num_configs == 0)
@@ -149,15 +89,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
         return NULL;
     }
 
-    if (!strncmp(getenv("POJAV_RENDERER"), "opengles3", 9)) {
-    eglChooseConfig_p(g_EglDisplay, egl_attributes_gles3, &bundle->config, 1, &num_configs);
-    } else if (!strncmp(getenv("POJAV_RENDERER"), "opengles1", 9)) {
-        eglChooseConfig_p(g_EglDisplay, egl_attributes_gles1, &bundle->config, 1, &num_configs);
-    } else if (!strncmp(getenv("POJAV_RENDERER"), "opengles3_desktopgl", 19)) {
-        eglChooseConfig_p(g_EglDisplay, egl_attributes_desktopgl, &bundle->config, 1, &num_configs);
-    } else {
-        eglChooseConfig_p(g_EglDisplay, egl_attributes, &bundle->config, 1, &num_configs);
-    }
+    eglChooseConfig_p(g_EglDisplay, egl_attributes, &bundle->config, 1, &num_configs);
     eglGetConfigAttrib_p(g_EglDisplay, bundle->config, EGL_NATIVE_VISUAL_ID, &bundle->format);
 
     {
