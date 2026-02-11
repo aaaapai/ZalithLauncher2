@@ -27,7 +27,7 @@ jobs:
     env:
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-      OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+      OAUTH_CLIENT_ID: 00000000402b5328
       CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
 
     steps:
