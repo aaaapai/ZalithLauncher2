@@ -89,7 +89,7 @@ const val MINECRAFT_SERVICES_URL = "https://api.minecraftservices.com"
 suspend fun fetchDeviceCodeResponse(context: CoroutineContext): DeviceCodeResponse = coroutineScope {
     withRetry {
         submitForm(
-            url = "$MICROSOFT_AUTH_URL/$TENANT/oauth2/v2.0/devicecode",
+            url = "$MICROSOFT_AUTH_URL/common/oauth2/v2.0/devicecode",
             parameters = Parameters.build {
                 append("client_id", InfoDistributor.OAUTH_CLIENT_ID)
                 append("scope", SCOPES.joinToString(" "))
@@ -127,7 +127,7 @@ suspend fun getTokenResponse(
                     append("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
                     append("device_code", codeResponse.deviceCode)
                     append("client_id", InfoDistributor.OAUTH_CLIENT_ID)
-                    append("tenant", TENANT)
+                    // append("tenant", TENANT)
                 },
                 context = context
             )
