@@ -27,7 +27,7 @@ osm_render_window_t* osm_get_current() {
 }
 
 osm_render_window_t* osm_init_context(osm_render_window_t* share) {
-    osm_render_window_t* render_window = je_malloc(sizeof(osm_render_window_t));
+    osm_render_window_t* render_window = malloc(sizeof(osm_render_window_t));
     if(render_window == NULL) return NULL;
     memset(render_window, 0, sizeof(osm_render_window_t));
     OSMesaContext osmesa_share = NULL;
