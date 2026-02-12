@@ -338,6 +338,7 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
         envMap["LIBGL_NOINTOVLHACK"] = "1"
         envMap["LIBGL_NORMALIZE"] = "1"
         envMap["LIBGL_FB"] = "1"
+        envMap["LIBGL_GL"] = "33"
     }
 
     envMap += renderer.getRendererEnv().value
