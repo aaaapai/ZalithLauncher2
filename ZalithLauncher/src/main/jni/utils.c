@@ -17,7 +17,7 @@ long shared_awt_surface;
 
 char** convert_to_char_array(JNIEnv *env, jobjectArray jstringArray) {
 	int num_rows = (*env)->GetArrayLength(env, jstringArray);
-	char **cArray = (char **) je_malloc(num_rows * sizeof(char*));
+	char **cArray = (char **) malloc(num_rows * sizeof(char*));
 	jstring row;
 	
 	for (int i = 0; i < num_rows; i++) {
