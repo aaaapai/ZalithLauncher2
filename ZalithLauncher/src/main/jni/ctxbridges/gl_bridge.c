@@ -57,7 +57,7 @@ static void gl4esi_get_display_dimensions(int* width, int* height) {
 }
 
 gl_render_window_t* gl_init_context(gl_render_window_t *share) {
-    gl_render_window_t* bundle = je_malloc(sizeof(gl_render_window_t));
+    gl_render_window_t* bundle = malloc(sizeof(gl_render_window_t));
     memset(bundle, 0, sizeof(gl_render_window_t));
     EGLint egl_attributes_desktopgl[] = { EGL_BLUE_SIZE, 8,
                     EGL_GREEN_SIZE, 8,
@@ -89,7 +89,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
                             eglGetError_p());
-        je_free(bundle);
+        free(bundle);
         return NULL;
     }
     } else {
@@ -97,7 +97,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
                             eglGetError_p());
-        je_free(bundle);
+        free(bundle);
         return NULL;
     }
     }
@@ -106,7 +106,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s",
                             "eglChooseConfig_p() found no matching config");
-        je_free(bundle);
+        free(bundle);
         return NULL;
     }
 
@@ -140,7 +140,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglCreateContext_p() finished with error: %04x",
                             eglGetError_p());
-        je_free(bundle);
+        free(bundle);
         return NULL;
     }
     return bundle;
