@@ -18,20 +18,12 @@ __attribute__((constructor)) void env_init() {
     if(strptr_env == NULL) {
         int deviceApiLevel = android_get_device_api_level();
         __android_log_print(ANDROID_LOG_INFO, "Environ", "No environ found, creating...");
-        if (deviceApiLevel <= 29 && !getenv("POJAV_FORCE_MALLOC_SYSTEM")) {
-          pojav_environ = je_malloc(sizeof(struct pojav_environ_s));
-        } else {
-          pojav_environ = malloc(sizeof(struct pojav_environ_s));
-        }
+        pojav_environ = malloc(sizeof(struct pojav_environ_s));
         assert(pojav_environ);
         memset(pojav_environ, 0 , sizeof(struct pojav_environ_s));
         if(asprintf(&strptr_env, "%p", pojav_environ) == -1) abort();
         setenv("POJAV_ENVIRON", strptr_env, 1);
-        if (deviceApiLevel <= 29 && !getenv("POJAV_FORCE_MALLOC_SYSTEM")) {
-           je_free(strptr_env);
-        }else{
-           free(strptr_env);
-        }
+        free(strptr_env);
     }else{
         __android_log_print(ANDROID_LOG_INFO, "Environ", "Found existing environ: %s", strptr_env);
         pojav_environ = (void*) strtoul(strptr_env, NULL, 0x10);
