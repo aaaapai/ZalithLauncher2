@@ -34,7 +34,7 @@ osm_render_window_t* osm_init_context(osm_render_window_t* share) {
     if(share != NULL) osmesa_share = share->context;
     OSMesaContext context = OSMesaCreateContext_p(GL_RGBA, osmesa_share);
     if(context == NULL) {
-        je_free(render_window);
+        free(render_window);
         return NULL;
     }
     render_window->context = context;
