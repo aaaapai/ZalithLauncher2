@@ -331,6 +331,15 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
         envMap["LIBGL_NORMALIZE"] = "1"
     }
 
+    if (rendererId.startsWith("opengles3_ng_gl4es")) {
+        envMap["LIBGL_ES"] = "3"
+        envMap["LIBGL_MIPMAP"] = "3"
+        envMap["LIBGL_NOERROR"] = "1"
+        envMap["LIBGL_NOINTOVLHACK"] = "1"
+        envMap["LIBGL_NORMALIZE"] = "1"
+        envMap["LIBGL_FB"] = "1"
+    }
+
     envMap += renderer.getRendererEnv().value
 
     renderer.getRendererEGL()?.let { eglName ->
