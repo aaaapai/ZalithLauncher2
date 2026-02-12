@@ -75,7 +75,7 @@ private fun InviteCodeInputDialog(
     var code by remember { mutableStateOf("") }
 
     /** 验证不通过时 */
-    var isError by mutableStateOf(false)
+    var isError by remember { mutableStateOf(false) }
     val supportingText: String? = remember(code) {
         if (code.isEmpty()) {
             //还未填写内容

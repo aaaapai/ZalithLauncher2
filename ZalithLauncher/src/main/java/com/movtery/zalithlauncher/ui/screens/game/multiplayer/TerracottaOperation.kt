@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
@@ -34,8 +35,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.terracotta.Terracotta
 import com.movtery.zalithlauncher.terracotta.TerracottaVPNService
+import com.movtery.zalithlauncher.terracotta.fetchNodes
 import com.movtery.zalithlauncher.utils.logging.Logger.lWarning
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.burningtnt.terracotta.TerracottaAndroidAPI
+import kotlin.collections.map
 
 /**
  * 陶瓦联机状态操作
@@ -53,6 +59,8 @@ sealed interface TerracottaOperation {
 fun TerracottaOperation(
     viewModel: TerracottaViewModel
 ) {
+    val scope = rememberCoroutineScope()
+
     val vpnLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -101,27 +109,49 @@ fun TerracottaOperation(
                 easyTierVer = viewModel.easyTierVer,
                 profiles = profiles,
                 onHostRoleClick = {
-                    runCatching {
-                        Terracotta.setScanning(null, userName)
+                    scope.launch(Dispatchers.Main) {
                         viewModel.isWaitingInteractive = false
-                    }.onFailure { e ->
-                        lWarning("Error occurred at \"Terracotta.setScanning(null, userName)\", message = ${e.message}")
-                        viewModel.isWaitingInteractive = true
+
+                        val nodes = fetchNodes()
+                        val nodeList = withContext(Dispatchers.Default) {
+                            nodes.map { node ->
+                                node.toString()
+                            }
+                        }
+
+                        runCatching {
+                            Terracotta.setScanning(null, userName)
+                            viewModel.isWaitingInteractive = false
+                        }.onFailure { e ->
+                            lWarning("Error occurred at \"Terracotta.setScanning(null, userName)\", message = ${e.message}")
+                            viewModel.isWaitingInteractive = true
+                        }
                     }
                 },
                 onHostCopyCode = { state ->
                     viewModel.copyInviteCode(state)
                 },
                 onGuestPositive = { roomCode ->
-                    runCatching {
-                        val success = Terracotta.setGuesting(roomCode, userName)
+                    scope.launch(Dispatchers.Main) {
                         viewModel.isWaitingInteractive = false
-                        if (!success) {
-                            Toast.makeText(context, context.getString(R.string.terracotta_status_waiting_guest_prompt_invalid), Toast.LENGTH_SHORT).show()
+
+                        val nodes = fetchNodes()
+                        val nodeList = withContext(Dispatchers.Default) {
+                            nodes.map { node ->
+                                node.toString()
+                            }
                         }
-                    }.onFailure { e ->
-                        lWarning("Error occurred at \"Terracotta.setGuesting(roomCode, userName)\", message = ${e.message}")
-                        viewModel.isWaitingInteractive = true
+
+                        runCatching {
+                            val success = Terracotta.setGuesting(roomCode, userName)
+                            viewModel.isWaitingInteractive = false
+                            if (!success) {
+                                Toast.makeText(context, context.getString(R.string.terracotta_status_waiting_guest_prompt_invalid), Toast.LENGTH_SHORT).show()
+                            }
+                        }.onFailure { e ->
+                            lWarning("Error occurred at \"Terracotta.setGuesting(roomCode, userName)\", message = ${e.message}")
+                            viewModel.isWaitingInteractive = true
+                        }
                     }
                 },
                 onGuestCopyUrl = { state ->
