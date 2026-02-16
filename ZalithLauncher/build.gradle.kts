@@ -4,14 +4,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    kotlin("android")
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
     id("kotlinx-serialization")
     id("kotlin-parcelize")
     id("stringfog")
 }
-apply(plugin = "stringfog")
 
 val zalithPackageName = "com.movtery.zalithlauncher"
 val launcherAPPName = project.findProperty("launcher_app_name") as? String ?: error("The \"launcher_app_name\" property is not set in gradle.properties.")
@@ -63,6 +62,8 @@ android {
             storePassword = defaultStorePassword
             keyAlias = "movtery_zalith_debug"
             keyPassword = defaultKeyPassword
+            enableV3Signing = true
+            enableV4Signing = true
         }
     }
 
@@ -70,7 +71,7 @@ android {
         applicationId = zalithPackageName
         applicationIdSuffix = ".v2"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = launcherVersionCode
         versionName = launcherVersionName
         manifestPlaceholders["launcher_name"] = launcherAPPName
@@ -80,7 +81,7 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            signingConfig = signingConfigs.getByName("releaseBuild")
+            signingConfig = signingConfigs.getByName("debugBuild")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -143,7 +144,9 @@ android {
         }
     }
 
-    ndkVersion = "25.2.9519653"
+
+    ndkPath = "/usr/local/lib/android/sdk/ndk/29.0.14206865"
+    ndkVersion = "29.0.14206865"
 
     externalNativeBuild {
         ndkBuild {
@@ -159,8 +162,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
@@ -171,7 +174,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
@@ -252,7 +255,6 @@ dependencies {
     implementation(project(":ColorPicker"))
     implementation(project(":Terracotta"))
     //Utils
-    implementation(libs.bytehook)
     implementation(libs.gson)
     implementation(libs.commons.io)
     implementation(libs.commons.codec)
@@ -273,7 +275,7 @@ dependencies {
     implementation(libs.mmkv)
     implementation(libs.fishnet)
     implementation(libs.process.phoenix)
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*"))))
     //Safe
     implementation(libs.stringfog.xor)
     implementation(libs.androidx.room.runtime)

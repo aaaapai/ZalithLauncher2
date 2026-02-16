@@ -2,6 +2,7 @@
 // Created by maks on 18.10.2023.
 //
 #include <malloc.h>
+#include "../jemalloc/jemalloc.h"
 #include <string.h>
 #include <environ/environ.h>
 #include <android/log.h>

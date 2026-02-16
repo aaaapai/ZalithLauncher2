@@ -13,6 +13,11 @@ LOCAL_PATH := $(HERE_PATH)
 
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := JEMALLOC
+LOCAL_SRC_FILES := jemalloc/$(TARGET_ARCH_ABI)/libjemalloc.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
 LOCAL_LDLIBS := -ldl -llog -landroid
 LOCAL_MODULE := pojavexec
 LOCAL_SHARED_LIBRARIES := driver_helper
@@ -37,8 +42,9 @@ LOCAL_SRC_FILES := \
     lwjgl_dlopen_hook.c
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
-LOCAL_CFLAGS += -DADRENO_POSSIBLE
+LOCAL_CFLAGS += -std=gnu23 -DADRENO_POSSIBLE
 LOCAL_LDLIBS += -lEGL -lGLESv2
+LOCAL_CFLAGS_egl_bridge.c := -O3 -ffast-math -mllvm -polly
 endif
 include $(BUILD_SHARED_LIBRARY)
 
@@ -98,4 +104,3 @@ include $(BUILD_SHARED_LIBRARY)
 
 # delete fake libs after linked
 $(info $(shell (rm $(HERE_PATH)/../jniLibs/*/libawt_headless.so)))
-

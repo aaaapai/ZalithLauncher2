@@ -40,7 +40,7 @@
         android:preserveLegacyExternalStorage="true"
         android:requestLegacyExternalStorage="true"
         android:allowNativeHeapPointerTagging="false"
-        tools:targetApi="33"
+        tools:targetApi="36"
         tools:ignore="DiscouragedApi">
         <activity
             android:name=".ui.activities.SplashActivity"

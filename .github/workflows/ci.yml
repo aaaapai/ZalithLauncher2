@@ -1,27 +1,15 @@
 name: Android CI
 
 on:
-  push:
   workflow_dispatch:
 
 jobs:
   Build:
-    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/build.yml
     with:
       variant: Release
     secrets:
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-      OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
-      CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-
-  Build-Debug:
-    uses: ./.github/workflows/build.yml
-    with:
-      variant: Debug
-    secrets:
-      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-      OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+      OAUTH_CLIENT_ID: 00000000402b5328
       CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}

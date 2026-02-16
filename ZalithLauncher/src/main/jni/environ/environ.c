@@ -7,10 +7,16 @@
 #include <assert.h>
 #include <string.h>
 #include "environ.h"
+#include <android/native_window.h>
+#include <android/native_window_jni.h>
+#include <android/rect.h>
+#include "../jemalloc/jemalloc.h"
+
 struct pojav_environ_s *pojav_environ;
 __attribute__((constructor)) void env_init() {
     char* strptr_env = getenv("POJAV_ENVIRON");
     if(strptr_env == NULL) {
+        int deviceApiLevel = android_get_device_api_level();
         __android_log_print(ANDROID_LOG_INFO, "Environ", "No environ found, creating...");
         pojav_environ = malloc(sizeof(struct pojav_environ_s));
         assert(pojav_environ);

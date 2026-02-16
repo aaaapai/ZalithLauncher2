@@ -9,6 +9,7 @@
 #include <dlfcn.h>
 #include <assert.h>
 #include <malloc.h>
+#include "../jemalloc/jemalloc.h"
 #include <stdlib.h>
 #include "environ/environ.h"
 #include "virgl_bridge.h"
@@ -24,23 +25,30 @@ static OSMesaContext virgl_context;
 void *egl_make_current(void *window) {
     if (pojav_environ->config_renderer == RENDERER_VIRGL)
     {
+        EGLContext context = (EGLContext)window;
+        
         EGLBoolean success = eglMakeCurrent_p(
                 potatoBridge.eglDisplay,
-                window==0 ? (EGLSurface *) 0 : potatoBridge.eglSurface,
-                window==0 ? (EGLSurface *) 0 : potatoBridge.eglSurface,
-                /* window==0 ? EGL_NO_CONTEXT : */ (EGLContext *) window
+                window == 0 ? EGL_NO_SURFACE : potatoBridge.eglSurface,
+                window == 0 ? EGL_NO_SURFACE : potatoBridge.eglSurface,
+                window == 0 ? EGL_NO_CONTEXT : context
         );
 
-        if (success == EGL_FALSE)
-            printf("EGLBridge: Error: eglMakeCurrent() failed: %p\n", eglGetError_p());
-        else printf("EGLBridge: eglMakeCurrent() succeed!\n");
+        if (success == EGL_FALSE) {
+            EGLint error = eglGetError_p();
+            printf("EGLBridge: Error: eglMakeCurrent() failed: 0x%x\n", error);
+            return nullptr;
+        }
+        
+        printf("EGLBridge: eglMakeCurrent() succeed!\n");
 
-    
         printf("VirGL: vtest_main = %p\n", vtest_main_p);
         printf("VirGL: Calling VTest server's main function\n");
-        vtest_main_p(3, (const char*[]){"vtest", "--no-loop-or-fork", "--use-gles", NULL, NULL});
+        
+        vtest_main_p(3, (char*[]){"vtest", "--no-loop-or-fork", "--use-gles", NULL, NULL});
+        return nullptr;
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -69,7 +77,7 @@ int virglInit() {
     if (pojav_environ->config_renderer != RENDERER_VIRGL)
         return 0;
 
-    if (potatoBridge.eglDisplay == NULL || potatoBridge.eglDisplay == EGL_NO_DISPLAY)
+    if (potatoBridge.eglDisplay == nullptr || potatoBridge.eglDisplay == EGL_NO_DISPLAY)
     {
         potatoBridge.eglDisplay = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
         if (potatoBridge.eglDisplay == EGL_NO_DISPLAY)
@@ -93,7 +101,7 @@ int virglInit() {
             EGL_ALPHA_SIZE, 8,
             // Minecraft required on initial 24
             EGL_DEPTH_SIZE, 24,
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
             EGL_NONE
     };
 
@@ -153,7 +161,7 @@ int virglInit() {
     pthread_create(&t, NULL, egl_make_current, (void *)ctx);
     usleep(100*1000); // need enough time for the server to init
 
-    if (OSMesaCreateContext_p == NULL)
+    if (OSMesaCreateContext_p == nullptr)
     {
         printf("OSMDroid: %s\n",dlerror());
         return 0;
@@ -165,13 +173,13 @@ int virglInit() {
 void *virglCreateContext(void *contextSrc) {
     printf("OSMDroid: generating context\n");
 
-    OSMesaContext osmesa_share = NULL;
-    if (contextSrc != NULL) osmesa_share = contextSrc;
+    OSMesaContext osmesa_share = nullptr;
+    if (contextSrc != nullptr) osmesa_share = contextSrc;
 
     OSMesaContext context = OSMesaCreateContext_p(OSMESA_RGBA, osmesa_share);
-    if (context == NULL) {
+    if (context == nullptr) {
         printf("[ VirGL Bridge ] OSMesaContext is Null!!!\n");
-        return NULL;
+        return nullptr;
     }
 
     virgl_context = context;

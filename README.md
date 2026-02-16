@@ -1,3 +1,7 @@
+Welcome to my fork.
+It's a fork of ZalithLauncher2.
+There are a lot of unknown issues in LWJGL 3.4.1 so far. So hopefully you can help me test the LWJGL 3.4.1. Maybe all of commits of the lwjgl3.4.1 branch in the fork will be merged into the upstream(ZalithLauncher2) soon.
+
 # Zalith Launcher 2
 ![Downloads](https://img.shields.io/github/downloads/ZalithLauncher/ZalithLauncher2/total)
 ![Discord](https://img.shields.io/discord/1409012263423185039?logo=discord&label=Discord&color=7289DA&link=https%3A%2F%2Fdiscord.gg%2FyDDkTHp4cJ)
