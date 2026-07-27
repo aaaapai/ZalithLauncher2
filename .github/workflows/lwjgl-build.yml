@@ -34,12 +34,12 @@ jobs:
         with:
           add-job-summary: "on-failure"
 
-      - name: Build APK for ${{ matrix.arch }}
+      - name: Build lwjgl for ${{ matrix.arch }}
         run: |
           chmod +x gradlew
           ./gradlew LWJGL:build --no-daemon
 
-      - name: Upload Debug APK for ${{ matrix.arch }}
+      - name: Upload lwjgl for ${{ matrix.arch }}
         continue-on-error: true
         uses: actions/upload-artifact@main
         with:
