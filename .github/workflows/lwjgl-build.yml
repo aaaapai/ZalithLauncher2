@@ -1,0 +1,60 @@
+name: LWJGL BUILD
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: ["arm"]
+      fail-fast: false
+
+    env:
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+      CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          add-job-summary: "on-failure"
+
+      - name: Build APK for ${{ matrix.arch }}
+        run: |
+          chmod +x gradlew
+          ./gradlew LWJGL:build --no-daemon
+
+      - name: Upload Release APK for ${{ matrix.arch }}
+        if: inputs.variant == 'Release'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: release apk (${{ matrix.arch }})
+          path: |
+                **/lwjgl3/lwjgl-glfw-classes.jar
+                **/lwjgl3/version
+
+      - name: Upload Debug APK for ${{ matrix.arch }}
+        if: inputs.variant == 'Debug'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug apk (${{ matrix.arch }})
+          path: |
+                **/lwjgl3/lwjgl-glfw-classes.jar
+                **/lwjgl3/version
