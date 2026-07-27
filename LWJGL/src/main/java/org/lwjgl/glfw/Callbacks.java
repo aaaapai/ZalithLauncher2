@@ -7,6 +7,8 @@ package org.lwjgl.glfw;
 import org.lwjgl.system.*;
 
 import static org.lwjgl.system.Checks.*;
+import static org.lwjgl.system.JNI.*;
+import static org.lwjgl.system.MemoryUtil.*;
 import java.lang.reflect.*;
 
 /** Utility class for GLFW callbacks. */

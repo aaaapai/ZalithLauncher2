@@ -1,11 +1,12 @@
 package org.lwjgl.glfw;
 
+import org.jspecify.annotations.*;
+
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.NativeType;
 
 import java.nio.IntBuffer;
 
-import javax.annotation.Nullable;
 
 public class GLFWNativeOSMesa {
     @NativeType("int")

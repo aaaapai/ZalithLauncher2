@@ -1,4 +1,5 @@
 package org.lwjgl.glfw;
+import java.nio.ByteBuffer;
 
 public class CallbackBridge {
     public static final int CLIPBOARD_COPY = 2000;
@@ -17,7 +18,12 @@ public class CallbackBridge {
     public static final int ANDROID_TYPE_GRAB_STATE = 0;
     
     public static final boolean INPUT_DEBUG_ENABLED;
-    
+
+    // Notification types
+    public static final int SDL = 0;
+    // Notification actions
+    public static final int INIT = 0;
+
     // TODO send grab state event to Android
     
     static {
@@ -38,7 +44,6 @@ public class CallbackBridge {
 */
     }
 
-
     public static void sendData(int type, String data) {
         nativeSendData(false, type, data);
     }
@@ -47,5 +52,7 @@ public class CallbackBridge {
     public static native String nativeClipboard(int action, byte[] copy);
     public static native void nativeSetGrabbing(boolean grab);
     public static native void nativeSetCursorShape(int shape);
+    public static native float nativeGetAndroidDPI();
+    public static native boolean nativeNotifyLauncher(int type, int... action);
 }
 
