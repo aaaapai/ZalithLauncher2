@@ -53,30 +53,6 @@ public class CallbackBridge {
     public volatile static boolean holdingAlt, holdingCapslock, holdingCtrl,
             holdingNumlock, holdingShift;
 
-    public static final ByteBuffer sGamepadButtonBuffer;
-    public static final FloatBuffer sGamepadAxisBuffer;
-    public static boolean sGamepadDirectInput = false;
-
-    private static @Nullable WeakReference<DirectGamepadEnableHandler> sDirectGamepadEnableHandler;
-
-    public static FloatBuffer createGamepadAxisBuffer() {
-        ByteBuffer axisByteBuffer = nativeCreateGamepadAxisBuffer();
-        return axisByteBuffer.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
-    }
-
-    public static void setDirectGamepadEnableHandler(DirectGamepadEnableHandler h) {
-        sDirectGamepadEnableHandler = new WeakReference<>(h);
-    }
-
-    @SuppressWarnings("unused")
-    @Keep
-    private static void onDirectInputEnable() {
-        android.util.Log.i("CallbackBridge", "onDirectInputEnable()");
-        DirectGamepadEnableHandler enableHandler = sDirectGamepadEnableHandler != null ? sDirectGamepadEnableHandler.get() : null;
-        if (enableHandler != null) enableHandler.onDirectGamepadEnabled();
-        sGamepadDirectInput = true;
-    }
-
     private static final ArrayList<GrabListener> grabListeners = new ArrayList<>();
 
     public static void addGrabListener(GrabListener listener) {
@@ -258,6 +234,11 @@ public class CallbackBridge {
             if(isGrabbing != grabbing) return;
 
             System.out.println("Grab changed : " + grabbing);
+            synchronized (grabListeners) {
+                for (GrabListener g : grabListeners) {
+                    g.onGrabState(grabbing);
+                }
+            }
             synchronized (grabListener) {
                 grabListener.accept(isGrabbing);
             }
@@ -345,6 +326,9 @@ public class CallbackBridge {
 
     static {
         NativeLibraryLoader.loadPojavLib();
+
+        sGamepadButtonBuffer = nativeCreateGamepadButtonBuffer();
+        sGamepadAxisBuffer = createGamepadAxisBuffer();
     }
 }
 
