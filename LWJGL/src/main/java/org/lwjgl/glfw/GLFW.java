@@ -591,7 +591,7 @@ public class GLFW
             // Mods like LWJGL3ify have more of a chance of overriding the other classes so
             // lets just load it here again just to be safe.
             System.loadLibrary("pojavexec");
-            nativeInitializeGLFWNativeBridge();
+            // will come back //nativeInitializeGLFWNativeBridge();
         } catch (UnsatisfiedLinkError e) {
             e.printStackTrace();
         }
