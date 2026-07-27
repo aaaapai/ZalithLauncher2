@@ -326,9 +326,6 @@ public class CallbackBridge {
 
     static {
         NativeLibraryLoader.loadPojavLib();
-
-        sGamepadButtonBuffer = nativeCreateGamepadButtonBuffer();
-        sGamepadAxisBuffer = createGamepadAxisBuffer();
     }
 }
 
