@@ -1485,7 +1485,7 @@ public class GLFW
             return joystickAxisData;
         }
         if(jid == 0) {
-            return buttonData;
+            return joystickData;
         }
         return null;
     }
@@ -1710,21 +1710,6 @@ public class GLFW
     public static void glfwSetPreeditCursorRectangle(@NativeType("GLFWwindow *") long window, int x, int y, int w, int h) { }
     public static void glfwResetPreeditText(@NativeType("GLFWwindow *") long window) { }
     @Nullable public static IntBuffer glfwGetPreeditCandidate(@NativeType("GLFWwindow *") long window, int index) { return null; }
-    
-
-public static void glfwGetMonitorContentScale(@NativeType("GLFWmonitor *") long monitor,
-                                              @Nullable @NativeType("float *") FloatBuffer xscale,
-                                              @Nullable @NativeType("float *") FloatBuffer yscale) {
-    if (xscale != null) xscale.put(scale);
-    if (yscale != null) yscale.put(scale);
-}
-
-public static void glfwGetMonitorContentScale(@NativeType("GLFWmonitor *") long monitor,
-                                              @Nullable @NativeType("float *") float[] xscale,
-                                              @Nullable @NativeType("float *") float[] yscale) {
-    if (xscale != null) Arrays.fill(xscale, scale);
-    if (yscale != null) Arrays.fill(yscale, scale);
-}
 
 public static void glfwGetWindowPos(@NativeType("GLFWwindow *") long window,
                                     @Nullable @NativeType("int *") IntBuffer xpos,
