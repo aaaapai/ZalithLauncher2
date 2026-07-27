@@ -54,8 +54,8 @@ tasks.jar {
         jarList.map { if (it.isDirectory) it else zipTree(it) }
     })
 
-    preserveFileTimestamps = false
-    reproducibleFileOrder = true
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
 
     doLast {
         val versionFile = file("${destinationDirectory.get().asFile}/version")
