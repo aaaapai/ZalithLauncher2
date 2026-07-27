@@ -16,6 +16,12 @@ dependencies {
     implementation("org.jspecify:jspecify:1.0.0")
 }
 
+tasks.compileJava {
+    options.compilerArgs.add("-XDenableSunApiLintControl")
+    options.compilerArgs.add("-XDignore.symbol.file")
+    // options.compilerArgs.add("-proc:none")
+}
+
 tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveBaseName.set("lwjgl-${lwjglVersion}-merged-modules")
