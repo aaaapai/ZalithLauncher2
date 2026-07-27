@@ -26,8 +26,13 @@ tasks.jar {
     })
     exclude("net/java/openjdk/cacio/ctc/**")
     manifest {
-        attributes("Manifest-Version" to "3.3.6")
+        attributes("Manifest-Version" to "3.4.3")
         attributes("Automatic-Module-Name" to "org.lwjgl")
+        attributes("Specification-Title" to "Lightweight Java Game Library - Core")
+        attributes("Implementation-Title" to "lwjgl")
+        attributes("Implementation-Version" to "RELEASE")
+        attributes("Implementation-Vendor" to "lwjgl.org")
+        attributes("Multi-Release" to "true")
     }
 }
 
