@@ -27,7 +27,7 @@ tasks.jar {
     }
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    archiveBaseName.set("lwjgl-${lwjglVersion}-merged-modules")
+    archiveBaseName.set("lwjgl-glfw-classes")
     destinationDirectory.set(file("../ZalithLauncher/src/main/assets/components/lwjgl3"))
 
     exclude("net/java/openjdk/cacio/ctc/**")
@@ -38,6 +38,7 @@ tasks.jar {
         "lwjgl-jemalloc.jar",
         "lwjgl-nanovg.jar",
         "lwjgl-openal.jar",
+        "lwjgl-opengl.jar",
         "lwjgl-stb.jar",
         "lwjgl-tinyfd.jar",
         "lwjgl-shaderc.jar",
@@ -68,7 +69,7 @@ tasks.jar {
 
     doLast {
         val versionFile = file("${destinationDirectory.get().asFile}/version")
-        versionFile.writeText(lwjglVersion)
+        versionFile.writeText(System.currentTimeMillis().toString())
     }
 
     doLast {
