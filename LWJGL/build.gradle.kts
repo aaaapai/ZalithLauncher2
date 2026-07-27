@@ -3,30 +3,82 @@ plugins {
 }
 
 group = "org.lwjgl.glfw"
+val lwjglVersion = "3.4.3"
 
-val fatJarDeps by configurations.creating {
+val lwjglModules by configurations.creating {
     isCanBeResolved = true
-    extendsFrom(configurations.runtimeClasspath.get())
+}
+
+dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    lwjglModules(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    compileOnly(fileTree(mapOf("dir" to "compileOnly", "include" to listOf("*.jar"))))
+    implementation("org.jspecify:jspecify:1.0.0")
 }
 
 tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    archiveBaseName.set("lwjgl-glfw-classes")
-    destinationDirectory.set(file("../ZalithLauncher/src/main/assets/components/lwjgl3/"))
-    // Auto update the version with a timestamp so the project jar gets updated by Pojav
-    doLast {
-        val versionFile = file("../ZalithLauncher/src/main/assets/components/lwjgl3/version")
-        versionFile.writeText(System.currentTimeMillis().toString())
-    }
-    from({
-        fatJarDeps.map {
-            println(it.name)
-            if (it.isDirectory) it else zipTree(it)
-        }
-    })
+    archiveBaseName.set("lwjgl-${lwjglVersion}-merged-modules")
+    destinationDirectory.set(file("../ZalithLauncher/src/main/assets/components/lwjgl3"))
+
     exclude("net/java/openjdk/cacio/ctc/**")
+
+    val excludedModules = listOf(
+        "lwjgl-lwjglx.jar",
+        "lwjgl-freetype.jar",
+        "lwjgl-jemalloc.jar",
+        "lwjgl-nanovg.jar",
+        "lwjgl-openal.jar",
+        "lwjgl-stb.jar",
+        "lwjgl-tinyfd.jar",
+        "lwjgl-shaderc.jar",
+        "lwjgl-spvc.jar",
+        "lwjgl-vma.jar",
+        "lwjgl-vulkan.jar",
+        "lwjgl-sdl.jar",
+        "lwjgl-spng.jar"
+    )
+
+    from({
+        val includedModules = lwjglModules.filter { dep ->
+            !excludedModules.contains(dep.name)
+        }
+        val coreJar = includedModules.find { it.name == "lwjgl-unsafe.jar" }
+        val jarList = if (coreJar != null) {
+            listOf(coreJar) + includedModules.filter { it != coreJar }
+        } else {
+            includedModules
+        }
+        println("Merging LWJGL $lwjglVersion modules in order:")
+        jarList.forEach { println("  ${it.name}") }
+        jarList.map { if (it.isDirectory) it else zipTree(it) }
+    })
+
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+
+    doLast {
+        val versionFile = file("${destinationDirectory.get().asFile}/version")
+        versionFile.writeText(lwjglVersion)
+    }
+
+    doLast {
+        val destDir = destinationDirectory.get().asFile
+        excludedModules.forEach { fileName ->
+            val depFile = lwjglModules.find { it.name == fileName }
+            if (depFile != null) {
+                copy {
+                    from(depFile)
+                    into(destDir)
+                }
+            } else {
+                println("Warning: excluded module '$fileName' not found")
+            }
+        }
+    }
+
     manifest {
-        attributes("Manifest-Version" to "3.4.3")
+        attributes("Manifest-Version" to lwjglVersion)
         attributes("Automatic-Module-Name" to "org.lwjgl")
         attributes("Specification-Title" to "Lightweight Java Game Library - Core")
         attributes("Implementation-Title" to "lwjgl")
@@ -42,10 +94,4 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(8))
     }
-}
-
-dependencies {
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-    compileOnly(fileTree(mapOf("dir" to "compileOnly", "include" to listOf("*.jar"))))
-    compileOnly("org.jspecify:jspecify:1.0.0")
 }
