@@ -33,6 +33,8 @@ public class GLFW
     static FloatBuffer joystickAxisData;
     static ByteBuffer joystickButtonData;
     static ByteBuffer empty = (ByteBuffer)ByteBuffer.allocate(0);
+    static FloatBuffer joystickData = (FloatBuffer)FloatBuffer.allocate(8).flip();
+    static ByteBuffer buttonData = (ByteBuffer)ByteBuffer.allocate(8).flip();
     /** The major version number of the GLFW library. This is incremented when the API is changed in non-compatible ways. */
     public static final int GLFW_VERSION_MAJOR = 3;
 
@@ -1442,15 +1444,6 @@ public class GLFW
           CallbackBridge.nativeSetCursorShape(CursorRegistry.getShape(cursor));
     }
 
-    /** {@code void glfwGetPreeditCursorRectangle(GLFWwindow * window, int * x, int * y, int * w, int * h)} */
-    public static void glfwGetPreeditCursorRectangle(@NativeType("GLFWwindow *") long window, @NativeType("int *") @Nullable IntBuffer x, @NativeType("int *") @Nullable IntBuffer y, @NativeType("int *") @Nullable IntBuffer w, @NativeType("int *") @Nullable IntBuffer h) {
-
-    }
-
-    /** {@code void glfwSetPreeditCursorRectangle(GLFWwindow * window, int x, int y, int w, int h)} */
-    public static void glfwSetPreeditCursorRectangle(@NativeType("GLFWwindow *") long window, int x, int y, int w, int h) {
-
-    }
 
     public static boolean glfwRawMouseMotionSupported() {
         // Should be not supported?
@@ -1537,7 +1530,6 @@ public class GLFW
     }
     public static boolean glfwGetGamepadState(int jid, GLFWGamepadState state) {
         if(jid != 0) return false;
-        MemoryUtil.memCopy(gamepadDataPointer, state.address(), state.sizeof());
         return true;
     }
 
@@ -1740,14 +1732,6 @@ public static void glfwGetWindowPos(@NativeType("GLFWwindow *") long window,
     GLFWWindowProperties win = internalGetWindow(window);
     if (xpos != null) xpos.put(win.x);
     if (ypos != null) ypos.put(win.y);
-}
-
-public static void glfwGetWindowPos(@NativeType("GLFWwindow *") long window,
-                                    @Nullable @NativeType("int *") int[] xpos,
-                                    @Nullable @NativeType("int *") int[] ypos) {
-    GLFWWindowProperties win = internalGetWindow(window);
-    if (xpos != null && xpos.length > 0) xpos[0] = win.x;
-    if (ypos != null && ypos.length > 0) ypos[0] = win.y;
 }
 
 
