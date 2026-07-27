@@ -16,13 +16,16 @@ dependencies {
     implementation("org.jspecify:jspecify:1.0.0")
 }
 
-tasks.compileJava {
-    options.compilerArgs.add("-XDenableSunApiLintControl")
-    options.compilerArgs.add("-XDignore.symbol.file")
-    // options.compilerArgs.add("-proc:none")
-}
-
 tasks.jar {
+    doFirst {
+        val destDir = destinationDirectory.get().asFile
+        destDir.listFiles()?.forEach { file ->
+            if (file.isFile && (file.extension == "jar" || file.name == "version")) {
+                file.delete()
+            }
+        }
+    }
+
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveBaseName.set("lwjgl-${lwjglVersion}-merged-modules")
     destinationDirectory.set(file("../ZalithLauncher/src/main/assets/components/lwjgl3"))
