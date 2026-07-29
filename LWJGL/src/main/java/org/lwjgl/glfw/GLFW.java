@@ -953,8 +953,12 @@ public class GLFW
     }
 
     public static void glfwGetWindowContentScale(@NativeType("GLFWwindow *") long window, @Nullable @NativeType("float *") FloatBuffer xscale, @Nullable @NativeType("float *") FloatBuffer yscale) {
-        if (xscale != null) xscale.put(scale);
-        if (yscale != null) yscale.put(scale);
+        //if (xscale != null) xscale.put(scale);
+        //if (yscale != null) yscale.put(scale);
+		if (xscale != null && yscale != null) {
+            xscale[0] = 1f;
+            yscale[0] = 1f;
+		}
     }
 
     @Nullable
