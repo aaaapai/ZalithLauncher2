@@ -1660,12 +1660,16 @@ public class GLFW
         right[0] = internalGetWindow(window).width;
         bottom[0] = internalGetWindow(window).height;
     }
-    static float scale = CallbackBridge.nativeGetAndroidDPI(); // This is overkill but hey, its the proper implementation!
+    //static float scale = CallbackBridge.nativeGetAndroidDPI(); // This is overkill but hey, its the proper implementation!
     /** Array version of: {@link #glfwGetWindowContentScale GetWindowContentScale} */
     public static void glfwGetWindowContentScale(@NativeType("GLFWwindow *") long window, @Nullable @NativeType("float *") float[] xscale, @Nullable @NativeType("float *") float[] yscale) {
         // Assume uniform scaling because we are in the modern era
-        if (xscale != null) Arrays.fill(xscale, scale);
-        if (yscale != null) Arrays.fill(yscale, scale);
+        //if (xscale != null) Arrays.fill(xscale, scale);
+        //if (yscale != null) Arrays.fill(yscale, scale);
+		if (xscale != null && yscale != null) {
+            xscale[0] = 1f;
+            yscale[0] = 1f;
+		}
     }
 /*
     public static void glfwGetWindowContentScale(@NativeType("GLFWwindow *") long window, @Nullable @NativeType("float *") float[] xscale, @Nullable @NativeType("float *") float[] yscale) {
