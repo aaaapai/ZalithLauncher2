@@ -956,8 +956,8 @@ public class GLFW
         //if (xscale != null) xscale.put(scale);
         //if (yscale != null) yscale.put(scale);
 		if (xscale != null && yscale != null) {
-            xscale[0] = 1f;
-            yscale[0] = 1f;
+           xscale.put(0, 1f);
+           yscale.put(0, 1f);
 		}
     }
 
