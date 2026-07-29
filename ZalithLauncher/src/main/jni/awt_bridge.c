@@ -37,7 +37,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
         //Save dalvik global JavaVM pointer
         dalvikJavaVMPtr = vm;
         JNIEnv *env = NULL;
-        (*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_4);
+        (*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6);
         class_ZLInvoker = (*env)->NewGlobalRef(env,(*env)->FindClass(env, "com/movtery/zalithlauncher/bridge/ZLNativeInvoker"));
         method_OpenLink= (*env)->GetStaticMethodID(env, class_ZLInvoker, "openLink", "(Ljava/lang/String;)V");
         method_OpenPath= (*env)->GetStaticMethodID(env, class_ZLInvoker, "openLink", "(Ljava/lang/String;)V");
@@ -47,7 +47,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
         runtimeJavaVMPtr = vm;
     }
 
-    return JNI_VERSION_1_4;
+    return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNICALL Java_com_movtery_zalithlauncher_bridge_ZLBridge_sendInputData(JNIEnv* env, jclass clazz, jint type, jint i1, jint i2, jint i3, jint i4) {
