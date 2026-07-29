@@ -52,7 +52,7 @@ public class CallbackBridge {
     public static native String nativeClipboard(int action, byte[] copy);
     public static native void nativeSetGrabbing(boolean grab);
     public static native void nativeSetCursorShape(int shape);
-	//public static native float nativeGetAndroidDPI();
-    //public static native boolean nativeNotifyLauncher(int type, int... action);
+	public static native float nativeGetAndroidDPI();
+    public static native boolean nativeNotifyLauncher(int type, int... action);
 }
 
