@@ -118,16 +118,3 @@ JNIEXPORT jint JNICALL Java_com_movtery_zalithlauncher_bridge_ZLBridge_chdir(JNI
 	(*env)->ReleaseStringUTFChars(env, nameStr, name);
 	return retval;
 }
-
-JNIEnv* get_attached_env(JavaVM* jvm) {
-    JNIEnv *jvm_env = NULL;
-    jint env_result = (*jvm)->GetEnv(jvm, (void**)&jvm_env, JNI_VERSION_1_4);
-    if(env_result == JNI_EDETACHED) {
-        env_result = (*jvm)->AttachCurrentThread(jvm, &jvm_env, NULL);
-    }
-    if(env_result != JNI_OK) {
-        printf("get_attached_env failed: %i\n", env_result);
-        return NULL;
-    }
-    return jvm_env;
-}
