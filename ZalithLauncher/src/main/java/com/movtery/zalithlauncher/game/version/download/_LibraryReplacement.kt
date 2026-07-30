@@ -33,33 +33,77 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
 
     return when {
         libraryName.startsWith("net.java.dev.jna:jna:") -> {
-            //如果版本已经达到5.13.0及以上，则不做处理
-            if (major >= 5 && minor >= 13) null
+            //如果版本已经达到5.19.0及以上，则不做处理
+            if (major >= 5 && minor >= 19) null
             else LibraryReplacement(
-                newName = "net.java.dev.jna:jna:5.13.0",
-                newPath = "net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar",
-                newSha1 = "1200e7ebeedbe0d10062093f32925a912020e747",
-                newUrl = "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar"
+                newName = "net.java.dev.jna:jna:5.19.1",
+                newPath = "net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar",
+                newSha1 = "ca303052cd617c1af2e2c8d344c98a706fb63143",
+                newUrl = "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar"
             )
         }
         libraryName.startsWith("com.github.oshi:oshi-core:") -> {
-            //仅对版本 6.2.0 进行修改
-            if (major != 6 || minor != 2) null
+            if (major >= 7 && minor >= 4) null
             else LibraryReplacement(
-                newName = "com.github.oshi:oshi-core:6.3.0",
-                newPath = "com/github/oshi/oshi-core/6.3.0/oshi-core-6.3.0.jar",
-                newSha1 = "9e98cf55be371cafdb9c70c35d04ec2a8c2b42ac",
-                newUrl = "https://repo1.maven.org/maven2/com/github/oshi/oshi-core/6.3.0/oshi-core-6.3.0.jar"
+                newName = "com.github.oshi:oshi-core:7.4.2",
+                newPath = "com/github/oshi/oshi-core/7.4.2/oshi-core-7.4.2.jar",
+                newSha1 = "e454d19d62444d778910027d40955c279241c769",
+                newUrl = "https://repo1.maven.org/maven2/com/github/oshi/oshi-core/7.4.2/oshi-core-7.4.2.jar"
+            )
+        }
+        libraryName.startsWith("org.ow2.asm:asm:") -> {
+            if (major >= 9 && minor >= 10) null
+            else LibraryReplacement(
+                newName = "org.ow2.asm:asm:9.10.1",
+                newPath = "org/ow2/asm/asm/9.10.1/asm-9.10.1.jar",
+                newSha1 = "507e7f8821c58fc995a057b63ad4008b96bafa4d",
+                newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar"
+            )
+        }
+        libraryName.startsWith("org.ow2.asm:asm-analysis:") -> {
+            if (major >= 9 && minor >= 10) null
+            else LibraryReplacement(
+                newName = "org.ow2.asm:asm-analysis:9.10.1",
+                newPath = "org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar",
+                newSha1 = "cf2754cfa5e4df15ccf9f8779485f23862c5b488",
+                newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar"
+            )
+        }
+        libraryName.startsWith("org.ow2.asm:asm-commons:") -> {
+            if (major >= 9 && minor >= 10) null
+            else LibraryReplacement(
+                newName = "org.ow2.asm:asm-commons:9.10.1",
+                newPath = "org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar",
+                newSha1 = "a28039cb619a6c2a5c7ca5b3206381f9032c8368",
+                newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar"
+            )
+        }
+        libraryName.startsWith("org.ow2.asm:asm-tree:") -> {
+            if (major >= 9 && minor >= 10) null
+            else LibraryReplacement(
+                newName = "org.ow2.asm:asm-tree:9.10.1",
+                newPath = "org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar",
+                newSha1 = "0fe218ecae48cabf4e53295d64ae4e01e5ddfb33",
+                newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar"
+            )
+        }
+        libraryName.startsWith("org.ow2.asm:asm-util:") -> {
+            if (major >= 9 && minor >= 10) null
+            else LibraryReplacement(
+                newName = "org.ow2.asm:asm-util:9.10.1",
+                newPath = "org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar",
+                newSha1 = "c6db0976b79a615802b820b08664602fa1f6a5ad",
+                newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar"
             )
         }
         libraryName.startsWith("org.ow2.asm:asm-all:") -> {
             //如果主版本号不低于5，则不做处理
             if (major >= 5) null
             else LibraryReplacement(
-                newName = "org.ow2.asm:asm-all:5.0.4",
-                newPath = "org/ow2/asm/asm-all/5.0.4/asm-all-5.0.4.jar",
-                newSha1 = "e6244859997b3d4237a552669279780876228909",
-                newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-all/5.0.4/asm-all-5.0.4.jar"
+                newName = "org.ow2.asm:asm-all:5.2",
+                newPath = "org/ow2/asm/asm-all/5.2/asm-all-5.2.jar",
+                newSha1 = "d7443ae58d5479f99b5691041ccf0f4437f194e1",
+                newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-all/5.2/asm-all-5.2.jar"
             )
         }
         else -> null
