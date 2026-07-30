@@ -46,6 +46,20 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
         pojav_environ->method_onCursorShapeChanged = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onCursorShapeChanged", "(I)V");
         pojav_environ->method_onGraphicOutput = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onGraphicOutput", "()V");
         pojav_environ->isUseStackQueueCall = JNI_FALSE;
+
+        pojav_environ->method_getAndroidDPI = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(
+            pojav_environ->dalvikJNIEnvPtr_ANDROID,
+            pojav_environ->bridgeClazz,
+            "getAndroidDPI",
+            "()F"
+        );
+        pojav_environ->method_notifyLauncher = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(
+            pojav_environ->dalvikJNIEnvPtr_ANDROID,
+            pojav_environ->bridgeClazz,
+            "notifyLauncher",
+            "(I[I)Z"
+        );
+
     } else if (pojav_environ->dalvikJavaVMPtr != vm) {
         LOG_TO_I("<%s> %s", "Native", "Saving JVM environ...");
         pojav_environ->runtimeJavaVMPtr = vm;
@@ -53,8 +67,6 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
         pojav_environ->vmGlfwClass = (*pojav_environ->runtimeJNIEnvPtr_JRE)->NewGlobalRef(pojav_environ->runtimeJNIEnvPtr_JRE, (*pojav_environ->runtimeJNIEnvPtr_JRE)->FindClass(pojav_environ->runtimeJNIEnvPtr_JRE, "org/lwjgl/glfw/GLFW"));
         pojav_environ->method_glftSetWindowAttrib = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticMethodID(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, "glfwSetWindowAttrib", "(JII)V");
         pojav_environ->method_internalWindowSizeChanged = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticMethodID(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, "internalWindowSizeChanged", "(JII)V");
-        pojav_environ->method_getAndroidDPI = (*dvEnv)->GetStaticMethodID(dvEnv, pojav_environ->bridgeClazz, "getAndroidDPI", "()F");
-        pojav_environ->method_notifyLauncher = (*dvEnv)->GetStaticMethodID(dvEnv, pojav_environ->bridgeClazz, "notifyLauncher", "(I[I)Z");
         jfieldID field_keyDownBuffer = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticFieldID(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, "keyDownBuffer", "Ljava/nio/ByteBuffer;");
         jobject keyDownBufferJ = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticObjectField(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, field_keyDownBuffer);
         pojav_environ->keyDownBuffer = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetDirectBufferAddress(pojav_environ->runtimeJNIEnvPtr_JRE, keyDownBufferJ);
@@ -510,16 +522,47 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
 }
 
 JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
-    TRY_ATTACH_ENV(dvm_env, pojav_environ->dalvikJavaVMPtr, "getAndroidDPI failed!\n",);
-    jfloat result = (*dvm_env)->CallStaticFloatMethod(dvm_env, pojav_environ->bridgeClazz,
-                                                      pojav_environ->method_getAndroidDPI);
+    JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
+    JNIEnv *dvm_env = NULL;
+    jfloat result = 0.0f;
+
+    // 获取或附着到 Dalvik VM
+    if ((*dvm)->GetEnv(dvm, (void**)&dvm_env, JNI_VERSION_1_6) != JNI_OK) {
+        (*dvm)->AttachCurrentThread(dvm, &dvm_env, NULL);
+        if (dvm_env == NULL) {
+            LOG_TO_E("getAndroidDPI: Failed to attach Dalvik thread");
+            return 0.0f;
+        }
+    }
+
+    result = (*dvm_env)->CallStaticFloatMethod(dvm_env, pojav_environ->bridgeClazz,
+                                               pojav_environ->method_getAndroidDPI);
+
+    // 如果这里不希望 Detach，可以注释掉；但为了线程安全，建议保持附着（如果之前已附着则不会重复附着）
+    // 简单起见，这里不 Detach，因为该线程可能还会被用于其他 Dalvik 调用。
+    // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
     return result;
 }
 
 JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeNotifyLauncher(JNIEnv* env, __attribute__((unused)) jclass clazz, jint type, jintArray action) {
-    TRY_ATTACH_ENV(dvm_env, pojav_environ->dalvikJavaVMPtr, "nativeNotifyLauncher failed!\n",);
-    jboolean result = (*dvm_env)->CallStaticBooleanMethod(dvm_env, pojav_environ->bridgeClazz,
-                                                      pojav_environ->method_notifyLauncher, type, convertIntArrayJVM(env, dvm_env, action));
+    JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
+    JNIEnv *dvm_env = NULL;
+    jboolean result = JNI_FALSE;
+
+    if ((*dvm)->GetEnv(dvm, (void**)&dvm_env, JNI_VERSION_1_6) != JNI_OK) {
+        (*dvm)->AttachCurrentThread(dvm, &dvm_env, NULL);
+        if (dvm_env == NULL) {
+            LOG_TO_E("nativeNotifyLauncher: Failed to attach Dalvik thread");
+            return JNI_FALSE;
+        }
+    }
+
+    // 直接传递 action（jintArray），不需要转换
+    result = (*dvm_env)->CallStaticBooleanMethod(dvm_env, pojav_environ->bridgeClazz,
+                                                 pojav_environ->method_notifyLauncher,
+                                                 type, action);
+
+    // 同上，不 Detach
     return result;
 }
 
