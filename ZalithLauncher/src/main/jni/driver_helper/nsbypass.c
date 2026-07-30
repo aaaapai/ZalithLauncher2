@@ -25,8 +25,6 @@
 #define ELF_XWORD Elf64_Xword
 #define ELF_DYN Elf64_Dyn
 
-int page_size = getpagesize();
-
 typedef void* (*loader_dlopen_t)(const char* filename, int flags, const void* caller_addr);
 typedef struct android_namespace_t* (*ld_android_create_namespace_t)(
     const char* name, const char* ld_library_path, const char* default_library_path, uint64_t type,
@@ -43,12 +41,14 @@ bool patch_elf_soname(int patchfd, int realfd, uint16_t patchid);
 static struct android_namespace_t* create_namespace_local(
     const char* name, const char* ld_library_path, const char* default_library_path, uint64_t type,
     const char* permitted_when_isolated_path, struct android_namespace_t* parent) {
+    int page_size = getpagesize();
     void* caller = __builtin_return_address(0);
     return android_create_namespace(name, ld_library_path, default_library_path, type,
                                      permitted_when_isolated_path, parent, caller);
 }
 
 static void* find_branch_label(void* func_start) {
+    int page_size = getpagesize();
     void* func_page_start = (void*)(((uintptr_t)func_start) & ~(page_size - 1));
     mprotect(func_page_start, page_size, PROT_READ | PROT_EXEC);
     uint32_t* bl_addr = func_start;
@@ -62,6 +62,7 @@ static void* find_branch_label(void* func_start) {
 
 bool linker_ns_load(const char* lib_search_path) {
 #ifdef ADRENO_POSSIBLE
+    int page_size = getpagesize();
     loader_dlopen_t loader_dlopen = find_branch_label(&dlopen);
     mprotect(loader_dlopen, page_size, PROT_READ | PROT_WRITE | PROT_EXEC);
 
