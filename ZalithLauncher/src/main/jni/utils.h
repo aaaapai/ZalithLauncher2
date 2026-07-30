@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include "environ/environ.h"
 
 #define CLIPBOARD_COPY 2000
 #define CLIPBOARD_PASTE 2001
