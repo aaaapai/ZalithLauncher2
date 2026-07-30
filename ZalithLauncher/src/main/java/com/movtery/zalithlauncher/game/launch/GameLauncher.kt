@@ -165,26 +165,26 @@ class GameLauncher(
     override fun getLogFile(): File = VersionsManager.getLatestLog(version)
 
     private fun setCustomEnv(envMap: MutableMap<String, String>) {
-      val customEnvFile = File(PathManager.DIR_FILES_EXTERNAL, "custom_env.txt")
-      if (customEnvFile.exists() && customEnvFile.isFile) {
-          try {
-              customEnvFile.bufferedReader().use { reader ->
-                  reader.forEachLine { line ->
-                      val index = line.indexOf('=')
-                      if (index > 0 && index < line.length - 1) {
-                          val key = line.substring(0, index)
-                          val value = line.substring(index + 1)
-                          envMap[key] = value
-                          lInfo("Loaded custom env: $key=$value")
-                      } else {
-                          lWarning("Invalid custom env line: $line")
-                      }
+       val customEnvFile = File(PathManager.DIR_FILES_EXTERNAL, "custom_env.txt")
+       if (customEnvFile.exists() && customEnvFile.isFile) {
+           try {
+               customEnvFile.bufferedReader().use { reader ->
+                   reader.forEachLine { line ->
+                       val index = line.indexOf('=')
+                       if (index > 0 && index < line.length - 1) {
+                           val key = line.substring(0, index)
+                           val value = line.substring(index + 1)
+                           envMap[key] = value
+                           Logger.info(TAG, "Loaded custom env: $key=$value")
+                       } else {
+                        Logger.warning(TAG, "Invalid custom env line: $line")
+                       }
                   }
-              }
-          } catch (e: Exception) {
-              lError("Failed to read custom_env.txt", e)
-          }
-      }
+               }
+           } catch (e: Exception) {
+                Logger.error(TAG, "Failed to read custom_env.txt", e)
+           }
+       }
     }
 
     override fun initEnv(screenSize: IntSize): MutableMap<String, String> {
