@@ -75,6 +75,11 @@ public class CallbackBridge {
         return metrics.density;
     }
 
+    @SuppressWarnings("unused")
+    @Keep
+    public static boolean notifyLauncher(int type, int... action) {
+      return false;
+    }
 
     public static void putMouseEventWithCoords(int button, float x, float y) {
         sendCursorPos(x, y);
