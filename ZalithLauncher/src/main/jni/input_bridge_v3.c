@@ -268,14 +268,10 @@ void installEMUIIteratorMititgation() {
     if (getenv("POJAV_EMUI_ITERATOR_MITIGATE") == NULL) return;
 
     if (pojav_environ == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "EMUIIteratorFix",
-                            "pojav_environ is NULL, aborting");
         return;
     }
     JNIEnv* env = pojav_environ->runtimeJNIEnvPtr_JRE;
     if (env == NULL) {
-        __android_log_print(ANDROID_LOG_ERROR, "EMUIIteratorFix",
-                            "runtimeJNIEnvPtr_JRE is NULL, aborting");
         return;
     }
 
