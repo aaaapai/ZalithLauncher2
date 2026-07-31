@@ -47,7 +47,7 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
             else LibraryReplacement(
                 newName = "com.github.oshi:oshi-core:7.4.2",
                 newPath = "com/github/oshi/oshi-core/7.4.2/oshi-core-7.4.2.jar",
-                newSha1 = "e454d19d62444d778910027d40955c279241c769",
+                newSha1 = "0823528b4a54899104cefca7a1088ce4140687b0",
                 newUrl = "https://repo1.maven.org/maven2/com/github/oshi/oshi-core/7.4.2/oshi-core-7.4.2.jar"
             )
         }
