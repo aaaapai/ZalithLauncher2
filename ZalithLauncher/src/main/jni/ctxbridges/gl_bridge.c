@@ -189,7 +189,7 @@ void gl_swap_surface(gl_render_window_t* bundle) {
     /*
      * 保留原有的 usleep 和尺寸检查，处理 Android 可能已经释放 surface 的情况
      */
-    usleep(750000); // 等待表面消亡
+    //usleep(750000); // 等待表面消亡 // Why?
     int32_t nativeWindowWidth = ANativeWindow_getWidth(pojav_environ->pojavWindow);
     int32_t nativeWindowHeight = ANativeWindow_getHeight(pojav_environ->pojavWindow);
     if ((nativeWindowWidth > 0) || (nativeWindowHeight > 0)) {
@@ -247,6 +247,15 @@ void gl_make_current(gl_render_window_t* bundle) {
     if (eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context))
     {
         currentBundle = bundle;
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "eglMakeCurrent success, surface=%p, context=%p", bundle->surface, bundle->context);
+        EGLContext cur = eglGetCurrentContext_p();
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "eglGetCurrentContext = %p (expected %p)", cur, bundle->context);
+        EGLint ver;
+        if (eglQueryContext_p(g_EglDisplay, bundle->context, EGL_CONTEXT_CLIENT_VERSION, &ver)) {
+            __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Context client version = %d", ver);
+        } else {
+            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglQueryContext failed: 0x%04x", eglGetError_p());
+        }
     } else {
         if (hasSetMainWindow)
         {
@@ -256,7 +265,6 @@ void gl_make_current(gl_render_window_t* bundle) {
         }
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglMakeCurrent returned with error: %04x", eglGetError_p());
     }
-
 }
 
 void gl_swap_buffers() {
