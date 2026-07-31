@@ -46,20 +46,6 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
         pojav_environ->method_onCursorShapeChanged = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onCursorShapeChanged", "(I)V");
         pojav_environ->method_onGraphicOutput = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onGraphicOutput", "()V");
         pojav_environ->isUseStackQueueCall = JNI_FALSE;
-
-        pojav_environ->method_getAndroidDPI = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(
-            pojav_environ->dalvikJNIEnvPtr_ANDROID,
-            pojav_environ->bridgeClazz,
-            "getAndroidDPI",
-            "()F"
-        );
-        pojav_environ->method_notifyLauncher = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(
-            pojav_environ->dalvikJNIEnvPtr_ANDROID,
-            pojav_environ->bridgeClazz,
-            "notifyLauncher",
-            "(I[I)Z"
-        );
-
     } else if (pojav_environ->dalvikJavaVMPtr != vm) {
         LOG_TO_I("<%s> %s", "Native", "Saving JVM environ...");
         pojav_environ->runtimeJavaVMPtr = vm;
@@ -537,7 +523,7 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
     // Attaching every time is annoying, so stick the attachment to the Android GUI thread around
 }
 
-JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
+/*JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
     JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
     JNIEnv *dvm_env = NULL;
     jfloat result = 0.0f;
@@ -580,7 +566,7 @@ JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeNotifyLaunch
 
     // 同上，不 Detach
     return result;
-}
+}*/
 
 const static JNINativeMethod critical_fcns[] = {
         {"nativeSetUseInputStackQueue", "(Z)V", critical_set_stackqueue},
