@@ -33,10 +33,6 @@
 #define EVENT_TYPE_WINDOW_SIZE 1008
 
 static void registerFunctions(JNIEnv *env);
-static void ensure_jre_hooks_installed(void);   // 新增：延迟初始化 JRE 钩子
-
-// 原子标志，确保钩子只安装一次
-static atomic_bool jre_hooks_installed = false;
 
 jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
     if (pojav_environ->dalvikJavaVMPtr == NULL) {
@@ -77,10 +73,9 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
         jfieldID field_mouseDownBuffer = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticFieldID(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, "mouseDownBuffer", "Ljava/nio/ByteBuffer;");
         jobject mouseDownBufferJ = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticObjectField(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, field_mouseDownBuffer);
         pojav_environ->mouseDownBuffer = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetDirectBufferAddress(pojav_environ->runtimeJNIEnvPtr_JRE, mouseDownBufferJ);
-        // 危险操作已移至 ensure_jre_hooks_installed()
-        // hookExec();
-        // installLwjglDlopenHook();
-        // installEMUIIteratorMititgation();
+        hookExec();
+        installLwjglDlopenHook();
+        installEMUIIteratorMititgation();
     }
 
     if(pojav_environ->dalvikJavaVMPtr == vm) {
@@ -95,18 +90,6 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
 }
 jint JNI_OnLoad_pojavexec(JavaVM* vm, void* reserved)
     __attribute__((alias("JNI_OnLoad")));
-
-// ---------- 新增：延迟初始化 JRE 钩子 ----------
-static void ensure_jre_hooks_installed(void) {
-    // 利用原子操作确保只执行一次
-    if (atomic_exchange(&jre_hooks_installed, true) == false) {
-        LOG_TO_I("<%s> %s", "JRE Hooks", "Installing (deferred) ...");
-        // 现在执行原本在 JNI_OnLoad 中的危险操作
-        hookExec();
-        installLwjglDlopenHook();
-        installEMUIIteratorMititgation();
-    }
-}
 
 #define ADD_CALLBACK_WWIN(NAME) \
 JNIEXPORT jlong JNICALL Java_org_lwjgl_glfw_GLFW_nglfwSet##NAME##Callback(JNIEnv * env, jclass cls, jlong window, jlong callbackptr) { \
@@ -132,9 +115,6 @@ void handleFramebufferSizeJava(long window, int w, int h) {
 }
 
 void pojavPumpEvents(void* window) {
-    // 确保 JRE 钩子已安装（延迟初始化）
-    ensure_jre_hooks_installed();
-
     if(pojav_environ->shouldUpdateMouse) {
         pojav_environ->GLFW_invoke_CursorPos(window, floor(pojav_environ->cursorX),
                                              floor(pojav_environ->cursorY));
@@ -512,9 +492,6 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_GLFW_nglfwSetShowingWindow(__attribut
 }
 
 JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(__attribute__((unused)) JNIEnv* env, __attribute__((unused)) jclass clazz, jint attrib, jint value) {
-    // 确保 JRE 钩子已安装（延迟初始化）
-    ensure_jre_hooks_installed();
-
     // Check for stack queue no longer necessary here as the JVM crash's origin is resolved
     if (!pojav_environ->showingWindow) {
         // If the window is not shown, there is nothing to do yet.
@@ -546,37 +523,48 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
     // Attaching every time is annoying, so stick the attachment to the Android GUI thread around
 }
 
-// 优化：获取 Dalvik JNIEnv 而不反复 Attach/Detach
-static JNIEnv* get_dalvik_env(void) {
-    JNIEnv *env;
-    if ((*pojav_environ->dalvikJavaVMPtr)->GetEnv(pojav_environ->dalvikJavaVMPtr, (void**)&env, JNI_VERSION_1_6) == JNI_OK)
-        return env;
-    // 若线程未附着，则附着（不主动 Detach，以便后续复用）
-    (*pojav_environ->dalvikJavaVMPtr)->AttachCurrentThread(pojav_environ->dalvikJavaVMPtr, &env, NULL);
-    return env;
-}
-
 JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
-    // 使用优化的环境获取，避免反复 Detach
-    JNIEnv *dvm_env = get_dalvik_env();
-    if (dvm_env == NULL) {
-        LOG_TO_E("getAndroidDPI: Failed to get Dalvik environment");
-        return 0.0f;
+    JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
+    JNIEnv *dvm_env = NULL;
+    jfloat result = 0.0f;
+
+    // 获取或附着到 Dalvik VM
+    if ((*dvm)->GetEnv(dvm, (void**)&dvm_env, JNI_VERSION_1_6) != JNI_OK) {
+        (*dvm)->AttachCurrentThread(dvm, &dvm_env, NULL);
+        if (dvm_env == NULL) {
+            LOG_TO_E("getAndroidDPI: Failed to attach Dalvik thread");
+            return 0.0f;
+        }
     }
-    jfloat result = (*dvm_env)->CallStaticFloatMethod(dvm_env, pojav_environ->bridgeClazz,
-                                                       pojav_environ->method_getAndroidDPI);
+
+    result = (*dvm_env)->CallStaticFloatMethod(dvm_env, pojav_environ->bridgeClazz,
+                                               pojav_environ->method_getAndroidDPI);
+
+    // 如果这里不希望 Detach，可以注释掉；但为了线程安全，建议保持附着（如果之前已附着则不会重复附着）
+    // 简单起见，这里不 Detach，因为该线程可能还会被用于其他 Dalvik 调用。
+    // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
     return result;
 }
 
 JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeNotifyLauncher(JNIEnv* env, __attribute__((unused)) jclass clazz, jint type, jintArray action) {
-    JNIEnv *dvm_env = get_dalvik_env();
-    if (dvm_env == NULL) {
-        LOG_TO_E("nativeNotifyLauncher: Failed to get Dalvik environment");
-        return JNI_FALSE;
+    JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
+    JNIEnv *dvm_env = NULL;
+    jboolean result = JNI_FALSE;
+
+    if ((*dvm)->GetEnv(dvm, (void**)&dvm_env, JNI_VERSION_1_6) != JNI_OK) {
+        (*dvm)->AttachCurrentThread(dvm, &dvm_env, NULL);
+        if (dvm_env == NULL) {
+            LOG_TO_E("nativeNotifyLauncher: Failed to attach Dalvik thread");
+            return JNI_FALSE;
+        }
     }
-    jboolean result = (*dvm_env)->CallStaticBooleanMethod(dvm_env, pojav_environ->bridgeClazz,
-                                                           pojav_environ->method_notifyLauncher,
-                                                           type, action);
+
+    // 直接传递 action（jintArray），不需要转换
+    result = (*dvm_env)->CallStaticBooleanMethod(dvm_env, pojav_environ->bridgeClazz,
+                                                 pojav_environ->method_notifyLauncher,
+                                                 type, action);
+
+    // 同上，不 Detach
     return result;
 }
 
@@ -645,4 +633,3 @@ static void registerFunctions(JNIEnv *env) {
                             use_critical_cc ? critical_fcns : noncritical_fcns,
                             sizeof(critical_fcns) / sizeof(critical_fcns[0]));
 }
-
