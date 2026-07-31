@@ -160,7 +160,6 @@ abstract class Launcher(
         val overridableArguments = mutableMapOf<String, String>().apply {
             put("java.home", getJavaHome())
             put("java.io.tmpdir", PathManager.DIR_CACHE.absolutePath)
-            put("jna.boot.library.path", PathManager.DIR_NATIVE_LIB)
             put("user.home", userHome)
             if (useLocalLanguage) {
                 put("user.language", System.getProperty("user.language") ?: "en")
