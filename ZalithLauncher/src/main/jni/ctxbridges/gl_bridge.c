@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include "gl_bridge.h"
 #include "egl_loader.h"
+#include "gl_loader.h"
 
 //
 // Created by maks on 17.09.2022.
@@ -36,6 +37,8 @@ bool gl_init() {
                             eglGetError_p());
         return false;
     }
+
+    dlsym_GL();
     return true;
 }
 
@@ -265,6 +268,23 @@ void gl_make_current(gl_render_window_t* bundle) {
         }
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglMakeCurrent returned with error: %04x", eglGetError_p());
     }
+
+    // 🔥 调用 glFlush 初始化 GL TLS
+    if (glFlush_p) {
+        glFlush_p();
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "glFlush() called successfully");
+    } else {
+        __android_log_print(ANDROID_LOG_WARN, g_LogTag, "glFlush_p is NULL");
+    }
+    
+    // 可选：再调用一次 glGetError 消费错误
+    if (glGetError_p) {
+        GLenum err = glGetError_p();
+        if (err != GL_NO_ERROR) {
+            __android_log_print(ANDROID_LOG_INFO, g_LogTag, "glGetError after flush: 0x%04x", err);
+        }
+    }
+
 }
 
 void gl_swap_buffers() {
