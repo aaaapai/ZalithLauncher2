@@ -172,14 +172,18 @@ fun createOkHttpClientBuilder(action: (OkHttpClient.Builder) -> Unit = { }): OkH
  */
 val DOWNLOAD_OKHTTP_CLIENT: OkHttpClient by lazy {
     OkHttpClient.Builder()
-        .dns(ResilientDns) //系统 DNS 解析失败时，自动回退到 DoH 解析
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .dns(ResilientDns)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .addInterceptor(CURSEFORGE_INTERCEPTOR)
-        .addInterceptor(USER_AGENT_INTERCEPTOR)
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val newRequest = request.newBuilder()
+                .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; MXW-AN00 Build/HONORMXW-AN00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.196 Mobile Safari/537.36")
+                .build()
+            chain.proceed(newRequest)
+        }
         .build()
-        // 注意：不设置 callTimeout，因为文件大小差异极大
-        // 协程层的 withTimeout 提供整体兜底保护
 }
