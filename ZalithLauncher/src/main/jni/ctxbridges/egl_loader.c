@@ -27,6 +27,7 @@ EGLContext (*eglCreateContext_p) (EGLDisplay dpy, EGLConfig config, EGLContext s
 EGLBoolean (*eglSwapInterval_p) (EGLDisplay dpy, EGLint interval);
 EGLSurface (*eglGetCurrentSurface_p) (EGLint readdraw);
 EGLBoolean (*eglQuerySurface_p)(EGLDisplay display, EGLSurface surface, EGLint attribute, EGLint * value);
+EGLBoolean (*eglQueryContext_p)(EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value);
 
 void dlsym_EGL() {
     void* dl_handle = NULL;
@@ -68,4 +69,5 @@ void dlsym_EGL() {
     eglTerminate_p = GLGetProcAddress(dl_handle, "eglTerminate");
     eglGetCurrentSurface_p = GLGetProcAddress(dl_handle,"eglGetCurrentSurface");
     eglQuerySurface_p = GLGetProcAddress(dl_handle, "eglQuerySurface");
+    eglQueryContext_p = GLGetProcAddress(dl_handle, "eglQueryContext");
 }
