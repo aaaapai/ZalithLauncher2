@@ -34,7 +34,7 @@
 
 static void registerFunctions(JNIEnv *env);
 
-jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
+jint JNI_OnLoad_pojavexec(JavaVM* vm, __attribute__((unused)) void* reserved) {
     if (pojav_environ->dalvikJavaVMPtr == NULL) {
         LOG_TO_I("<%s> %s", "Native", "Saving DVM environ...");
         //Save dalvik global JavaVM pointer
