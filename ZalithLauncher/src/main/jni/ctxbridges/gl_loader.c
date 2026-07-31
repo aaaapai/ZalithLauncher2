@@ -6,9 +6,9 @@
 
 #define LOG_TAG "GLLoader"
 
-glFlush_func glFlush_p = NULL;
-glGetError_func glGetError_p = NULL;
-glGetString_func glGetString_p = NULL;
+glFlush_func glFlush_ptr = NULL;
+glGetError_func glGetError_ptr = NULL;
+glGetString_func glGetString_ptr = NULL;
 
 // 检查 renderer 是否包含 _desktopgl 后缀
 static bool is_desktopgl_renderer() {
@@ -34,12 +34,12 @@ bool dlsym_GL() {
             
             // 通过 eglGetProcAddress 获取 GL 函数
             typedef void* (*eglGetProcAddress_func)(const char*);
-            eglGetProcAddress_func eglGetProcAddress = (eglGetProcAddress_func)dlsym(RTLD_DEFAULT, "eglGetProcAddress");
+            eglGetProcAddress_func eglGetProcAddress_yee = (eglGetProcAddress_func)dlsym(RTLD_DEFAULT, "eglGetProcAddress");
             
             if (eglGetProcAddress) {
-                glFlush_p = (glFlush_func)eglGetProcAddress("glFlush");
-                glGetError_p = (glGetError_func)eglGetProcAddress("glGetError");
-                glGetString_p = (glGetString_func)eglGetProcAddress("glGetString");
+                glFlush_ptr = (glFlush_func)eglGetProcAddress_yee("glFlush");
+                glGetError_ptr = (glGetError_func)eglGetProcAddress_yee("glGetError");
+                glGetString_ptr = (glGetString_func)eglGetProcAddress_yee("glGetString");
             }
         } else {
             __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Not _desktopgl and LIBGL_GLES not set, skipping GL loader");
@@ -54,15 +54,15 @@ bool dlsym_GL() {
             return false;
         }
         
-        glFlush_p = (glFlush_func)dlsym(libgl, "glFlush");
-        glGetError_p = (glGetError_func)dlsym(libgl, "glGetError");
-        glGetString_p = (glGetString_func)dlsym(libgl, "glGetString");
+        glFlush_ptr = (glFlush_func)dlsym(libgl, "glFlush");
+        glGetError_ptr = (glGetError_func)dlsym(libgl, "glGetError");
+        glGetString_ptr = (glGetString_func)dlsym(libgl, "glGetString");
     }
     
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, 
                        "GL functions: flush=%p, getError=%p, getString=%p", 
-                       glFlush_p, glGetError_p, glGetString_p);
+                       glFlush_ptr, glGetError_ptr, glGetString_ptr);
     
     // 至少需要 glFlush 和 glGetError
-    return (glFlush_p != NULL && glGetError_p != NULL);
+    return (glFlush_ptr != NULL && glGetError_ptr != NULL);
 }
