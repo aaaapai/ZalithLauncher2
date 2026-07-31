@@ -28,6 +28,7 @@ LOCAL_SRC_FILES := \
     ctxbridges/br_loader.c \
     ctxbridges/gl_bridge.c \
     ctxbridges/osm_bridge.c \
+    ctxbridges/gl_loader.c \
     ctxbridges/egl_loader.c \
     ctxbridges/osmesa_loader.c \
     ctxbridges/swap_interval_no_egl.c \
