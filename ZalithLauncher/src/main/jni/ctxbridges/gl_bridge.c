@@ -67,7 +67,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
                     EGL_SURFACE_TYPE,
                     EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
                     EGL_RENDERABLE_TYPE,
-                    EGL_OPENGL_ES2_BIT,
+                    EGL_OPENGL_ES3_BIT|EGL_OPENGL_ES2_BIT|EGL_OPENGL_ES_BIT,
                     EGL_NONE
                     };
     EGLint num_configs = 0;
