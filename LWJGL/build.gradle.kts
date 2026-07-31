@@ -32,7 +32,7 @@ tasks.jar {
 
     exclude("net/java/openjdk/cacio/ctc/**")
 
-    val excludedModules = listOf()
+    val excludedModules = emptyList<String>()
 
     from({
         val includedModules = lwjglModules.filter { dep ->
