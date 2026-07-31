@@ -227,7 +227,6 @@ dependencies {
     implementation(project(":ColorPicker"))
     implementation(project(":Terracotta"))
     //Utils
-    implementation(libs.bytehook)
     implementation(libs.gson)
     implementation(libs.commons.io)
     implementation(libs.commons.codec)
