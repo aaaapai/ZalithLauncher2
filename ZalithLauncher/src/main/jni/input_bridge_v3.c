@@ -76,7 +76,7 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
 
         if (pojav_environ->runtimeJNIEnvPtr_JRE != NULL && pojav_environ->vmGlfwClass != NULL) {
         hookExec();
-        //installLwjglDlopenHook();
+        installLwjglDlopenHook();
         installEMUIIteratorMititgation();
         } else {
         LOG_TO_W("<%s> %s", "Native", "JRE env not ready, skipping hooks");
