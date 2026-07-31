@@ -270,16 +270,16 @@ void gl_make_current(gl_render_window_t* bundle) {
     }
 
     // 🔥 调用 glFlush 初始化 GL TLS
-    if (glFlush_p) {
-        glFlush_p();
+    if (glFlush_ptr) {
+        glFlush_ptr();
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "glFlush() called successfully");
     } else {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag, "glFlush_p is NULL");
     }
     
     // 可选：再调用一次 glGetError 消费错误
-    if (glGetError_p) {
-        GLenum err = glGetError_p();
+    if (glGetError_ptr) {
+        GLenum err = glGetError_ptr();
         if (err != GL_NO_ERROR) {
             __android_log_print(ANDROID_LOG_INFO, g_LogTag, "glGetError after flush: 0x%04x", err);
         }
