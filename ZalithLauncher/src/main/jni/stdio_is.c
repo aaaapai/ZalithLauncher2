@@ -24,7 +24,7 @@ static JavaVM *exitTrap_jvm;
 static int pfd[2];
 static pthread_t logger;
 static jmethodID logger_onEventLogged;
-static volatile jobject logListener = NULL;
+static volatile jobject logListener = nullptr;
 static int latestlog_fd = -1;
 
 static bool recordBuffer(char* buf, ssize_t len) {
@@ -37,12 +37,12 @@ static bool recordBuffer(char* buf, ssize_t len) {
     return true;
 }
 
-static void *logger_thread() {
+static void *logger_thread(void *arg) {
     JNIEnv *env;
     jstring writeString;
 
     JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
-    (*dvm)->AttachCurrentThread(dvm, &env, NULL);
+    (*dvm)->AttachCurrentThread(dvm, &env, nullptr);
 
     ssize_t  rsize;
     char buf[2050];
@@ -55,7 +55,7 @@ static void *logger_thread() {
             rsize=rsize-1; //truncate
         }
         buf[rsize]=0x00;
-        if (shouldRecordString && logListener != NULL)
+        if (shouldRecordString && logListener != nullptr)
         {
             writeString = (*env)->NewStringUTF(env, buf); //send to app without newline
             (*env)->CallVoidMethod(env, logListener, logger_onEventLogged, writeString);
@@ -63,7 +63,7 @@ static void *logger_thread() {
         }
     }
     (*dvm)->DetachCurrentThread(dvm);
-    return NULL;
+    return nullptr;
 }
 
 JNIEXPORT void JNICALL
@@ -75,7 +75,7 @@ Java_com_movtery_zalithlauncher_bridge_LoggerBridge_start(JNIEnv *env, __attribu
         close(localfd);
     }
 
-    if (logger_onEventLogged == NULL)
+    if (logger_onEventLogged == nullptr)
     {
         jclass eventLogListener = (*env)->FindClass(env, "com/movtery/zalithlauncher/bridge/LoggerBridge$EventLogListener");
         logger_onEventLogged = (*env)->GetMethodID(env, eventLogListener, "onEventLogged", "(Ljava/lang/String;)V");
@@ -93,7 +93,7 @@ Java_com_movtery_zalithlauncher_bridge_LoggerBridge_start(JNIEnv *env, __attribu
     dup2(pfd[1], 2);
 
     /* open latestlog.txt for writing */
-    const char* logFilePath = (*env)->GetStringUTFChars(env, logPath, NULL);
+    const char* logFilePath = (*env)->GetStringUTFChars(env, logPath, nullptr);
     latestlog_fd = open(logFilePath, O_WRONLY | O_TRUNC);
 
     if (latestlog_fd == -1)
@@ -105,7 +105,7 @@ Java_com_movtery_zalithlauncher_bridge_LoggerBridge_start(JNIEnv *env, __attribu
     (*env)->ReleaseStringUTFChars(env, logPath, logFilePath);
 
     /* spawn the logging thread */
-    int result = pthread_create(&logger, 0, logger_thread, 0);
+    int result = pthread_create(&logger, 0, logger_thread, nullptr);
 
     if (result != 0)
     {
@@ -161,10 +161,10 @@ JNIEXPORT void JNICALL
 Java_com_movtery_zalithlauncher_bridge_LoggerBridge_setListener(JNIEnv *env, __attribute((unused)) jclass clazz, jobject log_listener) {
     jobject logListenerLocal = logListener;
 
-    if (log_listener == NULL) logListener = NULL;
+    if (log_listener == nullptr) logListener = nullptr;
     else logListener = (*env)->NewGlobalRef(env, log_listener);
 
-    if (logListenerLocal != NULL && logListenerLocal != logListener)
+    if (logListenerLocal != nullptr && logListenerLocal != logListener)
         (*env)->DeleteGlobalRef(env, logListenerLocal);
 }
 
