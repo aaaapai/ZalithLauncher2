@@ -171,6 +171,7 @@ fun createOkHttpClientBuilder(action: (OkHttpClient.Builder) -> Unit = { }): OkH
  * HttpURLConnection 在 Android 上更加可靠，能有效避免"卡 0b/s"问题。
  */
 val DOWNLOAD_OKHTTP_CLIENT: OkHttpClient by lazy {
+    Logger.debug("DownloadClient", "Using DOWNLOAD_OKHTTP_CLIENT with browser UA")
     OkHttpClient.Builder()
         .dns(ResilientDns)
         .connectTimeout(30, TimeUnit.SECONDS)
