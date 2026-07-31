@@ -30,6 +30,7 @@ object KopperZinkRenderer : RendererInterface {
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
         mapOf(
             "LIBGL_ES" to "3"
+            "mesa_glthread" to "true"
         )
     }
 
