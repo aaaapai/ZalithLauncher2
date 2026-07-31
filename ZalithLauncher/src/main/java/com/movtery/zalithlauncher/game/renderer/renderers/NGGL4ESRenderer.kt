@@ -21,7 +21,7 @@ package com.movtery.zalithlauncher.game.renderer.renderers
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 
 object NGGL4ESRenderer : RendererInterface {
-    override fun getRendererId(): String = "opengles3"
+    override fun getRendererId(): String = "opengles3_ngg"
 
     override fun getUniqueIdentifier(): String = "e7b90ed6-e518-4d4e-93dc-5c7133cd5b31"
 
@@ -34,6 +34,9 @@ object NGGL4ESRenderer : RendererInterface {
             put("LIBGL_ES", "3")
             put("LIBGL_NORMALIZE", "1")
             put("LIBGL_NOERROR", "1")
+            put("LIBGL_EGL", "libEGL_angle.so")
+            put("LIBGL_GLES", "libGLESv2_angle.so")
+            put("POJAVEXEC_EGL", "libEGL_angle.so")
         }
     }
 
