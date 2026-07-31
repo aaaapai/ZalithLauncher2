@@ -265,11 +265,23 @@ jint getLibraryPath_fix(__attribute__((unused)) JNIEnv *env,
  * Install the linker hang mitigation that is meant to prevent linker hangs on old EMUI firmware.
  */
 void installEMUIIteratorMititgation() {
-    if(getenv("POJAV_EMUI_ITERATOR_MITIGATE") == NULL) return;
-    LOG_TO_I("<%s> %s", "EMUIIteratorFix", "Installing...");
+    if (getenv("POJAV_EMUI_ITERATOR_MITIGATE") == NULL) return;
+
+    if (pojav_environ == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "EMUIIteratorFix",
+                            "pojav_environ is NULL, aborting");
+        return;
+    }
     JNIEnv* env = pojav_environ->runtimeJNIEnvPtr_JRE;
+    if (env == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "EMUIIteratorFix",
+                            "runtimeJNIEnvPtr_JRE is NULL, aborting");
+        return;
+    }
+
+    LOG_TO_I("<%s> %s", "EMUIIteratorFix", "Installing...");
     jclass sharedLibraryUtil = (*env)->FindClass(env, "org/lwjgl/system/SharedLibraryUtil");
-    if(sharedLibraryUtil == NULL) {
+    if (sharedLibraryUtil == NULL) {
         LOG_TO_E("<%s> %s", "EMUIIteratorFix", "Failed to find the target class");
         (*env)->ExceptionClear(env);
         return;
@@ -277,7 +289,7 @@ void installEMUIIteratorMititgation() {
     JNINativeMethod getLibraryPathMethod[] = {
             {"getLibraryPath", "(JJI)I", &getLibraryPath_fix}
     };
-    if((*env)->RegisterNatives(env, sharedLibraryUtil, getLibraryPathMethod, 1) != 0) {
+    if ((*env)->RegisterNatives(env, sharedLibraryUtil, getLibraryPathMethod, 1) != 0) {
         LOG_TO_E("<%s> %s", "EMUIIteratorFix", "Failed to register the mitigation method");
         (*env)->ExceptionClear(env);
     }
