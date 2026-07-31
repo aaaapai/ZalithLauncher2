@@ -134,9 +134,16 @@ fun AboutInfoScreen(
                         )
 
                         ButtonIconItem(
-                            icon = painterResource(R.drawable.img_avatar_movtery),
+                            icon = painterResource(R.drawable.ic_github),
                             title = "aaaa派",
                             text = stringResource(R.string.about_launcher_author_movtery_text, "HahaLauncher(based on ZalithLauncher2)"),
+                            button = {
+                                Button(
+                                    onClick = { openLink("https://github.com/aaaapai") }
+                                ) {
+                                    Text(text = "Github")
+                                }
+                            }
                         )
         
                     }
