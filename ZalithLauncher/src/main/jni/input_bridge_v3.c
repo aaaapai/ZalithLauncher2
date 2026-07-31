@@ -34,7 +34,7 @@
 
 static void registerFunctions(JNIEnv *env);
 
-jint JNI_OnLoad_pojavexec(JavaVM* vm, __attribute__((unused)) void* reserved) {
+jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
     if (pojav_environ->dalvikJavaVMPtr == NULL) {
         LOG_TO_I("<%s> %s", "Native", "Saving DVM environ...");
         //Save dalvik global JavaVM pointer
@@ -88,6 +88,8 @@ jint JNI_OnLoad_pojavexec(JavaVM* vm, __attribute__((unused)) void* reserved) {
     
     return JNI_VERSION_1_6;
 }
+jint JNI_OnLoad_pojavexec(JavaVM* vm, void* reserved)
+    __attribute__((alias("JNI_OnLoad")));
 
 #define ADD_CALLBACK_WWIN(NAME) \
 JNIEXPORT jlong JNICALL Java_org_lwjgl_glfw_GLFW_nglfwSet##NAME##Callback(JNIEnv * env, jclass cls, jlong window, jlong callbackptr) { \
