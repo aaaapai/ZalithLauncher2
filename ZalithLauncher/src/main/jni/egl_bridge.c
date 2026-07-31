@@ -296,11 +296,6 @@ Java_org_lwjgl_vulkan_VK_onVKFrame(ABI_COMPAT JNIEnv *env, ABI_COMPAT jclass thi
     calculateFPS();
 }
 
-EXTERNAL_API JNIEXPORT void JNICALL
-Java_org_lwjgl_vulkan_VK_onVKFrame(ABI_COMPAT JNIEnv *env, ABI_COMPAT jclass thiz) {
-    calculateFPS();
-}
-
 EXTERNAL_API JNIEXPORT jint JNICALL
 Java_org_lwjgl_glfw_CallbackBridge_getCurrentFps(JNIEnv *env, jclass clazz) {
     return fps;
