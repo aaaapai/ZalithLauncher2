@@ -37,11 +37,23 @@ void* dlopen_ext(const char* filename, int flags, const android_dlextinfo* extin
     if (strstr(filename, "vulkan."))
         return checkIfGlobalReadyHandle();
 
+    if (strstr(filename, "libGLES_"))
+        return checkIfGlobalReadyHandle();
+
+    if (strstr(filename, "libvulkanmemoryallocator"))
+        return checkIfGlobalReadyHandle();
+
     return dlopen_ext_impl(filename, flags, extinfo, reinterpret_cast<const void*>(&dlopen_ext));
 }
 
 void* load_sphal_library(const char* filename, int flags) {
     if (strstr(filename, "vulkan."))
+        return checkIfGlobalReadyHandle();
+
+    if (strstr(filename, "libGLES_"))
+        return checkIfGlobalReadyHandle();
+
+    if (strstr(filename, "libvulkanmemoryallocator"))
         return checkIfGlobalReadyHandle();
 
     struct android_namespace_t* androidNamespace = nullptr;
