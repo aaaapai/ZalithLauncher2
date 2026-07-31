@@ -191,7 +191,6 @@ abstract class Launcher(
             put("fml.ignorePatchDiscrepancies", "true")
 
             put("loader.disable_forked_guis", "true")
-            put("jdk.lang.Process.launchMechanism", "FORK")
 
             put("sodium.checks.issue2561", "false")
 
@@ -248,20 +247,6 @@ abstract class Launcher(
         args: MutableList<String>,
         ramAllocation: Int = AllSettings.ramAllocation.getOrMin()
     ) {
-        args.purgeArg("-Xms")
-        args.purgeArg("-Xmx")
-        args.purgeArg("-d32")
-        args.purgeArg("-d64")
-        args.purgeArg("-Xint")
-        args.purgeArg("-XX:+UseTransparentHugePages")
-        args.purgeArg("-XX:+UseLargePagesInMetaspace")
-        args.purgeArg("-XX:+UseLargePages")
-        args.purgeArg("-Dorg.lwjgl.opengl.libname")
-        // Don't let the user specify a custom Freetype library (as the user is unlikely to specify a version compiled for Android)
-        args.purgeArg("-Dorg.lwjgl.freetype.libname")
-        // Overridden by us to specify the exact number of cores that the android system has
-        args.purgeArg("-XX:ActiveProcessorCount")
-
         args.add("-javaagent:${LibPath.MIO_LIB_PATCHER.absolutePath}")
 
         //Add automatically generated args
@@ -279,10 +264,15 @@ abstract class Launcher(
         args.add("-Dorg.lwjgl.spvc.libname=spirv-cross-c-shared")
 
         // We don't have jemalloc for our LWJGL so set the allocator to system to avoid error logs
-        args.add("-Dorg.lwjgl.system.allocator=system")
+        args.add("-Dorg.lwjgl.system.allocator=mimalloc")
 
         // Some phones are not using the right number of cores, fix that
         args.add("-XX:ActiveProcessorCount=${java.lang.Runtime.getRuntime().availableProcessors()}")
+
+        args.add("-Dorg.lwjgl.system.memoryBackend=org.lwjgl.system.MemoryBackendUnsafe")
+
+        // Java9 doesn't support -XX:ActiveProcessorCount, which is needed to be ignored.
+        args.add("-XX:+IgnoreUnrecognizedVMOptions")
     }
 
     protected fun MutableList<String>.purgeArg(argStart: String) {
@@ -413,6 +403,11 @@ abstract class Launcher(
             map["AWTSTUB_HEIGHT"] = screenSize.height.toString()
             map["MOD_ANDROID_RUNTIME"] = PathManager.DIR_RUNTIME_MOD?.absolutePath ?: ""
             map["ALSOFT_DRIVERS"] = "opensl"
+            map["ANGLE_CONVER_TO_RGBA8"] = "true"
+            map["ANGLE_DESKTOPGL"] = "true"
+            map["ANGLE_ALLOW_SRGB_uSRGB_MIPMAP"] = "true"
+            map["ANGLE_LESS_FRAMEBUFFER_LIMIT"] = "true"
+            map["ANGLE_IGNORE_PROGEAMNOTLINKED"] = "true"
 
             if (AllSettings.dumpShaders.getValue()) map["LIBGL_VGPU_DUMP"] = "1"
             if (AllSettings.zinkPreferSystemDriver.getValue()) map["POJAV_ZINK_PREFER_SYSTEM_DRIVER"] = "1"
@@ -441,6 +436,9 @@ abstract class Launcher(
         ZLBridge.dlopen("$javaLibDir/libawt.so")
         ZLBridge.dlopen("$javaLibDir/libawt_headless.so")
         ZLBridge.dlopen("$javaLibDir/libfontmanager.so")
+
+        // See https://github.com/aaaapai/OpenJDK-Builder
+        ZLBridge.dlopen("$javaLibDir/libjspawnhelper.so")
         locateLibs(File(runtimeHome)).forEach { file ->
             ZLBridge.dlopen(file.absolutePath)
         }
@@ -490,6 +488,10 @@ fun getCacioJavaArgs(
 
         // Opens the java.net package to Arc DNS injector on Java 9+
         argsList.add("--add-opens=java.base/java.net=ALL-UNNAMED")
+
+        // Make sure unsafe backend is avaliable on LWJGL.
+        argsList.add("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED")
+        argsList.add("--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED")
     }
 
     val cacioClassPath = StringBuilder()
