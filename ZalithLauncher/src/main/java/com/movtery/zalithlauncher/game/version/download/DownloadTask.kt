@@ -19,6 +19,7 @@
 package com.movtery.zalithlauncher.game.version.download
 
 import com.movtery.zalithlauncher.path.DOWNLOAD_OKHTTP_CLIENT
+import com.movtery.zalithlauncher.utils.network.downloadFromMirrorList
 import com.movtery.zalithlauncher.utils.file.check7z
 import com.movtery.zalithlauncher.utils.file.checkZip
 import com.movtery.zalithlauncher.utils.file.compareSHA1
