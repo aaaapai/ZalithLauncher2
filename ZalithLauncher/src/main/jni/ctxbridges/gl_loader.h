@@ -2,6 +2,7 @@
 #define GL_LOADER_H
 
 #include <EGL/egl.h>
+#include <GL/gl.h>
 #include <stdbool.h>
 
 // GL函数指针声明
