@@ -10,9 +10,9 @@ typedef void (*glFlush_func)(void);
 typedef GLenum (*glGetError_func)(void);
 typedef const GLubyte* (*glGetString_func)(GLenum name);
 
-extern glFlush_func glFlush_p;
-extern glGetError_func glGetError_p;
-extern glGetString_func glGetString_p;
+extern glFlush_func glFlush_ptr;
+extern glGetError_func glGetError_ptr;
+extern glGetString_func glGetString_ptr;
 
 // 加载GL函数
 bool dlsym_GL(void);
