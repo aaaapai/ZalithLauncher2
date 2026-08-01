@@ -308,6 +308,10 @@ Java_org_lwjgl_vulkan_VK_getFpsAddress(ABI_COMPAT JNIEnv *env, ABI_COMPAT jclass
 
 EXTERNAL_API JNIEXPORT jlong JNICALL
 Java_org_lwjgl_vulkan_VK_getVulkanDriverHandle(ABI_COMPAT JNIEnv *env, ABI_COMPAT jclass thiz) {
+
+    printf("EGLBridge: Force to init OpenGL.");
+    pojavInit();
+
     printf("EGLBridge: LWJGL-side Vulkan loader requested the Vulkan handle\n");
     return (jlong) maybe_load_vulkan();
 }
