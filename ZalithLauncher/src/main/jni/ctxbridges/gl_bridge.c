@@ -21,6 +21,7 @@
 static const char* g_LogTag = "GLBridge";
 static __thread gl_render_window_t* currentBundle;
 static EGLDisplay g_EglDisplay;
+static EGLContext g_DummyContext = EGL_NO_CONTEXT;
 
 bool gl_init() {
     dlsym_EGL();
@@ -141,14 +142,25 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
         }
     }
 
+    // 如果还没有 dummy 上下文，创建一个占用 0x1
+    if (g_DummyContext == EGL_NO_CONTEXT) {
+        EGLint dummy_pbuffer[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
+        EGLSurface dummySurface = eglCreatePbufferSurface_p(g_EglDisplay, bundle->config, dummy_pbuffer);
+        if (dummySurface != EGL_NO_SURFACE) {
+            const EGLint dummy_ctx_attrs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+            g_DummyContext = eglCreateContext_p(g_EglDisplay, bundle->config, EGL_NO_CONTEXT, dummy_ctx_attrs);
+            __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Dummy context created: %p", g_DummyContext);
+            eglDestroySurface_p(g_EglDisplay, dummySurface);
+        }
+    }
+
     int libgl_es = strtol(getenv("LIBGL_ES"), NULL, 0);
     if (libgl_es < 0 || libgl_es > INT16_MAX) libgl_es = 2;
     __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Requesting ES version: %d", libgl_es);
     const EGLint egl_context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, libgl_es, EGL_NONE };
     bundle->context = eglCreateContext_p(g_EglDisplay, bundle->config, share == NULL ? EGL_NO_CONTEXT : share->context, egl_context_attributes);
 
-    __android_log_print(ANDROID_LOG_INFO, g_LogTag, "eglCreateContext returned: %p (raw: 0x%" PRIxPTR ")", 
-                       bundle->context, (uintptr_t)bundle->context);
+    __android_log_print(ANDROID_LOG_INFO, g_LogTag, "eglCreateContext returned: %p", bundle->context);
 
     if (bundle->context == EGL_NO_CONTEXT)
     {
@@ -156,33 +168,6 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
                             eglGetError_p());
         free(bundle);
         return NULL;
-    }
-    
-    // 如果上下文句柄看起来异常（小整数），尝试通过 eglGetCurrentContext 获取真实指针
-    if ((uintptr_t)bundle->context < 0x1000) {
-        __android_log_print(ANDROID_LOG_WARN, g_LogTag, "Context handle %p seems invalid, trying to recover", bundle->context);
-        
-        // 创建一个临时 pbuffer 来绑定上下文
-        EGLint pbuffer_attrs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
-        EGLSurface dummySurface = eglCreatePbufferSurface_p(g_EglDisplay, bundle->config, pbuffer_attrs);
-        if (dummySurface != EGL_NO_SURFACE) {
-            if (eglMakeCurrent_p(g_EglDisplay, dummySurface, dummySurface, bundle->context)) {
-                EGLContext realCtx = eglGetCurrentContext_p();
-                __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Recovered real context via eglGetCurrentContext: %p", realCtx);
-                if ((uintptr_t)realCtx > 0x1000) {
-                    bundle->context = realCtx;
-                    __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Context recovered successfully: %p", bundle->context);
-                } else {
-                    __android_log_print(ANDROID_LOG_WARN, g_LogTag, "Recovered context still looks invalid: %p", realCtx);
-                }
-                eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            } else {
-                __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Failed to make dummy context current: %04x", eglGetError_p());
-            }
-            eglDestroySurface_p(g_EglDisplay, dummySurface);
-        } else {
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Failed to create dummy pbuffer: %04x", eglGetError_p());
-        }
     }
 
     __android_log_print(ANDROID_LOG_INFO, g_LogTag, "gl_init_context returning bundle=%p, context=%p", bundle, bundle->context);
@@ -289,14 +274,9 @@ void gl_make_current(gl_render_window_t* bundle) {
         hasSetMainWindow = true;
     }
 
-    if (bundle->surface == NULL) {
-        __android_log_print(ANDROID_LOG_WARN, g_LogTag, "surface is NULL, calling gl_swap_surface");
-        gl_swap_surface(bundle);
-    }
-
-    // 验证 surface 和 context 是否有效
-    if ((uintptr_t)bundle->surface < 0x1000) {
-        __android_log_print(ANDROID_LOG_WARN, g_LogTag, "surface handle %p seems invalid, attempting to recreate", bundle->surface);
+    // 只在 surface 为 EGL_NO_SURFACE 时才创建，不检查地址大小
+    if (bundle->surface == EGL_NO_SURFACE) {
+        __android_log_print(ANDROID_LOG_WARN, g_LogTag, "surface is EGL_NO_SURFACE, calling gl_swap_surface");
         gl_swap_surface(bundle);
     }
 
@@ -308,13 +288,6 @@ void gl_make_current(gl_render_window_t* bundle) {
         currentBundle = bundle;
         EGLContext cur = eglGetCurrentContext_p();
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "eglGetCurrentContext = %p (expected %p)", cur, bundle->context);
-        
-        // 如果当前上下文与预期不符，用实际值覆盖
-        if (cur != bundle->context && (uintptr_t)cur > 0x1000) {
-            __android_log_print(ANDROID_LOG_WARN, g_LogTag, "Context mismatch, using real context: %p -> %p", 
-                               bundle->context, cur);
-            bundle->context = cur;
-        }
         
         EGLint ver;
         if (eglQueryContext_p(g_EglDisplay, bundle->context, EGL_CONTEXT_CLIENT_VERSION, &ver)) {
@@ -344,7 +317,6 @@ void gl_make_current(gl_render_window_t* bundle) {
     if (glGetError_ptr) {
         GLenum err = glGetError_ptr();
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "glGetError after flush: 0x%04x", err);
-        // 清空所有错误
         while ((err = glGetError_ptr()) != GL_NO_ERROR) {
             __android_log_print(ANDROID_LOG_INFO, g_LogTag, "glGetError cleared: 0x%04x", err);
         }
