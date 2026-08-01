@@ -273,6 +273,8 @@ abstract class Launcher(
 
         // Java9 doesn't support -XX:ActiveProcessorCount, which is needed to be ignored.
         args.add("-XX:+IgnoreUnrecognizedVMOptions")
+
+        args.add("-XX:AltTempDir=${PathManager.DIR_CACHE}")
     }
 
     protected fun MutableList<String>.purgeArg(argStart: String) {
