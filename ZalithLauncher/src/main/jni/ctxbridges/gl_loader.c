@@ -10,59 +10,49 @@ glFlush_func glFlush_ptr = NULL;
 glGetError_func glGetError_ptr = NULL;
 glGetString_func glGetString_ptr = NULL;
 
-// 检查 renderer 是否包含 _desktopgl 后缀
-static bool is_desktopgl_renderer() {
-    const char* renderer = getenv("POJAV_RENDERER");
-    if (!renderer) return false;
-    // 检查是否以 _desktopgl 结尾
-    size_t len = strlen(renderer);
-    if (len < 10) return false; // "_desktopgl" 长度为 10
-    return strcmp(renderer + len - 10, "_desktopgl") == 0;
-}
-
 bool dlsym_GL() {
-    // 检查是否使用 _desktopgl 后缀
-    bool desktopgl = is_desktopgl_renderer();
-    
-    const char* libPath = getenv("LIBGL_GLES");
-    
-    if (!libPath) {
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "LIBGL_GLES not set");
-        
-        if (desktopgl) {
-            __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "_desktopgl detected, using eglGetProcAddress");
-            
-            // 通过 eglGetProcAddress 获取 GL 函数
-            typedef void* (*eglGetProcAddress_func)(const char*);
-            eglGetProcAddress_func eglGetProcAddress_yee = (eglGetProcAddress_func)dlsym(RTLD_DEFAULT, "eglGetProcAddress");
-            
-            if (eglGetProcAddress) {
-                glFlush_ptr = (glFlush_func)eglGetProcAddress_yee("glFlush");
-                glGetError_ptr = (glGetError_func)eglGetProcAddress_yee("glGetError");
-                glGetString_ptr = (glGetString_func)eglGetProcAddress_yee("glGetString");
-            }
-        } else {
-            __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Not _desktopgl and LIBGL_GLES not set, skipping GL loader");
-            return false;
-        }
-    } else {
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Loading GL library from LIBGL_GLES: %s", libPath);
-        
-        void* libgl = dlopen(libPath, RTLD_LAZY);
-        if (!libgl) {
-            __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to dlopen %s: %s", libPath, dlerror());
-            return false;
-        }
-        
-        glFlush_ptr = (glFlush_func)dlsym(libgl, "glFlush");
-        glGetError_ptr = (glGetError_func)dlsym(libgl, "glGetError");
-        glGetString_ptr = (glGetString_func)dlsym(libgl, "glGetString");
+    void* libmg = dlopen("libmobileglues.so", RTLD_LAZY);
+    if (!libmg) {
+        // fallback to absolute path if needed (but usually in LD_LIBRARY_PATH)
+        libmg = dlopen("libmobileglues.so", RTLD_LAZY);
     }
-    
-    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, 
-                       "GL functions: flush=%p, getError=%p, getString=%p", 
-                       glFlush_ptr, glGetError_ptr, glGetString_ptr);
-    
-    // 至少需要 glFlush 和 glGetError
-    return (glFlush_ptr != NULL && glGetError_ptr != NULL);
+    if (libmg) {
+        // Try direct dlsym
+        glFlush_ptr = (glFlush_func)dlsym(libmg, "glFlush");
+        glGetError_ptr = (glGetError_func)dlsym(libmg, "glGetError");
+        glGetString_ptr = (glGetString_func)dlsym(libmg, "glGetString");
+        if (glFlush_ptr && glGetError_ptr && glGetString_ptr) {
+            __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Loaded GL functions from libmobileglues.so");
+            return true;
+        }
+        // Try via glXGetProcAddress
+        typedef void* (*glXGetProcAddress_t)(const char*);
+        glXGetProcAddress_t glXGetProcAddress = (glXGetProcAddress_t)dlsym(libmg, "glXGetProcAddress");
+        if (glXGetProcAddress) {
+            glFlush_ptr = (glFlush_func)glXGetProcAddress("glFlush");
+            glGetError_ptr = (glGetError_func)glXGetProcAddress("glGetError");
+            glGetString_ptr = (glGetString_func)glXGetProcAddress("glGetString");
+            if (glFlush_ptr && glGetError_ptr && glGetString_ptr) {
+                __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Loaded GL functions via glXGetProcAddress");
+                return true;
+            }
+        }
+    }
+
+    // Fallback to LIBGL_GLES
+    const char* libPath = getenv("LIBGL_GLES");
+    if (libPath) {
+        void* libgl = dlopen(libPath, RTLD_LAZY);
+        if (libgl) {
+            glFlush_ptr = (glFlush_func)dlsym(libgl, "glFlush");
+            glGetError_ptr = (glGetError_func)dlsym(libgl, "glGetError");
+            glGetString_ptr = (glGetString_func)dlsym(libgl, "glGetString");
+            if (glFlush_ptr && glGetError_ptr && glGetString_ptr) {
+                __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Loaded GL functions from LIBGL_GLES: %s", libPath);
+                return true;
+            }
+        }
+    }
+    __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to load GL functions");
+    return false;
 }
