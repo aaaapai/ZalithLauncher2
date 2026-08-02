@@ -1699,7 +1699,7 @@ public class GLFW
             return 240f;
         }
         // 如果 C 函数返回 float，则用 callF
-        return callF(addr);
+        return invokeF(addr);
         // 如果 C 函数返回 int，则用 callI(addr) 并转为 float
         // return (float) callI(addr);
     } // This is overkill but hey, its the proper implementation!
