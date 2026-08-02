@@ -523,7 +523,7 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
     // Attaching every time is annoying, so stick the attachment to the Android GUI thread around
 }
 
-/*JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
+JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
     JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
     JNIEnv *dvm_env = NULL;
     jfloat result = 0.0f;
@@ -545,8 +545,32 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
     // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
     return result;
 }
+float pojavGetAndroidDPI() {
 
-JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeNotifyLauncher(JNIEnv* env, __attribute__((unused)) jclass clazz, jint type, jintArray action) {
+ JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
+    JNIEnv *dvm_env = NULL;
+    jfloat result = 0.0f;
+
+    // 获取或附着到 Dalvik VM
+    if ((*dvm)->GetEnv(dvm, (void**)&dvm_env, JNI_VERSION_1_6) != JNI_OK) {
+        (*dvm)->AttachCurrentThread(dvm, &dvm_env, NULL);
+        if (dvm_env == NULL) {
+            LOG_TO_E("getAndroidDPI: Failed to attach Dalvik thread");
+            return 0.0f;
+        }
+    }
+
+    result = (*dvm_env)->CallStaticFloatMethod(dvm_env, pojav_environ->bridgeClazz,
+                                               pojav_environ->method_getAndroidDPI);
+
+    // 如果这里不希望 Detach，可以注释掉；但为了线程安全，建议保持附着（如果之前已附着则不会重复附着）
+    // 简单起见，这里不 Detach，因为该线程可能还会被用于其他 Dalvik 调用。
+    // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
+    return result;
+}
+
+
+/*JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeNotifyLauncher(JNIEnv* env, __attribute__((unused)) jclass clazz, jint type, jintArray action) {
     JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
     JNIEnv *dvm_env = NULL;
     jboolean result = JNI_FALSE;
