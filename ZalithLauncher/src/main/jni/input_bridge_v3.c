@@ -46,13 +46,6 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
         pojav_environ->method_onCursorShapeChanged = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onCursorShapeChanged", "(I)V");
         pojav_environ->method_onGraphicOutput = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onGraphicOutput", "()V");
         pojav_environ->isUseStackQueueCall = JNI_FALSE;
-
-        pojav_environ->method_getAndroidDPI = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(
-            pojav_environ->dalvikJNIEnvPtr_ANDROID,
-            pojav_environ->bridgeClazz,
-            "getAndroidDPI",
-            "()F"
-        );
  
     } else if (pojav_environ->dalvikJavaVMPtr != vm) {
         LOG_TO_I("<%s> %s", "Native", "Saving JVM environ...");
@@ -531,7 +524,7 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
     // Attaching every time is annoying, so stick the attachment to the Android GUI thread around
 }
 
-JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
+/*JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
     JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
     JNIEnv *dvm_env = NULL;
     jfloat result = 0.0f;
@@ -575,7 +568,7 @@ float pojavGetAndroidDPI() {
     // 简单起见，这里不 Detach，因为该线程可能还会被用于其他 Dalvik 调用。
     // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
     return result;
-}
+}*/
 
 
 /*JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeNotifyLauncher(JNIEnv* env, __attribute__((unused)) jclass clazz, jint type, jintArray action) {
