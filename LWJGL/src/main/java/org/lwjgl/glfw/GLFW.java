@@ -1136,7 +1136,7 @@ public class GLFW
 
     public static long glfwGetTimerFrequency() {
         // FIXME set correct value!!
-        return 60;
+        return 144; // Can I set to 144?
     }
 
     public static long glfwCreateWindow(int width, int height, CharSequence title, long monitor, long share) {
@@ -1684,25 +1684,7 @@ public class GLFW
         bottom[0] = internalGetWindow(window).height;
     }
     
-	static float scale;
-    static {
-        scale = nglfwGetAndroidDPI();
-    }
-
-	/**
-     * 通过 native 函数 pojavGetAndroidDPI 获取屏幕 DPI。
-     * 若函数地址无效，返回默认值 240（mdpi）。
-    */
-    private static float nglfwGetAndroidDPI() {
-        long addr = Functions.GetAndroidDPI;
-        if (addr == 0L) {
-            return 240f;
-        }
-        // 如果 C 函数返回 float，则用 callF
-        return invokeF(addr);
-        // 如果 C 函数返回 int，则用 callI(addr) 并转为 float
-        // return (float) callI(addr);
-    } // This is overkill but hey, its the proper implementation!
+	static float scale = CallbackBridge.nativeGetAndroidDPI(); // This is overkill but hey, its the proper implementation!
 
     /** Array version of: {@link #glfwGetWindowContentScale GetWindowContentScale} */
     public static void glfwGetWindowContentScale(@NativeType("GLFWwindow *") long window, @Nullable @NativeType("float *") float[] xscale, @Nullable @NativeType("float *") float[] yscale) {
