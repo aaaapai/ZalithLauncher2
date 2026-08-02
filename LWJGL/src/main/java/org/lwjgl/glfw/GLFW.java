@@ -34,16 +34,11 @@ public class GLFW
     static ByteBuffer joystickButtonData;
     static ByteBuffer empty = (ByteBuffer)ByteBuffer.allocate(0);
 
-	static FloatBuffer joystickData;
-    static ByteBuffer buttonData;
+	static FloatBuffer joystickData = FloatBuffer.allocate(8);
+    static ByteBuffer buttonData = ByteBuffer.allocate(8);
     static {
-        FloatBuffer tmpF = FloatBuffer.allocate(8);
-        tmpF.flip();
-        joystickData = tmpF;
-
-        ByteBuffer tmpB = ByteBuffer.allocate(8);
-        tmpB.flip();
-        buttonData = tmpB;
+        joystickData.limit(0);
+        buttonData.limit(0);
     }
 
     /** The major version number of the GLFW library. This is incremented when the API is changed in non-compatible ways. */
@@ -1197,7 +1192,7 @@ public class GLFW
 		}
 
         // Get the real values properly, but only if they're higher
-        /*FunctionProvider functionProvider = org.lwjgl.opengl.GL.getFunctionProvider();
+        FunctionProvider functionProvider = org.lwjgl.opengl.GL.getFunctionProvider();
         if (functionProvider != null) {
             // Save the old context so we can swap back to it later after getting driver info
             // This is because sometimes there are early loading windows like forge that get context
@@ -1237,7 +1232,7 @@ public class GLFW
 
             // We finished getting the driver info, we can return it back to its original state now
             glfwMakeContextCurrent(oldPtr);
-        }*/ // f**k off
+        } // f**k off?
         win.windowAttribs.put(GLFW_CONTEXT_VERSION_MAJOR, glMajor);
         win.windowAttribs.put(GLFW_CONTEXT_VERSION_MINOR, glMinor);
         mGLFWWindowMap.put(ptr, win);
