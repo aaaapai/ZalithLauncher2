@@ -32,8 +32,8 @@ object GL4ESRenderer : RendererInterface {
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
         buildMap {
             put("LIBGL_USE_MC_COLOR", "1")
-            put("LIBGL_GL", "31")
-            put("LIBGL_ES", "3")
+            put("LIBGL_GL", "13")
+            put("LIBGL_ES", "1")
             put("LIBGL_NORMALIZE", "1")
             put("LIBGL_NOERROR", "1")
             put("LIBGL_EGL", "libEGL.so")
