@@ -34,12 +34,11 @@ public class GLFW
     static ByteBuffer joystickButtonData;
     static ByteBuffer empty = (ByteBuffer)ByteBuffer.allocate(0);
 
-	static FloatBuffer joystickData = FloatBuffer.allocate(8);
-    static ByteBuffer buttonData = ByteBuffer.allocate(8);
-    static {
-        joystickData.limit(0);
-        buttonData.limit(0);
-    }
+	static FloatBuffer joystickAxisData;
+    static ByteBuffer joystickButtonData;
+    static ByteBuffer empty = ByteBuffer.allocate(0);
+    static FloatBuffer joystickData = FloatBuffer.allocate(0);
+    static ByteBuffer buttonData = ByteBuffer.allocate(0);
 
     /** The major version number of the GLFW library. This is incremented when the API is changed in non-compatible ways. */
     public static final int GLFW_VERSION_MAJOR = 3;
