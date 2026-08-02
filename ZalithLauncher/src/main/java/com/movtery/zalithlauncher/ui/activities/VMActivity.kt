@@ -339,6 +339,7 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.attributes = window.attributes.apply { preferredRefreshRate = 120f }
         //加载渲染器
         Renderers.init()
         //加载插件
