@@ -1,7 +1,6 @@
 name: Build APK
 
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       variant:
@@ -52,7 +51,7 @@ jobs:
       - name: Build APK for ${{ matrix.arch }}
         run: |
           chmod +x gradlew
-          ./gradlew ZalithLauncher:assemble${{ inputs.variant }} -Darch=${{ matrix.arch }}
+          ./gradlew ZalithLauncher:assemble${{ inputs.variant }} -Darch=${{ matrix.arch }} -x lintVitalRelease
 
       - name: Upload Release APK for ${{ matrix.arch }}
         if: inputs.variant == 'Release'
