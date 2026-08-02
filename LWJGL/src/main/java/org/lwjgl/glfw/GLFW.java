@@ -685,7 +685,8 @@ public class GLFW
         SwapInterval = apiGetFunctionAddress(GLFW, "pojavSwapInterval"),
         PumpEvents = apiGetFunctionAddress(GLFW, "pojavPumpEvents"),
         StopPumping = apiGetFunctionAddress(GLFW, "pojavStopPumping"),
-        StartPumping = apiGetFunctionAddress(GLFW, "pojavStartPumping");
+        StartPumping = apiGetFunctionAddress(GLFW, "pojavStartPumping"),
+		GetAndroidDPI = apiGetFunctionAddress(GLFW, "pojavGetAndroidDPI");
     }
 
     public static SharedLibrary getLibrary() {
@@ -1175,10 +1176,17 @@ public class GLFW
             glMinor = 3;
         } else if (glDriver.equals("opengles3")) {
             glMajor = 4;
-            glMinor = 6;
-        }
+            glMinor = 0;
+        } else if (glDriver.equals("opengles3_gl46")) {
+			glMajor = 4;
+			glMinor = 6;
+		} else if (glDriver.equals("opengles3_mgap")) {
+			glMajor = 4;
+			glMinor = 4;
+		}
+
         // Get the real values properly, but only if they're higher
-        FunctionProvider functionProvider = org.lwjgl.opengl.GL.getFunctionProvider();
+        /*FunctionProvider functionProvider = org.lwjgl.opengl.GL.getFunctionProvider();
         if (functionProvider != null) {
             // Save the old context so we can swap back to it later after getting driver info
             // This is because sometimes there are early loading windows like forge that get context
@@ -1218,7 +1226,7 @@ public class GLFW
 
             // We finished getting the driver info, we can return it back to its original state now
             glfwMakeContextCurrent(oldPtr);
-        }
+        }*/ // f**k it off.
         win.windowAttribs.put(GLFW_CONTEXT_VERSION_MAJOR, glMajor);
         win.windowAttribs.put(GLFW_CONTEXT_VERSION_MINOR, glMinor);
         mGLFWWindowMap.put(ptr, win);
