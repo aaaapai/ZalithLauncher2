@@ -546,7 +546,7 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
     // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
     return result;
 }*/
-float pojavGetAndroidDPI() {
+__attribute__((used)) float pojavGetAndroidDPI() {
 
  JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
     JNIEnv *dvm_env = NULL;
