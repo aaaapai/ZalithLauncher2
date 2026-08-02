@@ -545,7 +545,7 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
     // 简单起见，这里不 Detach，因为该线程可能还会被用于其他 Dalvik 调用。
     // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
     return result;
-}
+}*/
 float pojavGetAndroidDPI() {
 
  JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
@@ -568,7 +568,7 @@ float pojavGetAndroidDPI() {
     // 简单起见，这里不 Detach，因为该线程可能还会被用于其他 Dalvik 调用。
     // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
     return result;
-}*/
+}
 
 
 /*JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeNotifyLauncher(JNIEnv* env, __attribute__((unused)) jclass clazz, jint type, jintArray action) {
