@@ -30,10 +30,6 @@ import com.movtery.zalithlauncher.CursorRegistry;
 
 public class GLFW
 {
-    static FloatBuffer joystickAxisData;
-    static ByteBuffer joystickButtonData;
-    static ByteBuffer empty = (ByteBuffer)ByteBuffer.allocate(0);
-
 	static FloatBuffer joystickAxisData;
     static ByteBuffer joystickButtonData;
     static ByteBuffer empty = ByteBuffer.allocate(0);
