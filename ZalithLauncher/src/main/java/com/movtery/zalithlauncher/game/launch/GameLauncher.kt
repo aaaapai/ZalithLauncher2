@@ -417,7 +417,7 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
     if (renderer != GL4ESRenderer && renderer != NGGL4ESRenderer) {
         envMap["MESA_LOADER_DRIVER_OVERRIDE"] = "zink"
         envMap["MESA_GLSL_CACHE_DIR"] = PathManager.DIR_CACHE.absolutePath
-        envMap["MESA_GL_VERSION_OVERRIDE"] = "4.6"
+        envMap["MESA_GL_VERSION_OVERRIDE"] = "4.6compat"
         envMap["MESA_GLSL_VERSION_OVERRIDE"] = "460"
         envMap["force_glsl_extensions_warn"] = "true"
         envMap["allow_higher_compat_version"] = "true"
