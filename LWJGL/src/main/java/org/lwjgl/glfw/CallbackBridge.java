@@ -28,7 +28,6 @@ public class CallbackBridge {
     
     static {
         INPUT_DEBUG_ENABLED = Boolean.parseBoolean(System.getProperty("glfwstub.debugInput", "false"));
-        System.loadLibrary("pojavexec");
  
 /*
         if (isDebugEnabled) {
