@@ -31,7 +31,7 @@ object KopperZinkRenderer : RendererInterface {
         mapOf(
             "LIBGL_ES" to "3",
             "mesa_glthread" to "true",
-            "MESA_ANDROID_NO_KMS_SWRAST", "1"
+            "MESA_ANDROID_NO_KMS_SWRAST" to "1"
         )
     }
 
