@@ -26,6 +26,8 @@ static_assert(sizeof(gl_render_window_t) <= 256,
 static __thread gl_render_window_t* currentBundle = nullptr;
 static EGLDisplay g_EglDisplay = EGL_NO_DISPLAY;
 static int g_userSwapInterval = 0;
+// 在 static int g_userSwapInterval = 0; 之后添加
+static void (*g_ANativeWindow_setSwapInterval)(ANativeWindow* window, int interval) = nullptr;
 
 static bool wait_for_surface_ready(EGLDisplay display, EGLSurface surface) {
     int width = 0, height = 0;
@@ -58,6 +60,16 @@ bool gl_init() {
                             "eglInitialize_p() failed: %04x", eglGetError_p());
         return false;
     }
+
+    g_ANativeWindow_setSwapInterval = (void (*)(ANativeWindow*, int))dlsym(RTLD_DEFAULT, "ANativeWindow_setSwapInterval");
+    if (g_ANativeWindow_setSwapInterval == NULL) {
+        __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                            "ANativeWindow_setSwapInterval not found, EGL only fallback");
+    } else {
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                            "ANativeWindow_setSwapInterval loaded successfully");
+    }
+
     return true;
 }
 
@@ -180,9 +192,11 @@ void gl_swap_surface(gl_render_window_t* bundle) {
         }
 
         eglSwapInterval_p(g_EglDisplay, g_userSwapInterval);
-        ANativeWindow_setSwapInterval(bundle->nativeSurface, g_userSwapInterval);
-        __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
-                            "Applied swap interval %d to new surface", g_userSwapInterval);
+        if (g_ANativeWindow_setSwapInterval) {
+          g_ANativeWindow_setSwapInterval(bundle->nativeSurface, g_userSwapInterval);
+          __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
+                              "Applied swap interval %d to new surface", g_userSwapInterval);
+        }
 
         if (current_ctx == bundle->context) {
             eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context);
@@ -346,8 +360,8 @@ void gl_swap_interval(int swapInterval) {
     eglSwapInterval_p(g_EglDisplay, swapInterval);
 
     gl_render_window_t* bundle = gl_get_current();
-    if (bundle && bundle->nativeSurface) {
-        ANativeWindow_setSwapInterval(bundle->nativeSurface, swapInterval);
+    if (bundle && bundle->nativeSurface && g_ANativeWindow_setSwapInterval) {
+        g_ANativeWindow_setSwapInterval(bundle->nativeSurface, swapInterval);
         __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
                             "ANativeWindow_setSwapInterval(%d) called", swapInterval);
     }
