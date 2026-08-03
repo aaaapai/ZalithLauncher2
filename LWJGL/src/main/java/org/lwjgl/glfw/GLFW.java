@@ -1228,7 +1228,6 @@ public class GLFW
             // We finished getting the driver info, we can return it back to its original state now
             glfwMakeContextCurrent(oldPtr);
         }*/ // f**k off remember out of reviving it.
-		glfwMakeContextCurrent(ptr); // Can it make 26.2 work norma?ly? I'm not sure but it must be not a good idea.
         win.windowAttribs.put(GLFW_CONTEXT_VERSION_MAJOR, glMajor);
         win.windowAttribs.put(GLFW_CONTEXT_VERSION_MINOR, glMinor);
         mGLFWWindowMap.put(ptr, win);
