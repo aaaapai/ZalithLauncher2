@@ -102,7 +102,7 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
             else LibraryReplacement(
                 newName = "org.ow2.asm:asm-all:5.2",
                 newPath = "org/ow2/asm/asm-all/5.2/asm-all-5.2.jar",
-                newSha1 = "d7443ae58d5479f99b5691041ccf0f4437f194e1",
+                newSha1 = "2ea49e08b876bbd33e0a7ce75c8f371d29e1f10a",
                 newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-all/5.2/asm-all-5.2.jar"
             )
         }
