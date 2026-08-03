@@ -121,58 +121,68 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
 }
 
 void gl_swap_surface(gl_render_window_t* bundle) {
-    // ===== 情况1：有新 Surface 待切换（立即执行，无延迟）=====
+    // ===== 情况1：有新 Surface 待切换 =====
     if (bundle->newNativeSurface != NULL) {
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Switching to new native surface");
 
-        // ① 释放旧的 EGL Surface
+        // ① 先释放旧资源（防止泄漏）
         if (bundle->surface != NULL) {
             eglDestroySurface_p(g_EglDisplay, bundle->surface);
             bundle->surface = NULL;
         }
-
-        // ② 释放旧的 ANativeWindow（减少引用计数）
         if (bundle->nativeSurface != NULL) {
             ANativeWindow_release(bundle->nativeSurface);
             bundle->nativeSurface = NULL;
         }
 
-        // ③ 切换到新窗口
+        // ② 切换到新窗口
         bundle->nativeSurface = bundle->newNativeSurface;
-        bundle->newNativeSurface = NULL;                // 清空，避免重复处理
-        ANativeWindow_acquire(bundle->nativeSurface);   // 增加引用计数
+        bundle->newNativeSurface = NULL;          // 清空，避免重复处理
+        ANativeWindow_acquire(bundle->nativeSurface);
         ANativeWindow_setBuffersGeometry(bundle->nativeSurface, 0, 0, bundle->format);
 
-        // ④ 创建新的 EGL Surface
+        // ③ 创建新 EGL Surface
         bundle->surface = eglCreateWindowSurface_p(g_EglDisplay, bundle->config,
                                                    bundle->nativeSurface, NULL);
         if (bundle->surface == EGL_NO_SURFACE) {
             __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                                 "eglCreateWindowSurface failed: %04x", eglGetError_p());
+            // 创建失败则回退到 pbuffer
+            goto fallback_pbuffer;
         }
-        return;  // 已完成切换，直接返回
+
+        // ④ 轮询等待 Surface 真正可用（解决黑屏）
+        int width = 0, height = 0;
+        int retries = 100;  // 最多等待 1 秒 (100 * 10ms)
+        while (retries-- > 0) {
+            eglQuerySurface_p(g_EglDisplay, bundle->surface, EGL_WIDTH, &width);
+            eglQuerySurface_p(g_EglDisplay, bundle->surface, EGL_HEIGHT, &height);
+            if (width > 0 && height > 0) {
+                __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                                    "New surface ready: %dx%d", width, height);
+                break;
+            }
+            usleep(10000);  // 10ms
+        }
+        if (width <= 0 || height <= 0) {
+            __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                                "Surface not ready after wait, continuing anyway");
+        }
+        return;  // 切换完成
     }
 
     // ===== 情况2：无新 Surface，回退到 1×1 Pbuffer =====
-    // 先尝试释放旧的资源（如果仍有效）
+fallback_pbuffer:
+    // 释放旧资源（若存在）
     if (bundle->nativeSurface != NULL) {
-        // 检查窗口是否依然有效（Android 可能在后台已销毁，此时 getWidth 返回负值）
-        int width = ANativeWindow_getWidth(bundle->nativeSurface);
-        if (width > 0) {
-            ANativeWindow_release(bundle->nativeSurface);
-        } else {
-            __android_log_print(ANDROID_LOG_WARN, g_LogTag,
-                                "Native surface invalid (width=%d), skipping release", width);
-        }
+        ANativeWindow_release(bundle->nativeSurface);
         bundle->nativeSurface = NULL;
     }
-
     if (bundle->surface != NULL) {
         eglDestroySurface_p(g_EglDisplay, bundle->surface);
         bundle->surface = NULL;
     }
 
-    // 创建 Pbuffer 作为后备，保证渲染不中断
     __android_log_print(ANDROID_LOG_INFO, g_LogTag, "No new surface, switching to 1x1 pbuffer");
     const EGLint pbuffer_attrs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
     bundle->surface = eglCreatePbufferSurface_p(g_EglDisplay, bundle->config, pbuffer_attrs);
@@ -216,37 +226,43 @@ void gl_make_current(gl_render_window_t* bundle) {
 
 }
 
-
 void gl_swap_buffers() {
-    // 如果处于“新窗口等待”状态，立即完成切换（这里会调用修正后的 gl_swap_surface）
+    // 如果处于新窗口等待状态，立即执行切换
     if (currentBundle->state == STATE_RENDERER_NEW_WINDOW) {
-        // 先解绑当前上下文，避免干扰
+        // 先解绑，避免干扰
         eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        gl_swap_surface(currentBundle);                // 此时会立即切换并释放旧资源
-        eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface,
-                         currentBundle->context);
-        // 标记状态为存活，避免反复进入
+        gl_swap_surface(currentBundle);
+        // 重新绑定
+        if (eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface,
+                             currentBundle->context) != EGL_TRUE) {
+            __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                                "eglMakeCurrent failed after switch: %04x", eglGetError_p());
+        }
         if (currentBundle->nativeSurface != NULL) {
             currentBundle->state = STATE_RENDERER_ALIVE;
         }
     }
 
-    // 正常交换缓冲
+    // 正常交换
     if (currentBundle->surface != NULL) {
-        if (!eglSwapBuffers_p(g_EglDisplay, currentBundle->surface) &&
-            eglGetError_p() == EGL_BAD_SURFACE) {
-            // Surface 已失效，触发重新切换（进入上面的分支）
-            eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            // 清空 newNativeSurface 以避免误切换（实际由 gl_setup_window 设置）
-            currentBundle->newNativeSurface = NULL;
-            gl_swap_surface(currentBundle);
-            eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface,
-                             currentBundle->context);
-            if (currentBundle->nativeSurface != NULL) {
-                currentBundle->state = STATE_RENDERER_ALIVE;
+        if (!eglSwapBuffers_p(g_EglDisplay, currentBundle->surface)) {
+            EGLint err = eglGetError_p();
+            if (err == EGL_BAD_SURFACE) {
+                // Surface 已损坏，重新创建
+                __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                                    "Surface died, recreating...");
+                eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+                currentBundle->newNativeSurface = NULL;
+                gl_swap_surface(currentBundle);
+                eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface,
+                                 currentBundle->context);
+                if (currentBundle->nativeSurface != NULL) {
+                    currentBundle->state = STATE_RENDERER_ALIVE;
+                }
+            } else if (err != EGL_SUCCESS) {
+                __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                                    "eglSwapBuffers error: %04x", err);
             }
-            __android_log_print(ANDROID_LOG_INFO, g_LogTag,
-                                "Surface died, recreated");
         }
     }
 }
