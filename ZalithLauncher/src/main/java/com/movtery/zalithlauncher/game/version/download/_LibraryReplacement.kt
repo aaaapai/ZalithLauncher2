@@ -43,12 +43,12 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
             )
         }
         libraryName.startsWith("com.github.oshi:oshi-core:") -> {
-            if (major >= 7 && minor >= 4) null
+            if (major >= 6 && minor >= 9) null
             else LibraryReplacement(
-                newName = "com.github.oshi:oshi-core:7.4.2",
-                newPath = "com/github/oshi/oshi-core/7.4.2/oshi-core-7.4.2.jar",
-                newSha1 = "0823528b4a54899104cefca7a1088ce4140687b0",
-                newUrl = "https://repo1.maven.org/maven2/com/github/oshi/oshi-core/7.4.2/oshi-core-7.4.2.jar"
+                newName = "com.github.oshi:oshi-core:6.9.0",
+                newPath = "com/github/oshi/oshi-core/6.9.0/oshi-core-6.9.0.jar",
+                newSha1 = "03224870731860cfcd7744581a05b559e94291e7",
+                newUrl = "https://repo1.maven.org/maven2/com/github/oshi/oshi-core/6.9.0/oshi-core-6.9.0.jar"
             )
         }
         libraryName.startsWith("org.ow2.asm:asm:") -> {
