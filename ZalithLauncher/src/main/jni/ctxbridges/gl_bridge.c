@@ -16,24 +16,46 @@
 // Created by maks on 17.09.2022.
 //
 
-static const char* g_LogTag = "GLBridge";
-static __thread gl_render_window_t* currentBundle;
-static EGLDisplay g_EglDisplay;
+static constexpr char g_LogTag[] = "GLBridge";
+static constexpr int MAX_RETRIES = 100;
+static constexpr struct timespec WAIT_INTERVAL = {0, 10000000L}; // 10ms
+static_assert(sizeof(gl_render_window_t) <= 256,
+              "gl_render_window_t size unexpectedly large");
+
+static __thread gl_render_window_t* currentBundle = nullptr;
+static EGLDisplay g_EglDisplay = EGL_NO_DISPLAY;
+static int g_userSwapInterval = 0;  // 默认关闭 VSync (0)
+
+static bool wait_for_surface_ready(EGLDisplay display, EGLSurface surface) {
+    int width = 0, height = 0;
+    for (int i = 0; i < MAX_RETRIES; ++i) {
+        eglQuerySurface_p(display, surface, EGL_WIDTH, &width);
+        eglQuerySurface_p(display, surface, EGL_HEIGHT, &height);
+        if (width > 0 && height > 0) {
+            __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                                "New surface ready: %dx%d", width, height);
+            return true;
+        }
+        nanosleep(&WAIT_INTERVAL, nullptr);
+    }
+    __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                        "Surface not ready after %d retries", MAX_RETRIES);
+    return false;
+}
+
 
 bool gl_init() {
     dlsym_EGL();
     g_EglDisplay = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
 
-    if (g_EglDisplay == EGL_NO_DISPLAY)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s",
+    if (g_EglDisplay == EGL_NO_DISPLAY) {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "eglGetDisplay_p(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
         return false;
     }
-    if (eglInitialize_p(g_EglDisplay, 0, 0) != EGL_TRUE)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglInitialize_p() failed: %04x",
-                            eglGetError_p());
+    if (eglInitialize_p(g_EglDisplay, nullptr, nullptr) != EGL_TRUE) {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                            "eglInitialize_p() failed: %04x", eglGetError_p());
         return false;
     }
     return true;
@@ -51,212 +73,220 @@ static void gl4esi_get_display_dimensions(int* width, int* height) {
     if (!result_width || !result_height) goto zero;
     return;
 
-    zero:
+zero:
     *width = 0;
     *height = 0;
 }
 
-gl_render_window_t* gl_init_context(gl_render_window_t *share) {
-    gl_render_window_t* bundle = malloc(sizeof(gl_render_window_t));
-    memset(bundle, 0, sizeof(gl_render_window_t));
-    EGLint egl_attributes[] = { EGL_BLUE_SIZE, 8,
-                    EGL_GREEN_SIZE, 8,
-                    EGL_RED_SIZE, 8,
-                    EGL_ALPHA_SIZE, 8,
-                    EGL_DEPTH_SIZE, 24,
-                    EGL_SURFACE_TYPE,
-                    EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
-                    EGL_RENDERABLE_TYPE,
-                    EGL_OPENGL_ES2_BIT,
-                    EGL_NONE
-                    };
+gl_render_window_t* gl_init_context(gl_render_window_t* share) {
+    gl_render_window_t* bundle = malloc(sizeof(typeof(*bundle)));
+    if (bundle == nullptr) return nullptr;
+    memset(bundle, 0, sizeof(typeof(*bundle)));
+
+    EGLint egl_attributes[] = {
+        EGL_BLUE_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_RED_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_DEPTH_SIZE, 24,
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_NONE
+    };
     EGLint num_configs = 0;
 
-    if (eglChooseConfig_p(g_EglDisplay, egl_attributes, NULL, 0, &num_configs) != EGL_TRUE)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
-                            eglGetError_p());
+    if (eglChooseConfig_p(g_EglDisplay, egl_attributes, nullptr, 0, &num_configs) != EGL_TRUE) {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                            "eglChooseConfig_p() failed: %04x", eglGetError_p());
         free(bundle);
-        return NULL;
+        return nullptr;
     }
 
-    if (num_configs == 0)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s",
+    if (num_configs == 0) {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "eglChooseConfig_p() found no matching config");
         free(bundle);
-        return NULL;
+        return nullptr;
     }
 
     eglChooseConfig_p(g_EglDisplay, egl_attributes, &bundle->config, 1, &num_configs);
     eglGetConfigAttrib_p(g_EglDisplay, bundle->config, EGL_NATIVE_VISUAL_ID, &bundle->format);
 
-    {
-        EGLBoolean bindResult;
-
-        if (!strncmp(getenv("POJAV_RENDERER"), "opengles3_desktopgl", 19))
-        {
-            printf("EGLBridge: Binding to OpenGL\n");
-            bindResult = eglBindAPI_p(EGL_OPENGL_API);
-        } else {
-            printf("EGLBridge: Binding to OpenGL ES\n");
-            bindResult = eglBindAPI_p(EGL_OPENGL_ES_API);
-        }
-        if (!bindResult) printf("EGLBridge: bind failed: %p\n", eglGetError_p());
+    // 设置 API
+    const char* renderer = getenv("POJAV_RENDERER");
+    EGLBoolean bindResult;
+    if (renderer && !strncmp(renderer, "opengles3_desktopgl", 19)) {
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Binding to OpenGL");
+        bindResult = eglBindAPI_p(EGL_OPENGL_API);
+    } else {
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Binding to OpenGL ES");
+        bindResult = eglBindAPI_p(EGL_OPENGL_ES_API);
+    }
+    if (!bindResult) {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                            "eglBindAPI failed: %04x", eglGetError_p());
     }
 
-    int libgl_es = strtol(getenv("LIBGL_ES"), NULL, 0);
+    int libgl_es = (int)strtol(getenv("LIBGL_ES"), nullptr, 0);
     if (libgl_es < 0 || libgl_es > INT16_MAX) libgl_es = 2;
-    const EGLint egl_context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, libgl_es, EGL_NONE };
-    bundle->context = eglCreateContext_p(g_EglDisplay, bundle->config, share == NULL ? EGL_NO_CONTEXT : share->context, egl_context_attributes);
+    const EGLint egl_context_attributes[] = {
+        EGL_CONTEXT_CLIENT_VERSION, libgl_es,
+        EGL_NONE
+    };
+    bundle->context = eglCreateContext_p(g_EglDisplay, bundle->config,
+                                         (share == nullptr) ? EGL_NO_CONTEXT : share->context,
+                                         egl_context_attributes);
 
-    if (bundle->context == EGL_NO_CONTEXT)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglCreateContext_p() finished with error: %04x",
-                            eglGetError_p());
+    if (bundle->context == EGL_NO_CONTEXT) {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                            "eglCreateContext_p() finished with error: %04x", eglGetError_p());
         free(bundle);
-        return NULL;
+        return nullptr;
     }
     return bundle;
 }
 
 void gl_swap_surface(gl_render_window_t* bundle) {
-    // ===== 情况1：有新 Surface 待切换 =====
-    if (bundle->newNativeSurface != NULL) {
+    if (bundle->newNativeSurface != nullptr) {
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Switching to new native surface");
 
-        // ① 先释放旧资源（防止泄漏）
-        if (bundle->surface != NULL) {
-            eglDestroySurface_p(g_EglDisplay, bundle->surface);
-            bundle->surface = NULL;
-        }
-        if (bundle->nativeSurface != NULL) {
-            ANativeWindow_release(bundle->nativeSurface);
-            bundle->nativeSurface = NULL;
+        // 保存当前上下文并解绑（强制完成所有 GPU 命令）
+        EGLContext current_ctx = eglGetCurrentContext_p();
+        EGLSurface current_draw = eglGetCurrentSurface_p(EGL_DRAW);
+        if (current_draw != EGL_NO_SURFACE) {
+            eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         }
 
-        // ② 切换到新窗口
+        // 释放旧资源
+        if (bundle->surface != EGL_NO_SURFACE) {
+            eglDestroySurface_p(g_EglDisplay, bundle->surface);
+            bundle->surface = EGL_NO_SURFACE;
+        }
+        if (bundle->nativeSurface != nullptr) {
+            ANativeWindow_release(bundle->nativeSurface);
+            bundle->nativeSurface = nullptr;
+        }
+
+        // 切换到新窗口
         bundle->nativeSurface = bundle->newNativeSurface;
-        bundle->newNativeSurface = NULL;          // 清空，避免重复处理
+        bundle->newNativeSurface = nullptr;
         ANativeWindow_acquire(bundle->nativeSurface);
         ANativeWindow_setBuffersGeometry(bundle->nativeSurface, 0, 0, bundle->format);
 
-        // ③ 创建新 EGL Surface
+        // 创建新 EGL Surface
         bundle->surface = eglCreateWindowSurface_p(g_EglDisplay, bundle->config,
-                                                   bundle->nativeSurface, NULL);
+                                                   bundle->nativeSurface, nullptr);
         if (bundle->surface == EGL_NO_SURFACE) {
             __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                                 "eglCreateWindowSurface failed: %04x", eglGetError_p());
-            // 创建失败则回退到 pbuffer
             goto fallback_pbuffer;
         }
 
-        // ④ 轮询等待 Surface 真正可用（解决黑屏）
-        int width = 0, height = 0;
-        int retries = 100;  // 最多等待 1 秒 (100 * 10ms)
-        while (retries-- > 0) {
-            eglQuerySurface_p(g_EglDisplay, bundle->surface, EGL_WIDTH, &width);
-            eglQuerySurface_p(g_EglDisplay, bundle->surface, EGL_HEIGHT, &height);
-            if (width > 0 && height > 0) {
-                __android_log_print(ANDROID_LOG_INFO, g_LogTag,
-                                    "New surface ready: %dx%d", width, height);
-                break;
-            }
-            usleep(10000);  // 10ms
+        // 如果之前绑定的上下文属于当前 bundle，重新绑定并恢复交换间隔
+        if (current_ctx == bundle->context) {
+            eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context);
+            // 恢复用户设置的交换间隔
+            eglSwapInterval_p(g_EglDisplay, g_userSwapInterval);
         }
-        if (width <= 0 || height <= 0) {
-            __android_log_print(ANDROID_LOG_WARN, g_LogTag,
-                                "Surface not ready after wait, continuing anyway");
-        }
-        return;  // 切换完成
+
+        // 轮询等待 Surface 就绪（解决黑屏）
+        wait_for_surface_ready(g_EglDisplay, bundle->surface);
+        return;
     }
 
-    // ===== 情况2：无新 Surface，回退到 1×1 Pbuffer =====
 fallback_pbuffer:
-    // 释放旧资源（若存在）
-    if (bundle->nativeSurface != NULL) {
-        ANativeWindow_release(bundle->nativeSurface);
-        bundle->nativeSurface = NULL;
-    }
-    if (bundle->surface != NULL) {
-        eglDestroySurface_p(g_EglDisplay, bundle->surface);
-        bundle->surface = NULL;
-    }
+    {
+        EGLContext ctx_fb = eglGetCurrentContext_p();
+        if (eglGetCurrentSurface_p(EGL_DRAW) != EGL_NO_SURFACE) {
+            eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        }
+        if (bundle->nativeSurface != nullptr) {
+            ANativeWindow_release(bundle->nativeSurface);
+            bundle->nativeSurface = nullptr;
+        }
+        if (bundle->surface != EGL_NO_SURFACE) {
+            eglDestroySurface_p(g_EglDisplay, bundle->surface);
+            bundle->surface = EGL_NO_SURFACE;
+        }
 
-    __android_log_print(ANDROID_LOG_INFO, g_LogTag, "No new surface, switching to 1x1 pbuffer");
-    const EGLint pbuffer_attrs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
-    bundle->surface = eglCreatePbufferSurface_p(g_EglDisplay, bundle->config, pbuffer_attrs);
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                            "No new surface, switching to 1x1 pbuffer");
+        static constexpr EGLint pbuffer_attrs[] = {
+            EGL_WIDTH, 1,
+            EGL_HEIGHT, 1,
+            EGL_NONE
+        };
+        bundle->surface = eglCreatePbufferSurface_p(g_EglDisplay, bundle->config, pbuffer_attrs);
+        if (ctx_fb == bundle->context) {
+            eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context);
+            eglSwapInterval_p(g_EglDisplay, g_userSwapInterval);
+        }
+    }
 }
 
 void gl_make_current(gl_render_window_t* bundle) {
-
-    if (bundle == NULL)
-    {
-        if (eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT))
-        {
-            currentBundle = NULL;
+    if (bundle == nullptr) {
+        if (eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT)) {
+            currentBundle = nullptr;
         }
         return;
     }
 
     bool hasSetMainWindow = false;
-    if (pojav_environ->mainWindowBundle == NULL)
-    {
+    if (pojav_environ->mainWindowBundle == nullptr) {
         pojav_environ->mainWindowBundle = (basic_render_window_t*)bundle;
-        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Main window bundle is now %p", pojav_environ->mainWindowBundle);
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                            "Main window bundle is now %p", pojav_environ->mainWindowBundle);
         pojav_environ->mainWindowBundle->newNativeSurface = pojav_environ->pojavWindow;
         hasSetMainWindow = true;
     }
 
-    if (bundle->surface == NULL)
+    if (bundle->surface == EGL_NO_SURFACE) {
         gl_swap_surface(bundle);
-
-    if (eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context))
-    {
-        currentBundle = bundle;
-    } else {
-        if (hasSetMainWindow)
-        {
-            pojav_environ->mainWindowBundle->newNativeSurface = NULL;
-            gl_swap_surface((gl_render_window_t*)pojav_environ->mainWindowBundle);
-            pojav_environ->mainWindowBundle = NULL;
-        }
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglMakeCurrent returned with error: %04x", eglGetError_p());
     }
 
+    if (eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context)) {
+        currentBundle = bundle;
+    } else {
+        if (hasSetMainWindow) {
+            pojav_environ->mainWindowBundle->newNativeSurface = nullptr;
+            gl_swap_surface((gl_render_window_t*)pojav_environ->mainWindowBundle);
+            pojav_environ->mainWindowBundle = nullptr;
+        }
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                            "eglMakeCurrent returned with error: %04x", eglGetError_p());
+    }
 }
 
 void gl_swap_buffers() {
-    // 如果处于新窗口等待状态，立即执行切换
     if (currentBundle->state == STATE_RENDERER_NEW_WINDOW) {
-        // 先解绑，避免干扰
-        eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        gl_swap_surface(currentBundle);
-        // 重新绑定
-        if (eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface,
-                             currentBundle->context) != EGL_TRUE) {
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
-                                "eglMakeCurrent failed after switch: %04x", eglGetError_p());
+        EGLContext old_ctx = eglGetCurrentContext_p();
+        EGLSurface old_draw = eglGetCurrentSurface_p(EGL_DRAW);
+        if (old_draw != EGL_NO_SURFACE) {
+            eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         }
-        if (currentBundle->nativeSurface != NULL) {
+        gl_swap_surface(currentBundle);
+        if (old_ctx == currentBundle->context) {
+            eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface,
+                             currentBundle->context);
+        }
+        if (currentBundle->nativeSurface != nullptr) {
             currentBundle->state = STATE_RENDERER_ALIVE;
         }
     }
 
-    // 正常交换
-    if (currentBundle->surface != NULL) {
+    if (currentBundle->surface != EGL_NO_SURFACE) {
         if (!eglSwapBuffers_p(g_EglDisplay, currentBundle->surface)) {
             EGLint err = eglGetError_p();
-            if (err == EGL_BAD_SURFACE) {
-                // Surface 已损坏，重新创建
+            if (err == EGL_BAD_SURFACE || err == EGL_BAD_CURRENT_SURFACE) {
                 __android_log_print(ANDROID_LOG_INFO, g_LogTag,
                                     "Surface died, recreating...");
                 eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-                currentBundle->newNativeSurface = NULL;
+                currentBundle->newNativeSurface = nullptr;
                 gl_swap_surface(currentBundle);
                 eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface,
                                  currentBundle->context);
-                if (currentBundle->nativeSurface != NULL) {
+                if (currentBundle->nativeSurface != nullptr) {
                     currentBundle->state = STATE_RENDERER_ALIVE;
                 }
             } else if (err != EGL_SUCCESS) {
@@ -268,17 +298,19 @@ void gl_swap_buffers() {
 }
 
 void gl_setup_window() {
-    if (pojav_environ->mainWindowBundle != NULL)
-    {
-        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Main window bundle is not NULL, changing state");
+    if (pojav_environ->mainWindowBundle != nullptr) {
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                            "Main window bundle is not NULL, changing state");
         pojav_environ->mainWindowBundle->state = STATE_RENDERER_NEW_WINDOW;
         pojav_environ->mainWindowBundle->newNativeSurface = pojav_environ->pojavWindow;
     }
 }
 
 void gl_swap_interval(int swapInterval) {
-    const char *renderer = getenv("POJAV_RENDERER");
-    if (renderer && !strcmp(renderer, "opengles3_desktopgl_zink_kopper") && !getenv("POJAV_VSYNC_IN_ZINK")) {
+    g_userSwapInterval = swapInterval;
+    const char* renderer = getenv("POJAV_RENDERER");
+    if (renderer && !strcmp(renderer, "opengles3_desktopgl_zink_kopper") &&
+        !getenv("POJAV_VSYNC_IN_ZINK")) {
         return;
     }
     eglSwapInterval_p(g_EglDisplay, swapInterval);
