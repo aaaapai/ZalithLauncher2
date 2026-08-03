@@ -757,20 +757,19 @@ public class GLFW
     }
 
     public static GLFWErrorCallback glfwSetErrorCallback(@Nullable @NativeType("GLFWerrorfun") GLFWErrorCallbackI cbfun) {
-        GLFWFramebufferSizeCallback lastCallback = mGLFWFramebufferSizeCallback;
-        if (cbfun == null) mGLFWFramebufferSizeCallback = null;
-        else mGLFWFramebufferSizeCallback = GLFWFramebufferSizeCallback.createSafe(nglfwSetFramebufferSizeCallback(window, memAddressSafe(cbfun)));
+       GLFWErrorCallback lastCallback = mGLFWErrorCallback;
+        if (cbfun == null) mGLFWErrorCallback = null;
+        else mGLFWErrorCallback = GLFWErrorCallback.create(cbfun);
 
         return lastCallback;
     }
 
     public static GLFWFramebufferSizeCallback glfwSetFramebufferSizeCallback(@NativeType("GLFWwindow *") long window, @Nullable @NativeType("GLFWframebuffersizefun") GLFWFramebufferSizeCallbackI cbfun) {
-        GLFWFramebufferSizeCallback previousCallback = null;
-        if(mGLFWFramebufferSizeCallbackI != null) {
-            previousCallback = GLFWFramebufferSizeCallback.create(mGLFWFramebufferSizeCallbackI);
-        }
-        mGLFWFramebufferSizeCallbackI = cbfun;
-        return previousCallback;
+        GLFWFramebufferSizeCallback lastCallback = mGLFWFramebufferSizeCallback;
+        if (cbfun == null) mGLFWFramebufferSizeCallback = null;
+        else mGLFWFramebufferSizeCallback = GLFWFramebufferSizeCallback.createSafe(nglfwSetFramebufferSizeCallback(window, memAddressSafe(cbfun)));
+
+        return lastCallback;
     }
 
     public static GLFWJoystickCallback glfwSetJoystickCallback(/* @NativeType("GLFWwindow *") long window, */ @Nullable @NativeType("GLFWjoystickfun") GLFWJoystickCallbackI cbfun) {
