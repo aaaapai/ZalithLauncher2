@@ -34,12 +34,12 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
     return when {
         libraryName.startsWith("net.java.dev.jna:jna:") -> {
             //如果版本已经达到5.19.0及以上，则不做处理
-            if (major >= 5 && minor >= 19) null
+            if (major >= 5 && minor >= 17) null
             else LibraryReplacement(
-                newName = "net.java.dev.jna:jna:5.19.1",
-                newPath = "net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar",
-                newSha1 = "ca303052cd617c1af2e2c8d344c98a706fb63143",
-                newUrl = "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar"
+                newName = "net.java.dev.jna:jna:5.17.0",
+                newPath = "net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar",
+                newSha1 = "33d12735bef894440780fce64f9758d420c7bae2",
+                newUrl = "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar"
             )
         }
         libraryName.startsWith("com.github.oshi:oshi-core:") -> {
