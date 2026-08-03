@@ -59,48 +59,25 @@ static void gl4esi_get_display_dimensions(int* width, int* height) {
 gl_render_window_t* gl_init_context(gl_render_window_t *share) {
     gl_render_window_t* bundle = malloc(sizeof(gl_render_window_t));
     memset(bundle, 0, sizeof(gl_render_window_t));
-    EGLint egl_attributes_desktopgl[] = { EGL_BLUE_SIZE, 8,
-                    EGL_GREEN_SIZE, 8,
-                    EGL_RED_SIZE, 8,
-                    EGL_ALPHA_SIZE, 8,
-                    EGL_DEPTH_SIZE, 24,
-                    EGL_SURFACE_TYPE,
-                    EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
-                    EGL_RENDERABLE_TYPE,
-                    EGL_OPENGL_ES3_BIT|EGL_OPENGL_ES2_BIT,
-                    EGL_NONE
-                    };
     EGLint egl_attributes[] = { EGL_BLUE_SIZE, 8,
                     EGL_GREEN_SIZE, 8,
                     EGL_RED_SIZE, 8,
                     EGL_ALPHA_SIZE, 8,
-                    EGL_BUFFER_SIZE, 32,
                     EGL_DEPTH_SIZE, 24,
-                    EGL_STENCIL_SIZE, 8,
                     EGL_SURFACE_TYPE,
                     EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
                     EGL_RENDERABLE_TYPE,
-                    EGL_OPENGL_ES3_BIT|EGL_OPENGL_ES2_BIT|EGL_OPENGL_ES_BIT,
+                    EGL_OPENGL_ES2_BIT,
                     EGL_NONE
                     };
     EGLint num_configs = 0;
 
-    if (!strncmp(getenv("POJAV_RENDERER"), "opengles3_desktopgl", 19)) {
-    if (eglChooseConfig_p(g_EglDisplay, egl_attributes_desktopgl, NULL, 0, &num_configs) != EGL_TRUE)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
-                            eglGetError_p());
-        free(bundle);
-        return NULL;
-    }
-    } else {
     if (eglChooseConfig_p(g_EglDisplay, egl_attributes, NULL, 0, &num_configs) != EGL_TRUE)
     {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglChooseConfig_p() failed: %04x",
                             eglGetError_p());
         free(bundle);
         return NULL;
-    }
     }
 
     if (num_configs == 0)
@@ -111,11 +88,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
         return NULL;
     }
 
-    if (!strncmp(getenv("POJAV_RENDERER"), "opengles3_desktopgl", 19)) {
-        eglChooseConfig_p(g_EglDisplay, egl_attributes_desktopgl, &bundle->config, 1, &num_configs);
-    } else {
-        eglChooseConfig_p(g_EglDisplay, egl_attributes, &bundle->config, 1, &num_configs);
-    }
+    eglChooseConfig_p(g_EglDisplay, egl_attributes, &bundle->config, 1, &num_configs);
     eglGetConfigAttrib_p(g_EglDisplay, bundle->config, EGL_NATIVE_VISUAL_ID, &bundle->format);
 
     {
@@ -148,76 +121,51 @@ gl_render_window_t* gl_init_context(gl_render_window_t *share) {
 }
 
 void gl_swap_surface(gl_render_window_t* bundle) {
-    // 如果有新 Surface 待切换，先释放旧资源（如果有）
-    if (bundle->newNativeSurface != NULL) {
-        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Switching to new native surface, releasing old if any");
-        
-        // 先解绑当前上下文（如果有）
-        if (currentBundle == bundle) {
-            eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        }
-        
-        // 释放旧的 nativeSurface 和 eglSurface
-        if (bundle->nativeSurface != NULL) {
-            ANativeWindow_release(bundle->nativeSurface);
-            bundle->nativeSurface = NULL;
-        }
-        if (bundle->surface != NULL) {
-            eglDestroySurface_p(g_EglDisplay, bundle->surface);
-            bundle->surface = NULL;
-        }
-        
-        // 使用新窗口创建
+    // 有新 Surface 待切换，这里直接切换
+    if (bundle->newNativeSurface != NULL)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "Switching to new native surface");
         bundle->nativeSurface = bundle->newNativeSurface;
         bundle->newNativeSurface = NULL;
         ANativeWindow_acquire(bundle->nativeSurface);
         ANativeWindow_setBuffersGeometry(bundle->nativeSurface, 0, 0, bundle->format);
         bundle->surface = eglCreateWindowSurface_p(g_EglDisplay, bundle->config, bundle->nativeSurface, NULL);
-        
-        if (bundle->surface == EGL_NO_SURFACE) {
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglCreateWindowSurface failed: %04x, falling back to pbuffer", eglGetError_p());
-            ANativeWindow_release(bundle->nativeSurface);
-            bundle->nativeSurface = NULL;
-            const EGLint pbuffer_attrs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
-            bundle->surface = eglCreatePbufferSurface_p(g_EglDisplay, bundle->config, pbuffer_attrs);
-        }
-        // 新表面创建完成，返回（旧表面已销毁）
         return;
     }
 
-    // 无新窗口：按原有逻辑释放并回退到 pbuffer
     /*
-     * 保留原有的 usleep 和尺寸检查，处理 Android 可能已经释放 surface 的情况
+     * In some cases (see MinecraftGLSurface.start(), android kills the surface automatically for
+     * us, if we try to release/destroy it, we SIGSEGV. Check if we are -19x-19 or some other
+     * invalid value and skip the release because Android decided to handle releasing it for us.
+     * This goes against every piece of documentation I have ever seen but who actually reads those?
+     *
+     * Some drivers take forever to properly destroy the surface, they do it part at a time or
+     * some other garbage while SIGSEGVing us if we try releasing while they're in the middle of
+     * turning the surface dead. This makes the width and height make it look valid when it actually
+     * isn't so we wait for them and hope there is no race condition of both us and Android trying
+     * to release the surface. This seems driver dependent as AVD and Waydroid do not need 0.75s
+     * to set the bloody height and width to their proper values. They just do it, instantly.
      */
-    //usleep(750000); // 等待表面消亡 // Why?
+    usleep(750000); // An overkill amount of time to wait for a surface to finish dying
     int32_t nativeWindowWidth = ANativeWindow_getWidth(pojav_environ->pojavWindow);
     int32_t nativeWindowHeight = ANativeWindow_getHeight(pojav_environ->pojavWindow);
     if ((nativeWindowWidth > 0) || (nativeWindowHeight > 0)) {
-        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Native surface dimensions (%d x %d), releasing", nativeWindowWidth, nativeWindowHeight);
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Native surface dimensions (%d x %d)\n",
+                            nativeWindowWidth, nativeWindowHeight);
         if (bundle->nativeSurface != NULL) {
             ANativeWindow_release(bundle->nativeSurface);
-            bundle->nativeSurface = NULL;
         }
-        if (bundle->surface != NULL) {
-            eglDestroySurface_p(g_EglDisplay, bundle->surface);
-            bundle->surface = NULL;
-        }
+        if (bundle->surface != NULL) eglDestroySurface_p(g_EglDisplay, bundle->surface);
     } else {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag,
-                            "Native surface dimensions (%d x %d) invalid! Assuming Android already released window.",
+                            "Native surface dimensions (%d x %d) are invalid! Assuming android has already released window.\n",
                             nativeWindowWidth, nativeWindowHeight);
-        // 此时认为 Android 已释放，我们仅置空指针，避免二次释放
-        bundle->nativeSurface = NULL;
-        // surface 可能已被 Android 隐式销毁，但我们仍尝试销毁以避免泄漏
-        if (bundle->surface != NULL) {
-            eglDestroySurface_p(g_EglDisplay, bundle->surface);
-            bundle->surface = NULL;
-        }
     }
 
-    // 回退到 1x1 pbuffer
+    // 无新窗口可用，回退到 1x1 pbuffer 避免渲染彻底中断
     __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "No new native surface, switching to 1x1 pbuffer");
-    const EGLint pbuffer_attrs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
+    bundle->nativeSurface = NULL;
+    const EGLint pbuffer_attrs[] = {EGL_WIDTH, 1 , EGL_HEIGHT, 1, EGL_NONE};
     bundle->surface = eglCreatePbufferSurface_p(g_EglDisplay, bundle->config, pbuffer_attrs);
 }
 
@@ -247,15 +195,6 @@ void gl_make_current(gl_render_window_t* bundle) {
     if (eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context))
     {
         currentBundle = bundle;
-        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "eglMakeCurrent success, surface=%p, context=%p", bundle->surface, bundle->context);
-        EGLContext cur = eglGetCurrentContext_p();
-        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "eglGetCurrentContext = %p (expected %p)", cur, bundle->context);
-        EGLint ver;
-        if (eglQueryContext_p(g_EglDisplay, bundle->context, EGL_CONTEXT_CLIENT_VERSION, &ver)) {
-            __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Context client version = %d", ver);
-        } else {
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglQueryContext failed: 0x%04x", eglGetError_p());
-        }
     } else {
         if (hasSetMainWindow)
         {
@@ -265,6 +204,7 @@ void gl_make_current(gl_render_window_t* bundle) {
         }
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "eglMakeCurrent returned with error: %04x", eglGetError_p());
     }
+
 }
 
 void gl_swap_buffers() {
