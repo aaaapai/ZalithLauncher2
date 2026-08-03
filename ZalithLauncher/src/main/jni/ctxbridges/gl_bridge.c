@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <environ/environ.h>
 #include <unistd.h>
+#include <time.h>
 #include "gl_bridge.h"
 #include "egl_loader.h"
 
