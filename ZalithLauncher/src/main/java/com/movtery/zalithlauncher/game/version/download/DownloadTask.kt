@@ -47,7 +47,9 @@ class DownloadTask(
     val isDownloadable: Boolean,
     private val onDownloadFailed: (DownloadTask) -> Unit = {},
     private val onFileDownloadedSize: (Long) -> Unit = {},
-    private val onFileDownloaded: () -> Unit = {}
+    private val onFileDownloaded: () -> Unit = {},
+    // 新增回调：下载开始时通知文件总大小（用于设置进度条最大值）
+    private val onDownloadStart: (Long) -> Unit = {}
 ) {
     /**
      * 文件下载成功后执行的任务
@@ -63,13 +65,32 @@ class DownloadTask(
             return
         }
 
-        // 使用自定义的 DOWNLOAD_OKHTTP_CLIENT 进行下载
+        // 优先使用原有的 downloadFromMirrorList（内部已处理好进度和总大小）
+        runCatching {
+            runInterruptible {
+                downloadFromMirrorList(
+                    urls = urls,
+                    sha1 = sha1,
+                    outputFile = file,
+                    bufferSize = bufferSize
+                ) { size ->
+                    downloadedSize(size)
+                }
+            }
+            downloadedFile()
+            return
+        }.onFailure { e ->
+            if (e is CancellationException) throw e
+            Logger.warning(TAG, "downloadFromMirrorList 失败，回退到 OkHttp 手动下载", e)
+        }
+
+        // ---------- 回退方案：使用 OkHttp 手动下载 ----------
         val client = DOWNLOAD_OKHTTP_CLIENT
         var lastException: Exception? = null
 
         for (url in urls) {
             try {
-                Logger.debug(TAG, "尝试下载: $url")
+                Logger.debug(TAG, "回退下载尝试: $url")
                 val request = Request.Builder().url(url).build()
                 val response = client.newCall(request).execute()
 
@@ -78,6 +99,15 @@ class DownloadTask(
                     Logger.error(TAG, errorMsg)
                     lastException = IOException(errorMsg)
                     continue
+                }
+
+                // 获取文件总大小并通知 UI（用于进度条）
+                val contentLength = response.body?.contentLength() ?: -1L
+                if (contentLength > 0) {
+                    onDownloadStart(contentLength)
+                } else {
+                    // 无法获取总大小时传递 -1，UI 可据此隐藏百分比或显示“计算中…”
+                    onDownloadStart(-1)
                 }
 
                 // 确保目标目录存在
@@ -118,7 +148,7 @@ class DownloadTask(
             }
         }
 
-        // 所有镜像都失败
+        // 所有镜像均失败
         val finalError = lastException ?: IOException("所有镜像均无法下载")
         if (!isDownloadable && finalError is FileNotFoundException) throw finalError
         onDownloadFailed(this)
