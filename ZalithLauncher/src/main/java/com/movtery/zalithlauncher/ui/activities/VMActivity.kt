@@ -635,6 +635,10 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
         withHandler { mIsSurfaceDestroyed = false }
         lifecycleScope.launch(Dispatchers.Default) {
+
+            delay(200)
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY)
+            android.os.Process.setThreadPriority(android.os.Process.myTid(), android.os.Process.THREAD_PRIORITY_DISPLAY)
             val screenSize = vmViewModel.screenSizeBridge.awaitData()
             val currentSize = refreshWindowSize(screenSize = screenSize)
             withHandler {
@@ -671,6 +675,10 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
         withHandler { mIsSurfaceDestroyed = false }
         lifecycleScope.launch(Dispatchers.Default) {
+
+            delay(200)
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY)
+            android.os.Process.setThreadPriority(android.os.Process.myTid(), android.os.Process.THREAD_PRIORITY_DISPLAY)
             val screenSize = vmViewModel.screenSizeBridge.awaitData()
             val currentSize = refreshWindowSize(screenSize = screenSize)
             withHandler {
