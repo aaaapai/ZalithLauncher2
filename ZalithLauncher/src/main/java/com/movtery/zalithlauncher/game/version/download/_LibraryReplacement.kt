@@ -56,7 +56,7 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
             else LibraryReplacement(
                 newName = "org.ow2.asm:asm:9.10.1",
                 newPath = "org/ow2/asm/asm/9.10.1/asm-9.10.1.jar",
-                newSha1 = "507e7f8821c58fc995a057b63ad4008b96bafa4d",
+                newSha1 = "ada2141c0cc52ee8f5c48cd5fa4ce0e794f22236",
                 newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar"
             )
         }
@@ -65,7 +65,7 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
             else LibraryReplacement(
                 newName = "org.ow2.asm:asm-analysis:9.10.1",
                 newPath = "org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar",
-                newSha1 = "cf2754cfa5e4df15ccf9f8779485f23862c5b488",
+                newSha1 = "8d49f14d51f632cb1d87c88d1ceaf50db0d8af1b",
                 newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar"
             )
         }
@@ -74,7 +74,7 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
             else LibraryReplacement(
                 newName = "org.ow2.asm:asm-commons:9.10.1",
                 newPath = "org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar",
-                newSha1 = "a28039cb619a6c2a5c7ca5b3206381f9032c8368",
+                newSha1 = "4229e4c55fd8e01c23f9fe9884075cc628aacc50",
                 newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar"
             )
         }
@@ -83,7 +83,7 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
             else LibraryReplacement(
                 newName = "org.ow2.asm:asm-tree:9.10.1",
                 newPath = "org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar",
-                newSha1 = "0fe218ecae48cabf4e53295d64ae4e01e5ddfb33",
+                newSha1 = "e244332a17564c1d1572449399a842de35881be2",
                 newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar"
             )
         }
@@ -92,7 +92,7 @@ fun getLibraryReplacement(libraryName: String, versionParts: List<String>): Libr
             else LibraryReplacement(
                 newName = "org.ow2.asm:asm-util:9.10.1",
                 newPath = "org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar",
-                newSha1 = "c6db0976b79a615802b820b08664602fa1f6a5ad",
+                newSha1 = "7bb9d450e8d4cbf9f9e04096c44bbfe7fba80b15",
                 newUrl = "https://repo1.maven.org/maven2/org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar"
             )
         }
