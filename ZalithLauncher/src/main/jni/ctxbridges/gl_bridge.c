@@ -25,7 +25,7 @@ static EGLDisplay g_EglDisplay = EGL_NO_DISPLAY;
 static int g_userSwapInterval = 0;
 static void (*g_ANativeWindow_setSwapInterval)(ANativeWindow* window, int interval) = nullptr;
 
-// 兼容性 likely/unlikely 宏（带参数）
+// 兼容性 likely/unlikely 宏
 #if defined(__GNUC__) || defined(__clang__)
 #define LIKELY(x)   __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -211,9 +211,12 @@ void gl_swap_surface(gl_render_window_t* bundle) {
         int w = ANativeWindow_getWidth(bundle->newNativeSurface);
         int h = ANativeWindow_getHeight(bundle->newNativeSurface);
         if (UNLIKELY(w <= 0 || h <= 0)) {
+            // 窗口尺寸无效（可能已被系统销毁），释放窗口并立即 fallback 到 PBuffer
             __android_log_print(ANDROID_LOG_WARN, g_LogTag,
-                                "New surface size invalid (%dx%d), deferring", w, h);
-            return;
+                                "New surface size invalid (%dx%d), discarding and using pbuffer", w, h);
+            ANativeWindow_release(bundle->newNativeSurface);
+            bundle->newNativeSurface = nullptr;
+            goto fallback_pbuffer;
         }
 
         uint64_t now = get_time_ms();
@@ -233,7 +236,8 @@ void gl_swap_surface(gl_render_window_t* bundle) {
             bundle->last_fail_time = now;
             ANativeWindow_release(bundle->newNativeSurface);
             bundle->newNativeSurface = nullptr;
-            return;
+            // 创建失败也 fallback 到 PBuffer
+            goto fallback_pbuffer;
         }
 
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Switching to new surface (w=%d, h=%d)", w, h);
@@ -269,6 +273,7 @@ void gl_swap_surface(gl_render_window_t* bundle) {
         return;
     }
 
+    // 无新窗口，若表面为空则 fallback 到 PBuffer
     if (UNLIKELY(bundle->surface == EGL_NO_SURFACE)) {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag, "Surface is NULL, fallback to pbuffer");
         goto fallback_pbuffer;
@@ -379,10 +384,12 @@ void gl_swap_buffers() {
                     __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                                         "SwapBuffers failed (0x%04x), attempting surface rebuild", err);
                     eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+                    // 销毁旧表面
                     if (currentBundle->surface != EGL_NO_SURFACE && currentBundle->surface != currentBundle->pbuffer_surface) {
                         eglDestroySurface_p(g_EglDisplay, currentBundle->surface);
                         currentBundle->surface = EGL_NO_SURFACE;
                     }
+                    // 优先使用现有 nativeSurface 重建
                     if (currentBundle->nativeSurface != nullptr) {
                         currentBundle->newNativeSurface = currentBundle->nativeSurface;
                         ANativeWindow_acquire(currentBundle->newNativeSurface);
