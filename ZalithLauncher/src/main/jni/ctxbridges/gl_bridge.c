@@ -25,7 +25,6 @@ static EGLDisplay g_EglDisplay = EGL_NO_DISPLAY;
 static int g_userSwapInterval = 0;
 static void (*g_ANativeWindow_setSwapInterval)(ANativeWindow* window, int interval) = nullptr;
 
-// 兼容性 likely/unlikely 宏
 #if defined(__GNUC__) || defined(__clang__)
 #define LIKELY(x)   __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)
@@ -190,8 +189,9 @@ static EGLSurface try_create_window_surface(EGLDisplay display, EGLConfig config
     EGLint err = eglGetError_p();
     __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                         "Strategy1 failed (0x%04x), trying strategy2", err);
-    while (eglGetError_p() != EGL_SUCCESS) {} // 清空错误
+    while (eglGetError_p() != EGL_SUCCESS) {}
 
+    // 策略2：设置几何体为 0,0，不带属性（标准 EGL / MobileGLUES）
     ANativeWindow_setBuffersGeometry(window, 0, 0, format);
     surface = eglCreateWindowSurface_p(display, config, window, nullptr);
     if (LIKELY(surface != EGL_NO_SURFACE)) {
@@ -214,13 +214,16 @@ void gl_swap_surface(gl_render_window_t* bundle) {
                                 "New surface size invalid (%dx%d), discarding and using pbuffer", w, h);
             ANativeWindow_release(bundle->newNativeSurface);
             bundle->newNativeSurface = nullptr;
+            // 设置一个较长的防抖时间，避免反复尝试
+            bundle->last_fail_time = get_time_ms() + 500;
             goto fallback_pbuffer;
         }
 
         uint64_t now = get_time_ms();
-        if (UNLIKELY(bundle->last_fail_time > 0 && (now - bundle->last_fail_time) < 200)) {
+        if (UNLIKELY(bundle->last_fail_time > 0 && now < bundle->last_fail_time)) {
+            // 在防抖期内，释放新窗口并返回，保持当前表面不变
             __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
-                                "Too soon after previous fail, skip new surface");
+                                "In cooldown period, skip new surface");
             ANativeWindow_release(bundle->newNativeSurface);
             bundle->newNativeSurface = nullptr;
             return;
@@ -231,7 +234,7 @@ void gl_swap_surface(gl_render_window_t* bundle) {
             bundle->format, w, h);
 
         if (UNLIKELY(new_surface == EGL_NO_SURFACE)) {
-            bundle->last_fail_time = now;
+            bundle->last_fail_time = get_time_ms() + 500;
             ANativeWindow_release(bundle->newNativeSurface);
             bundle->newNativeSurface = nullptr;
             goto fallback_pbuffer;
@@ -453,6 +456,22 @@ void gl_swap_buffers() {
 
 void gl_setup_window() {
     if (UNLIKELY(pojav_environ->mainWindowBundle != nullptr)) {
+        // 验证窗口有效性
+        ANativeWindow* win = pojav_environ->pojavWindow;
+        if (win != nullptr) {
+            int w = ANativeWindow_getWidth(win);
+            int h = ANativeWindow_getHeight(win);
+            if (UNLIKELY(w <= 0 || h <= 0)) {
+                __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                                    "gl_setup_window: pojavWindow invalid (%dx%d), skip", w, h);
+                return;
+            }
+        } else {
+            __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                                "gl_setup_window: pojavWindow is NULL, skip");
+            return;
+        }
+
         __android_log_print(ANDROID_LOG_INFO, g_LogTag,
                             "Main window bundle is not NULL, changing state");
         pojav_environ->mainWindowBundle->state = STATE_RENDERER_NEW_WINDOW;
@@ -468,7 +487,6 @@ void gl_swap_interval(int swapInterval) {
         return;
     }
 
-    // 检查当前上下文是否有效
     EGLContext current_ctx = eglGetCurrentContext_p();
     if (UNLIKELY(current_ctx == EGL_NO_CONTEXT)) {
         __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
@@ -476,7 +494,6 @@ void gl_swap_interval(int swapInterval) {
         return;
     }
 
-    // 检查当前绘制表面是否有效
     EGLSurface current_draw = eglGetCurrentSurface_p(EGL_DRAW);
     if (UNLIKELY(current_draw == EGL_NO_SURFACE)) {
         __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
@@ -509,3 +526,4 @@ Java_org_lwjgl_opengl_PojavRendererInit_nativeInitGl4esInternals(JNIEnv *env, jc
     }
 #undef GETSYM
 }
+
