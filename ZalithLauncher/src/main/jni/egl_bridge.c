@@ -269,21 +269,21 @@ void* maybe_load_vulkan() {
 
 static int frameCount = 0;
 static int fps = 0;
-static time_t lastTime = 0;
+static uint64_t lastUpdateTime = 0;
 
 void calculateFPS() {
     frameCount++;
-    time_t currentTime = time(NULL);
+    uint64_t now = get_time_ms();
 
-    if (currentTime != lastTime) {
-        lastTime = currentTime;
-        fps = frameCount;
+    if (now - lastUpdateTime >= 500) {
+        fps = frameCount * 2;
         frameCount = 0;
+        lastUpdateTime = now;
     }
 
-    if (!pojav_environ->hasGraphicOutput && pojav_environ->dalvikJavaVMPtr && pojav_environ->bridgeClazz && pojav_environ->method_onGraphicOutput) {
+    if (!pojav_environ->hasGraphicOutput && pojav_environ->dalvikJavaVMPtr &&
+        pojav_environ->bridgeClazz && pojav_environ->method_onGraphicOutput) {
         pojav_environ->hasGraphicOutput = true;
-
         JNIEnv *dalvikEnv;
         (*pojav_environ->dalvikJavaVMPtr)->AttachCurrentThread(pojav_environ->dalvikJavaVMPtr, &dalvikEnv, NULL);
         (*dalvikEnv)->CallStaticVoidMethod(dalvikEnv, pojav_environ->bridgeClazz, pojav_environ->method_onGraphicOutput);
