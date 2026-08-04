@@ -14,6 +14,9 @@ typedef struct {
     EGLint     format;
     EGLContext context;
     EGLSurface surface;
+    EGLSurface pbuffer_surface;
+    bool       pbuffer_created;
+    uint64_t   last_fail_time;
 } gl_render_window_t;
 
 bool gl_init();
