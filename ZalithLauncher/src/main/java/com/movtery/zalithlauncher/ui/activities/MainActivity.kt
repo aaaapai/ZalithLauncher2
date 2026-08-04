@@ -513,33 +513,15 @@ class MainActivity : BaseAppCompatActivity() {
     /**
      * 检查启动器更新
      */
-    private fun checkUpdate() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val success = launcherUpgradeViewModel.checkManually(
-                    onInProgress = {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(this@MainActivity, getString(R.string.generic_in_progress), Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    onIsLatest = {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(this@MainActivity, getString(R.string.upgrade_is_latest), Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                )
-                if (!success) throw RuntimeException()
-            } catch (_: TooFrequentOperationException) {
-                //太频繁了
-                return@launch
-            } catch (_: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, getString(R.string.upgrade_get_remote_failed), Toast.LENGTH_SHORT).show()
-                }
-                return@launch
-            }
-        }
-    }
+     private fun checkUpdate() {
+         lifecycleScope.launch(Dispatchers.Main) {
+            MaterialAlertDialogBuilder(this@MainActivity)
+                 .setTitle("提示")
+                 .setMessage("检测更新被淦了")
+                 .setPositiveButton("知道了", null)
+                 .showThemed()
+         }
+     }
 
     /**
      * 处理自定义主页的事件
