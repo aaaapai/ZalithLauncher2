@@ -25,7 +25,6 @@ static EGLDisplay g_EglDisplay = EGL_NO_DISPLAY;
 static int g_userSwapInterval = 0;
 static void (*g_ANativeWindow_setSwapInterval)(ANativeWindow* window, int interval) = nullptr;
 
-
 static bool wait_for_surface_ready(EGLDisplay display, EGLSurface surface) {
     int width = 0, height = 0;
     for (int i = 0; i < MAX_RETRIES; ++i) {
@@ -42,6 +41,7 @@ static bool wait_for_surface_ready(EGLDisplay display, EGLSurface surface) {
                         "Surface not ready after %d retries", MAX_RETRIES);
     return false;
 }
+
 
 bool gl_init() {
     dlsym_EGL();
@@ -83,6 +83,31 @@ static void gl4esi_get_display_dimensions(int* width, int* height) {
 zero:
     *width = 0;
     *height = 0;
+}
+
+static bool gl_rebuild_context(gl_render_window_t* bundle) {
+    if (bundle == nullptr) return false;
+    if (bundle->context != EGL_NO_CONTEXT) {
+        eglDestroyContext_p(g_EglDisplay, bundle->context);
+        bundle->context = EGL_NO_CONTEXT;
+    }
+    const EGLint egl_context_attributes[] = {
+        EGL_CONTEXT_CLIENT_VERSION, bundle->client_version,
+        EGL_NONE
+    };
+    EGLContext new_ctx = eglCreateContext_p(g_EglDisplay, bundle->config,
+                                            bundle->share_context,
+                                            egl_context_attributes);
+    if (new_ctx == EGL_NO_CONTEXT) {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                            "Failed to rebuild context: 0x%04x", eglGetError_p());
+        return false;
+    }
+    bundle->context = new_ctx;
+    bundle->context_lost = false;
+    __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                        "Context rebuilt successfully (new=%p)", new_ctx);
+    return true;
 }
 
 gl_render_window_t* gl_init_context(gl_render_window_t* share) {
@@ -134,12 +159,15 @@ gl_render_window_t* gl_init_context(gl_render_window_t* share) {
 
     int libgl_es = (int)strtol(getenv("LIBGL_ES"), nullptr, 0);
     if (libgl_es < 0 || libgl_es > INT16_MAX) libgl_es = 2;
+    bundle->client_version = libgl_es;
+    bundle->share_context = (share == nullptr) ? EGL_NO_CONTEXT : share->context;
+
     const EGLint egl_context_attributes[] = {
         EGL_CONTEXT_CLIENT_VERSION, libgl_es,
         EGL_NONE
     };
     bundle->context = eglCreateContext_p(g_EglDisplay, bundle->config,
-                                         (share == nullptr) ? EGL_NO_CONTEXT : share->context,
+                                         bundle->share_context,
                                          egl_context_attributes);
 
     if (bundle->context == EGL_NO_CONTEXT) {
@@ -148,6 +176,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t* share) {
         free(bundle);
         return nullptr;
     }
+    bundle->context_lost = false;
     return bundle;
 }
 
@@ -172,7 +201,8 @@ void gl_swap_surface(gl_render_window_t* bundle) {
             return;
         }
 
-        // 关键修改：显式传入宽高属性
+        ANativeWindow_setBuffersGeometry(bundle->newNativeSurface, w, h, bundle->format);
+
         EGLint surface_attribs[] = {
             EGL_WIDTH, w,
             EGL_HEIGHT, h,
@@ -198,6 +228,7 @@ void gl_swap_surface(gl_render_window_t* bundle) {
             eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         }
 
+        // 销毁旧窗口表面（保留 pbuffer 表面）
         if (bundle->surface != EGL_NO_SURFACE && bundle->surface != bundle->pbuffer_surface) {
             eglDestroySurface_p(g_EglDisplay, bundle->surface);
         }
@@ -209,7 +240,6 @@ void gl_swap_surface(gl_render_window_t* bundle) {
         bundle->nativeSurface = bundle->newNativeSurface;
         bundle->newNativeSurface = nullptr;
         ANativeWindow_acquire(bundle->nativeSurface);
-        ANativeWindow_setBuffersGeometry(bundle->nativeSurface, 0, 0, bundle->format);
 
         eglSwapInterval_p(g_EglDisplay, g_userSwapInterval);
         if (g_ANativeWindow_setSwapInterval) {
@@ -362,7 +392,8 @@ void gl_swap_buffers() {
 
     if (!eglSwapBuffers_p(g_EglDisplay, currentBundle->surface)) {
         EGLint err = eglGetError_p();
-        if (err == EGL_BAD_SURFACE || err == EGL_BAD_CURRENT_SURFACE || err == EGL_CONTEXT_LOST) {
+        if (err == EGL_BAD_SURFACE || err == EGL_BAD_CURRENT_SURFACE) {
+            // 表面损坏，尝试重建表面
             static uint64_t last_rebuild_time = 0;
             uint64_t now = get_time_ms();
             if (now - last_rebuild_time > 200) {
@@ -377,6 +408,54 @@ void gl_swap_buffers() {
                 }
                 eglSwapInterval_p(g_EglDisplay, g_userSwapInterval);
                 last_rebuild_time = now;
+            }
+        } else if (err == EGL_CONTEXT_LOST) {
+            // 上下文丢失，必须重建
+            static uint64_t last_context_rebuild = 0;
+            uint64_t now = get_time_ms();
+            if (now - last_context_rebuild > 1000) { // 重建间隔1秒，防止疯狂循环
+                __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                                    "Context lost (0x%04x), rebuilding entire context", err);
+                eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+                // 销毁所有表面（包括 pbuffer）
+                if (currentBundle->surface != EGL_NO_SURFACE) {
+                    eglDestroySurface_p(g_EglDisplay, currentBundle->surface);
+                    currentBundle->surface = EGL_NO_SURFACE;
+                }
+                if (currentBundle->pbuffer_surface != EGL_NO_SURFACE) {
+                    eglDestroySurface_p(g_EglDisplay, currentBundle->pbuffer_surface);
+                    currentBundle->pbuffer_surface = EGL_NO_SURFACE;
+                    currentBundle->pbuffer_created = false;
+                }
+                if (currentBundle->nativeSurface != nullptr) {
+                    ANativeWindow_release(currentBundle->nativeSurface);
+                    currentBundle->nativeSurface = nullptr;
+                }
+
+                // 重建上下文
+                if (gl_rebuild_context(currentBundle)) {
+                    // 重新创建表面（首先尝试窗口表面，若无效则 pbuffer）
+                    currentBundle->newNativeSurface = pojav_environ->pojavWindow;
+                    if (currentBundle->newNativeSurface != nullptr) {
+                        ANativeWindow_acquire(currentBundle->newNativeSurface);
+                    }
+                    gl_swap_surface(currentBundle);
+                    // 重新绑定
+                    if (eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface,
+                                         currentBundle->context)) {
+                        eglSwapInterval_p(g_EglDisplay, g_userSwapInterval);
+                        __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                                            "Context and surface rebuilt successfully");
+                    } else {
+                        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                                            "Failed to make new context current");
+                    }
+                } else {
+                    __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                                        "Failed to rebuild context, giving up");
+                }
+                last_context_rebuild = now;
             }
         } else {
             __android_log_print(ANDROID_LOG_WARN, g_LogTag,
