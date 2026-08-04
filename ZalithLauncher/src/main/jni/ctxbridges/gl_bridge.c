@@ -25,38 +25,35 @@ static EGLDisplay g_EglDisplay = EGL_NO_DISPLAY;
 static int g_userSwapInterval = 0;
 static void (*g_ANativeWindow_setSwapInterval)(ANativeWindow* window, int interval) = nullptr;
 
-// 兼容性 likely/unlikely 宏
-#if __has_c_attribute(likely)
-    #define LIKELY   [[likely]]
-    #define UNLIKELY [[unlikely]]
-#elif defined(__GNUC__) || defined(__clang__)
-    #define LIKELY   __builtin_expect(!!(x), 1)
-    #define UNLIKELY __builtin_expect(!!(x), 0)
+// 兼容性 likely/unlikely 宏（带参数）
+#if defined(__GNUC__) || defined(__clang__)
+#define LIKELY(x)   __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 #else
-    #define LIKELY
-    #define UNLIKELY
+#define LIKELY(x)   (x)
+#define UNLIKELY(x) (x)
 #endif
 
 bool gl_init() {
     dlsym_EGL();
     g_EglDisplay = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
 
-    if (g_EglDisplay == EGL_NO_DISPLAY) UNLIKELY {
+    if (UNLIKELY(g_EglDisplay == EGL_NO_DISPLAY)) {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "eglGetDisplay_p(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
         return false;
     }
-    if (eglInitialize_p(g_EglDisplay, nullptr, nullptr) != EGL_TRUE) UNLIKELY {
+    if (UNLIKELY(eglInitialize_p(g_EglDisplay, nullptr, nullptr) != EGL_TRUE)) {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "eglInitialize_p() failed: %04x", eglGetError_p());
         return false;
     }
 
     g_ANativeWindow_setSwapInterval = (void (*)(ANativeWindow*, int))dlsym(RTLD_DEFAULT, "ANativeWindow_setSwapInterval");
-    if (g_ANativeWindow_setSwapInterval == NULL) UNLIKELY {
+    if (UNLIKELY(g_ANativeWindow_setSwapInterval == NULL)) {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                             "ANativeWindow_setSwapInterval not found, EGL only fallback");
-    } else LIKELY {
+    } else {
         __android_log_print(ANDROID_LOG_INFO, g_LogTag,
                             "ANativeWindow_setSwapInterval loaded successfully");
     }
@@ -68,11 +65,11 @@ gl_render_window_t* gl_get_current() {
 }
 
 static void gl4esi_get_display_dimensions(int* width, int* height) {
-    if (currentBundle == NULL) UNLIKELY goto zero;
+    if (UNLIKELY(currentBundle == NULL)) goto zero;
     EGLSurface surface = currentBundle->surface;
     EGLBoolean result_width = eglQuerySurface_p(g_EglDisplay, surface, EGL_WIDTH, width);
     EGLBoolean result_height = eglQuerySurface_p(g_EglDisplay, surface, EGL_HEIGHT, height);
-    if (!result_width || !result_height) UNLIKELY goto zero;
+    if (UNLIKELY(!result_width || !result_height)) goto zero;
     return;
 zero:
     *width = 0;
@@ -80,7 +77,7 @@ zero:
 }
 
 static bool gl_rebuild_context(gl_render_window_t* bundle) {
-    if (bundle == nullptr) UNLIKELY return false;
+    if (UNLIKELY(bundle == nullptr)) return false;
     if (bundle->context != EGL_NO_CONTEXT) {
         eglDestroyContext_p(g_EglDisplay, bundle->context);
         bundle->context = EGL_NO_CONTEXT;
@@ -92,7 +89,7 @@ static bool gl_rebuild_context(gl_render_window_t* bundle) {
     EGLContext new_ctx = eglCreateContext_p(g_EglDisplay, bundle->config,
                                             bundle->share_context,
                                             egl_context_attributes);
-    if (new_ctx == EGL_NO_CONTEXT) UNLIKELY {
+    if (UNLIKELY(new_ctx == EGL_NO_CONTEXT)) {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "Failed to rebuild context: 0x%04x", eglGetError_p());
         return false;
@@ -106,7 +103,7 @@ static bool gl_rebuild_context(gl_render_window_t* bundle) {
 
 gl_render_window_t* gl_init_context(gl_render_window_t* share) {
     gl_render_window_t* bundle = (gl_render_window_t*)calloc(1, sizeof(gl_render_window_t));
-    if (bundle == nullptr) UNLIKELY return nullptr;
+    if (UNLIKELY(bundle == nullptr)) return nullptr;
 
     EGLint egl_attributes[] = {
         EGL_BLUE_SIZE, 8,
@@ -120,14 +117,14 @@ gl_render_window_t* gl_init_context(gl_render_window_t* share) {
     };
     EGLint num_configs = 0;
 
-    if (eglChooseConfig_p(g_EglDisplay, egl_attributes, nullptr, 0, &num_configs) != EGL_TRUE) UNLIKELY {
+    if (UNLIKELY(eglChooseConfig_p(g_EglDisplay, egl_attributes, nullptr, 0, &num_configs) != EGL_TRUE)) {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "eglChooseConfig_p() failed: %04x", eglGetError_p());
         free(bundle);
         return nullptr;
     }
 
-    if (num_configs == 0) UNLIKELY {
+    if (UNLIKELY(num_configs == 0)) {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "eglChooseConfig_p() found no matching config");
         free(bundle);
@@ -142,17 +139,17 @@ gl_render_window_t* gl_init_context(gl_render_window_t* share) {
     if (renderer && !strncmp(renderer, "opengles3_desktopgl", 19)) {
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Binding to OpenGL");
         bindResult = eglBindAPI_p(EGL_OPENGL_API);
-    } else LIKELY {
+    } else {
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Binding to OpenGL ES");
         bindResult = eglBindAPI_p(EGL_OPENGL_ES_API);
     }
-    if (!bindResult) UNLIKELY {
+    if (UNLIKELY(!bindResult)) {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "eglBindAPI failed: %04x", eglGetError_p());
     }
 
     int libgl_es = (int)strtol(getenv("LIBGL_ES"), nullptr, 0);
-    if (libgl_es < 0 || libgl_es > INT16_MAX) UNLIKELY libgl_es = 2;
+    if (UNLIKELY(libgl_es < 0 || libgl_es > INT16_MAX)) libgl_es = 2;
     bundle->client_version = libgl_es;
     bundle->share_context = (share == nullptr) ? EGL_NO_CONTEXT : share->context;
 
@@ -164,7 +161,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t* share) {
                                          bundle->share_context,
                                          egl_context_attributes);
 
-    if (bundle->context == EGL_NO_CONTEXT) UNLIKELY {
+    if (UNLIKELY(bundle->context == EGL_NO_CONTEXT)) {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
                             "eglCreateContext_p() finished with error: %04x", eglGetError_p());
         free(bundle);
@@ -177,6 +174,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t* share) {
 static EGLSurface try_create_window_surface(EGLDisplay display, EGLConfig config,
                                             ANativeWindow* window, EGLint format,
                                             int width, int height) {
+    // 策略1：设置几何体为实际尺寸，带 EGL_WIDTH/HEIGHT 属性
     ANativeWindow_setBuffersGeometry(window, width, height, format);
     EGLint surface_attribs[] = {
         EGL_WIDTH, width,
@@ -184,7 +182,7 @@ static EGLSurface try_create_window_surface(EGLDisplay display, EGLConfig config
         EGL_NONE
     };
     EGLSurface surface = eglCreateWindowSurface_p(display, config, window, surface_attribs);
-    if (surface != EGL_NO_SURFACE) LIKELY {
+    if (LIKELY(surface != EGL_NO_SURFACE)) {
         __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
                             "Created window surface with attributes (w=%d,h=%d)", width, height);
         return surface;
@@ -192,11 +190,12 @@ static EGLSurface try_create_window_surface(EGLDisplay display, EGLConfig config
     EGLint err = eglGetError_p();
     __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                         "Strategy1 failed (0x%04x), trying strategy2", err);
-    while (eglGetError_p() != EGL_SUCCESS) {}
+    while (eglGetError_p() != EGL_SUCCESS) {} // 清空错误
 
+    // 策略2：设置几何体为 0,0，不带属性（标准 EGL / MobileGLUES）
     ANativeWindow_setBuffersGeometry(window, 0, 0, format);
     surface = eglCreateWindowSurface_p(display, config, window, nullptr);
-    if (surface != EGL_NO_SURFACE) LIKELY {
+    if (LIKELY(surface != EGL_NO_SURFACE)) {
         __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
                             "Created window surface without attributes");
         return surface;
@@ -208,17 +207,17 @@ static EGLSurface try_create_window_surface(EGLDisplay display, EGLConfig config
 }
 
 void gl_swap_surface(gl_render_window_t* bundle) {
-    if (bundle->newNativeSurface != nullptr) LIKELY {
+    if (LIKELY(bundle->newNativeSurface != nullptr)) {
         int w = ANativeWindow_getWidth(bundle->newNativeSurface);
         int h = ANativeWindow_getHeight(bundle->newNativeSurface);
-        if (w <= 0 || h <= 0) UNLIKELY {
+        if (UNLIKELY(w <= 0 || h <= 0)) {
             __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                                 "New surface size invalid (%dx%d), deferring", w, h);
             return;
         }
 
         uint64_t now = get_time_ms();
-        if (bundle->last_fail_time > 0 && (now - bundle->last_fail_time) < 200) UNLIKELY {
+        if (UNLIKELY(bundle->last_fail_time > 0 && (now - bundle->last_fail_time) < 200)) {
             __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
                                 "Too soon after previous fail, skip new surface");
             ANativeWindow_release(bundle->newNativeSurface);
@@ -230,7 +229,7 @@ void gl_swap_surface(gl_render_window_t* bundle) {
             g_EglDisplay, bundle->config, bundle->newNativeSurface,
             bundle->format, w, h);
 
-        if (new_surface == EGL_NO_SURFACE) UNLIKELY {
+        if (UNLIKELY(new_surface == EGL_NO_SURFACE)) {
             bundle->last_fail_time = now;
             ANativeWindow_release(bundle->newNativeSurface);
             bundle->newNativeSurface = nullptr;
@@ -270,7 +269,7 @@ void gl_swap_surface(gl_render_window_t* bundle) {
         return;
     }
 
-    if (bundle->surface == EGL_NO_SURFACE) UNLIKELY {
+    if (UNLIKELY(bundle->surface == EGL_NO_SURFACE)) {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag, "Surface is NULL, fallback to pbuffer");
         goto fallback_pbuffer;
     }
@@ -312,7 +311,7 @@ fallback_pbuffer:
 }
 
 void gl_make_current(gl_render_window_t* bundle) {
-    if (bundle == nullptr) UNLIKELY {
+    if (UNLIKELY(bundle == nullptr)) {
         if (eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT)) {
             currentBundle = nullptr;
         }
@@ -320,7 +319,7 @@ void gl_make_current(gl_render_window_t* bundle) {
     }
 
     bool hasSetMainWindow = false;
-    if (pojav_environ->mainWindowBundle == nullptr) UNLIKELY {
+    if (UNLIKELY(pojav_environ->mainWindowBundle == nullptr)) {
         pojav_environ->mainWindowBundle = (basic_render_window_t*)bundle;
         __android_log_print(ANDROID_LOG_INFO, g_LogTag,
                             "Main window bundle is now %p", pojav_environ->mainWindowBundle);
@@ -328,13 +327,13 @@ void gl_make_current(gl_render_window_t* bundle) {
         hasSetMainWindow = true;
     }
 
-    if (bundle->surface == EGL_NO_SURFACE) UNLIKELY {
+    if (UNLIKELY(bundle->surface == EGL_NO_SURFACE)) {
         gl_swap_surface(bundle);
     }
 
-    if (eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context)) LIKELY {
+    if (LIKELY(eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context))) {
         currentBundle = bundle;
-    } else UNLIKELY {
+    } else {
         if (hasSetMainWindow) {
             pojav_environ->mainWindowBundle->newNativeSurface = nullptr;
             gl_swap_surface((gl_render_window_t*)pojav_environ->mainWindowBundle);
@@ -346,7 +345,7 @@ void gl_make_current(gl_render_window_t* bundle) {
 }
 
 void gl_swap_buffers() {
-    if (currentBundle->state == STATE_RENDERER_NEW_WINDOW) UNLIKELY {
+    if (UNLIKELY(currentBundle->state == STATE_RENDERER_NEW_WINDOW)) {
         EGLContext old_ctx = eglGetCurrentContext_p();
         EGLSurface old_draw = eglGetCurrentSurface_p(EGL_DRAW);
         if (old_draw != EGL_NO_SURFACE) {
@@ -360,7 +359,7 @@ void gl_swap_buffers() {
         currentBundle->state = STATE_RENDERER_ALIVE;
     }
 
-    if (currentBundle->surface == EGL_NO_SURFACE) UNLIKELY {
+    if (UNLIKELY(currentBundle->surface == EGL_NO_SURFACE)) {
         eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         gl_swap_surface(currentBundle);
         eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface, currentBundle->context);
@@ -370,10 +369,10 @@ void gl_swap_buffers() {
         }
     }
 
-    if (currentBundle->surface != EGL_NO_SURFACE) LIKELY {
-        if (!eglSwapBuffers_p(g_EglDisplay, currentBundle->surface)) UNLIKELY {
+    if (LIKELY(currentBundle->surface != EGL_NO_SURFACE)) {
+        if (UNLIKELY(!eglSwapBuffers_p(g_EglDisplay, currentBundle->surface))) {
             EGLint err = eglGetError_p();
-            if (err == EGL_BAD_SURFACE || err == EGL_BAD_CURRENT_SURFACE) UNLIKELY {
+            if (UNLIKELY(err == EGL_BAD_SURFACE || err == EGL_BAD_CURRENT_SURFACE)) {
                 static uint64_t last_rebuild_time = 0;
                 uint64_t now = get_time_ms();
                 if (now - last_rebuild_time > 200) {
@@ -398,7 +397,7 @@ void gl_swap_buffers() {
                     }
                     last_rebuild_time = now;
                 }
-            } else if (err == EGL_CONTEXT_LOST) UNLIKELY {
+            } else if (UNLIKELY(err == EGL_CONTEXT_LOST)) {
                 static uint64_t last_context_rebuild = 0;
                 uint64_t now = get_time_ms();
                 if (now - last_context_rebuild > 1000) {
@@ -446,13 +445,13 @@ void gl_swap_buffers() {
                                     "eglSwapBuffers failed: 0x%04x (ignored)", err);
             }
         }
-    } else UNLIKELY {
+    } else {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag, "Surface is NULL, skipping swap");
     }
 }
 
 void gl_setup_window() {
-    if (pojav_environ->mainWindowBundle != nullptr) UNLIKELY {
+    if (UNLIKELY(pojav_environ->mainWindowBundle != nullptr)) {
         __android_log_print(ANDROID_LOG_INFO, g_LogTag,
                             "Main window bundle is not NULL, changing state");
         pojav_environ->mainWindowBundle->state = STATE_RENDERER_NEW_WINDOW;
@@ -471,7 +470,7 @@ void gl_swap_interval(int swapInterval) {
     eglSwapInterval_p(g_EglDisplay, swapInterval);
 
     gl_render_window_t* bundle = gl_get_current();
-    if (bundle && bundle->nativeSurface && g_ANativeWindow_setSwapInterval) LIKELY {
+    if (LIKELY(bundle && bundle->nativeSurface && g_ANativeWindow_setSwapInterval)) {
         g_ANativeWindow_setSwapInterval(bundle->nativeSurface, swapInterval);
         __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
                             "ANativeWindow_setSwapInterval(%d) called", swapInterval);
@@ -487,7 +486,7 @@ Java_org_lwjgl_opengl_PojavRendererInit_nativeInitGl4esInternals(JNIEnv *env, jc
 #define GETSYM(N) ((*env)->CallLongMethod(env, function_provider, method_getFunctionAddress, (*env)->NewStringUTF(env, N)));
 
     void (*set_getmainfbsize)(void (*new_getMainFBSize)(int* width, int* height)) = (void*)GETSYM("set_getmainfbsize");
-    if(set_getmainfbsize != NULL) LIKELY {
+    if (LIKELY(set_getmainfbsize != NULL)) {
         __android_log_print(ANDROID_LOG_INFO, g_LogTag, "GL4ES internals initialized dimension callback");
         set_getmainfbsize(gl4esi_get_display_dimensions);
     }
