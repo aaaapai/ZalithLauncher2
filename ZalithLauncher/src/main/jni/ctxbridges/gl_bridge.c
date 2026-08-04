@@ -192,7 +192,6 @@ static EGLSurface try_create_window_surface(EGLDisplay display, EGLConfig config
                         "Strategy1 failed (0x%04x), trying strategy2", err);
     while (eglGetError_p() != EGL_SUCCESS) {} // 清空错误
 
-    // 策略2：设置几何体为 0,0，不带属性（标准 EGL / MobileGLUES）
     ANativeWindow_setBuffersGeometry(window, 0, 0, format);
     surface = eglCreateWindowSurface_p(display, config, window, nullptr);
     if (LIKELY(surface != EGL_NO_SURFACE)) {
@@ -211,7 +210,6 @@ void gl_swap_surface(gl_render_window_t* bundle) {
         int w = ANativeWindow_getWidth(bundle->newNativeSurface);
         int h = ANativeWindow_getHeight(bundle->newNativeSurface);
         if (UNLIKELY(w <= 0 || h <= 0)) {
-            // 窗口尺寸无效（可能已被系统销毁），释放窗口并立即 fallback 到 PBuffer
             __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                                 "New surface size invalid (%dx%d), discarding and using pbuffer", w, h);
             ANativeWindow_release(bundle->newNativeSurface);
@@ -236,7 +234,6 @@ void gl_swap_surface(gl_render_window_t* bundle) {
             bundle->last_fail_time = now;
             ANativeWindow_release(bundle->newNativeSurface);
             bundle->newNativeSurface = nullptr;
-            // 创建失败也 fallback 到 PBuffer
             goto fallback_pbuffer;
         }
 
@@ -273,7 +270,6 @@ void gl_swap_surface(gl_render_window_t* bundle) {
         return;
     }
 
-    // 无新窗口，若表面为空则 fallback 到 PBuffer
     if (UNLIKELY(bundle->surface == EGL_NO_SURFACE)) {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag, "Surface is NULL, fallback to pbuffer");
         goto fallback_pbuffer;
@@ -384,12 +380,10 @@ void gl_swap_buffers() {
                     __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                                         "SwapBuffers failed (0x%04x), attempting surface rebuild", err);
                     eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-                    // 销毁旧表面
                     if (currentBundle->surface != EGL_NO_SURFACE && currentBundle->surface != currentBundle->pbuffer_surface) {
                         eglDestroySurface_p(g_EglDisplay, currentBundle->surface);
                         currentBundle->surface = EGL_NO_SURFACE;
                     }
-                    // 优先使用现有 nativeSurface 重建
                     if (currentBundle->nativeSurface != nullptr) {
                         currentBundle->newNativeSurface = currentBundle->nativeSurface;
                         ANativeWindow_acquire(currentBundle->newNativeSurface);
@@ -471,6 +465,22 @@ void gl_swap_interval(int swapInterval) {
     const char* renderer = getenv("POJAV_RENDERER");
     if (renderer && !strcmp(renderer, "opengles3_desktopgl_zink_kopper") &&
         !getenv("POJAV_VSYNC_IN_ZINK")) {
+        return;
+    }
+
+    // 检查当前上下文是否有效
+    EGLContext current_ctx = eglGetCurrentContext_p();
+    if (UNLIKELY(current_ctx == EGL_NO_CONTEXT)) {
+        __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
+                            "gl_swap_interval: no current context, skip");
+        return;
+    }
+
+    // 检查当前绘制表面是否有效
+    EGLSurface current_draw = eglGetCurrentSurface_p(EGL_DRAW);
+    if (UNLIKELY(current_draw == EGL_NO_SURFACE)) {
+        __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
+                            "gl_swap_interval: no current surface, skip");
         return;
     }
 
