@@ -25,6 +25,12 @@ static EGLDisplay g_EglDisplay = EGL_NO_DISPLAY;
 static int g_userSwapInterval = 0;
 static void (*g_ANativeWindow_setSwapInterval)(ANativeWindow* window, int interval) = nullptr;
 
+static uint64_t get_time_ms() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
 bool gl_init() {
     dlsym_EGL();
     g_EglDisplay = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
@@ -96,6 +102,7 @@ gl_render_window_t* gl_init_context(gl_render_window_t* share) {
     gl_render_window_t* bundle = (gl_render_window_t*)calloc(1, sizeof(gl_render_window_t));
     if (bundle == nullptr) return nullptr;
 
+    // 配置同时支持窗口和 PBuffer，兼容两种后端
     EGLint egl_attributes[] = {
         EGL_BLUE_SIZE, 8,
         EGL_GREEN_SIZE, 8,
@@ -162,6 +169,40 @@ gl_render_window_t* gl_init_context(gl_render_window_t* share) {
     return bundle;
 }
 
+// 尝试创建窗口表面，先带属性，失败则不带属性重试
+static EGLSurface try_create_window_surface(EGLDisplay display, EGLConfig config,
+                                            ANativeWindow* window, EGLint format,
+                                            int width, int height) {
+    // 1. 带尺寸属性尝试（MobileGL 需要）
+    EGLint surface_attribs[] = {
+        EGL_WIDTH, width,
+        EGL_HEIGHT, height,
+        EGL_NONE
+    };
+    EGLSurface surface = eglCreateWindowSurface_p(display, config, window, surface_attribs);
+    if (surface != EGL_NO_SURFACE) {
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                            "Created window surface with attributes (w=%d,h=%d)", width, height);
+        return surface;
+    }
+    EGLint err = eglGetError_p();
+    // 如果错误是 BAD_CONFIG，可能是后端不接受带属性的创建，尝试不带属性
+    if (err == EGL_BAD_CONFIG) {
+        __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                            "eglCreateWindowSurface with attributes failed (0x%04x), retry without attributes", err);
+        surface = eglCreateWindowSurface_p(display, config, window, nullptr);
+        if (surface != EGL_NO_SURFACE) {
+            __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                                "Created window surface without attributes");
+            return surface;
+        }
+        err = eglGetError_p();
+    }
+    __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                        "eglCreateWindowSurface failed: 0x%04x", err);
+    return EGL_NO_SURFACE;
+}
+
 void gl_swap_surface(gl_render_window_t* bundle) {
     if (bundle->newNativeSurface != nullptr) {
         int w = ANativeWindow_getWidth(bundle->newNativeSurface);
@@ -183,19 +224,15 @@ void gl_swap_surface(gl_render_window_t* bundle) {
             return;
         }
 
+        // 设置窗口几何体（兼容两种后端）
         ANativeWindow_setBuffersGeometry(bundle->newNativeSurface, w, h, bundle->format);
 
-        EGLint surface_attribs[] = {
-            EGL_WIDTH, w,
-            EGL_HEIGHT, h,
-            EGL_NONE
-        };
-        EGLSurface new_surface = eglCreateWindowSurface_p(g_EglDisplay, bundle->config,
-                                                          bundle->newNativeSurface, surface_attribs);
+        // 使用自适应创建函数
+        EGLSurface new_surface = try_create_window_surface(
+            g_EglDisplay, bundle->config, bundle->newNativeSurface,
+            bundle->format, w, h);
+
         if (new_surface == EGL_NO_SURFACE) {
-            EGLint err = eglGetError_p();
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
-                                "eglCreateWindowSurface failed: 0x%04x, keep old", err);
             bundle->last_fail_time = now;
             ANativeWindow_release(bundle->newNativeSurface);
             bundle->newNativeSurface = nullptr;
@@ -235,10 +272,12 @@ void gl_swap_surface(gl_render_window_t* bundle) {
         return;
     }
 
+    // 无新窗口，检查表面是否为空，若空则 fallback 到 PBuffer
     if (bundle->surface == EGL_NO_SURFACE) {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag, "Surface is NULL, fallback to pbuffer");
         goto fallback_pbuffer;
     }
+    // 不检查尺寸，因为部分实现可能返回 0
     return;
 
 fallback_pbuffer:
@@ -325,20 +364,17 @@ void gl_swap_buffers() {
         currentBundle->state = STATE_RENDERER_ALIVE;
     }
 
-    // 如果当前表面为空，尝试重建
     if (currentBundle->surface == EGL_NO_SURFACE) {
         eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         gl_swap_surface(currentBundle);
         eglMakeCurrent_p(g_EglDisplay, currentBundle->surface, currentBundle->surface, currentBundle->context);
-        if (currentBundle->nativeSurface != nullptr) {
-            currentBundle->state = STATE_RENDERER_ALIVE;
-        }
         eglSwapInterval_p(g_EglDisplay, g_userSwapInterval);
         if (currentBundle->surface == EGL_NO_SURFACE) {
             return;
         }
     }
 
+    // 直接交换，不依赖尺寸查询
     if (currentBundle->surface != EGL_NO_SURFACE) {
         if (!eglSwapBuffers_p(g_EglDisplay, currentBundle->surface)) {
             EGLint err = eglGetError_p();
