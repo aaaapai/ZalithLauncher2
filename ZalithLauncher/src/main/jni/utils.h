@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdbool.h>
+#include <time.h>
+
 #include "environ/environ.h"
 
 #define CLIPBOARD_COPY 2000
@@ -17,3 +19,8 @@ void installLwjglDlopenHook();
 void installEMUIIteratorMititgation();
 JNIEXPORT jstring JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeClipboard(JNIEnv* env, jclass clazz, jint action, jbyteArray copySrc);
 
+static inline uint64_t get_time_ms() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
