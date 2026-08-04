@@ -172,8 +172,14 @@ void gl_swap_surface(gl_render_window_t* bundle) {
             return;
         }
 
+        // 关键修改：显式传入宽高属性
+        EGLint surface_attribs[] = {
+            EGL_WIDTH, w,
+            EGL_HEIGHT, h,
+            EGL_NONE
+        };
         EGLSurface new_surface = eglCreateWindowSurface_p(g_EglDisplay, bundle->config,
-                                                          bundle->newNativeSurface, nullptr);
+                                                          bundle->newNativeSurface, surface_attribs);
         if (new_surface == EGL_NO_SURFACE) {
             EGLint err = eglGetError_p();
             __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
@@ -235,7 +241,6 @@ fallback_pbuffer:
             eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         }
 
-        // 创建 PBuffer
         if (!bundle->pbuffer_created) {
             static const EGLint pbuffer_attrs[] = {
                 EGL_WIDTH, 1280,
@@ -248,7 +253,6 @@ fallback_pbuffer:
             __android_log_print(ANDROID_LOG_INFO, g_LogTag, "Created pbuffer surface once");
         }
 
-        // 销毁旧的窗口表面
         if (bundle->surface != EGL_NO_SURFACE && bundle->surface != bundle->pbuffer_surface) {
             eglDestroySurface_p(g_EglDisplay, bundle->surface);
         }
@@ -258,7 +262,6 @@ fallback_pbuffer:
         }
 
         bundle->surface = bundle->pbuffer_surface;
-        // 如果当前上下文是 bundle 的，重新绑定
         if (eglGetCurrentContext_p() == bundle->context) {
             eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context);
             eglSwapInterval_p(g_EglDisplay, g_userSwapInterval);
