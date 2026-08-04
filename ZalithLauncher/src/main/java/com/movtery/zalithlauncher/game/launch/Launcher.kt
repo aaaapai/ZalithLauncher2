@@ -405,7 +405,6 @@ abstract class Launcher(
             map["AWTSTUB_HEIGHT"] = screenSize.height.toString()
             map["MOD_ANDROID_RUNTIME"] = PathManager.DIR_RUNTIME_MOD?.absolutePath ?: ""
             map["ALSOFT_DRIVERS"] = "opensl"
-            map["ANGLE_CONVER_TO_RGBA8"] = "true"
             map["ANGLE_DESKTOPGL"] = "true"
             map["ANGLE_ALLOW_SRGB_uSRGB_MIPMAP"] = "true"
             map["ANGLE_LESS_FRAMEBUFFER_LIMIT"] = "true"
