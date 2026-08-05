@@ -7,14 +7,14 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <elf.h>
-#include <elf_defs.h>
+#include "elf_defs.h"
 #include <android/log.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
 #define TAG __FILE_NAME__
-#include <log.h>
+#include "log.h"
 
 #define LOG_DBG
 

@@ -10,7 +10,7 @@
 #include "android_namespace_func.h"
 
 #define TAG __FILE_NAME__
-#include <log.h>
+#include "log.h"
 
 /* upper 6 bits of an ARM64 instruction are the instruction name */
 #define OP_MS 0b11111100000000000000000000000000

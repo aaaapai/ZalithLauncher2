@@ -4,11 +4,11 @@
 
 #include "android_namespace_func.h"
 #include "fake_dlfcn.h"
-#include <elf_defs.h>
+#include "elf_defs.h"
 #include <dlfcn.h>
 
 #define TAG __FILE_NAME__
-#include <log.h>
+#include "log.h"
 
 typedef void* (*dlsym_impl)(void* handle, const char* proc);
 
