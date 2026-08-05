@@ -74,3 +74,8 @@ void* load_sphal_library(const char* filename, int flags) {
 uint64_t hook_atrace_get_enabled_tags() {
     return 0;
 }
+
+extern "C" __attribute__((visibility("default"), used))
+void app__pojav_linkerhook_pass_handles(void* handle, void* dlopen_ext, void* get_namespace) {
+    set_handles(handle, dlopen_ext, get_namespace);
+}
