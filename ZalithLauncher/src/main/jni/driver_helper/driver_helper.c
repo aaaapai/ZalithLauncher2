@@ -9,6 +9,7 @@
 #include <android/dlext.h>
 #include "nsbypass.h"
 #include "GL/gl.h"
+#include "log.h"
 
 //#define ADRENO_POSSIBLE
 #ifdef ADRENO_POSSIBLE
