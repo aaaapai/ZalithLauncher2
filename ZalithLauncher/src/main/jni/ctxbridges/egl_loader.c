@@ -68,10 +68,15 @@ void dlsym_EGL() {
         }
     }
 
-    // Determine if namespace bypass should be used (only for Freedreno and plain library name)
+    // Determine if namespace bypass should be used
     int use_namespace = 0;
-    if (use_freedreno && eglName && strchr(eglName, '/') == NULL) {
-        use_namespace = 1;
+    if (eglName && strchr(eglName, '/') == NULL) {
+        if (use_freedreno) {
+            use_namespace = 1;
+        } else if (strcmp(eglName, "libEGL_angle.so") == 0) {
+            // 对 ANGLE 也启用命名空间，避免系统自带 ANGLE 干扰
+            use_namespace = 1;
+        }
     }
 
     if (use_namespace) {
@@ -96,7 +101,7 @@ void dlsym_EGL() {
         }
 
         if (ns_load_success == 1) {
-            dl_handle = linker_ns_dlopen(eglName, RTLD_LOCAL | RTLD_NOW);
+            dl_handle = linker_ns_dlopen(eglName, RTLD_GLOBAL | RTLD_NOW);
             if (!dl_handle) {
                 fprintf(stderr, "[EGL] linker_ns_dlopen(%s) failed: %s\n", eglName, dlerror());
             } else {
@@ -105,9 +110,9 @@ void dlsym_EGL() {
         }
     } else {
         if (eglName)
-            dl_handle = dlopen(eglName, RTLD_LOCAL | RTLD_LAZY);
+            dl_handle = dlopen(eglName, RTLD_GLOBAL | RTLD_LAZY);
         if (dl_handle == nullptr)
-            dl_handle = dlopen("libEGL.so", RTLD_LOCAL | RTLD_LAZY);
+            dl_handle = dlopen("libEGL.so", RTLD_GLOBAL | RTLD_LAZY);
         if (dl_handle) {
             fprintf(stderr, "[EGL] Loaded %s via normal dlopen\n", eglName ? eglName : "libEGL.so");
         }
@@ -125,6 +130,7 @@ void dlsym_EGL() {
     setenv("EGL_PTR", ptr_str, 1);
     fprintf(stderr, "[EGL] EGL_PTR set to %s\n", ptr_str);
 
+    // Resolve all EGL function pointers
     eglBindAPI_p = GLGetProcAddress(dl_handle, "eglBindAPI");
     eglChooseConfig_p = GLGetProcAddress(dl_handle, "eglChooseConfig");
     eglCreateContext_p = GLGetProcAddress(dl_handle, "eglCreateContext");
