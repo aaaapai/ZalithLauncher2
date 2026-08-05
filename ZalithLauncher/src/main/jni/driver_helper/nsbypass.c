@@ -49,7 +49,7 @@ bool linker_ns_load(const char* lib_search_path) {
                                                       "/system/:/system_ext/:/data/:/vendor/:/apex/:/dev", nullptr);
     // Check if namespace creation succeeded
     if (driver_namespace == nullptr) {
-        LOGW("Failed to create namespace");
+        LOGI("Failed to create namespace");  // 原 LOGW 改为 LOGI
         ldfuncs.close(ldfuncs.dl_handle);
         return false;
     }
@@ -76,7 +76,7 @@ bool linker_ns_load(const char* lib_search_path) {
 void* linker_ns_dlopen(const char* name, int flag) {
     // If namespace not initialized, fallback to regular dlopen
     if (driver_namespace == nullptr) {
-        LOGW("Namespace not initialized, using dlopen fallback for %s", name);
+        LOGI("Namespace not initialized, using dlopen fallback for %s", name);  // 原 LOGW 改为 LOGI
         return dlopen(name, flag);
     }
     android_dlextinfo dlextinfo;
@@ -129,7 +129,7 @@ bool patch_elf_soname(int patchfd, int realfd, size_t size, const char* patchnam
 void* linker_ns_dlopen_unique(const char* tmpdir, const char* name, const char* patch_name, int flags) {
     // If namespace not initialized, fallback to regular dlopen of original library
     if (driver_namespace == nullptr) {
-        LOGW("Namespace not initialized, using dlopen fallback for %s", name);
+        LOGI("Namespace not initialized, using dlopen fallback for %s", name);  // 原 LOGW 改为 LOGI
         return dlopen(name, flags);
     }
     int pagesize = getpagesize();
