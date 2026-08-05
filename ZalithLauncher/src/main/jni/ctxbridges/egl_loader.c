@@ -50,7 +50,6 @@ void dlsym_EGL() {
     const char* renderer = getenv("POJAV_RENDERER");
 
     // Determine EGL library name
-    // If Freedreno/Turnip renderer is requested, prioritize POJAVEXEC_EGL or default Mesa EGL
     int use_freedreno = 0;
     if (renderer && strcmp(renderer, "opengles3_desktopgl_freedreno_kgsl") == 0) {
         use_freedreno = 1;
@@ -58,10 +57,9 @@ void dlsym_EGL() {
         if (execEgl && strlen(execEgl) > 0) {
             eglName = execEgl;
         } else {
-            eglName = "libEGL_mesa.so";   // default Mesa EGL name
+            eglName = "libEGL_mesa.so";
         }
     } else {
-        // Original logic for other renderers
         if (gles && !strncmp(gles, "libGLESv2_angle.so", 18)) {
             eglName = "libEGL_angle.so";
         } else {
@@ -70,31 +68,20 @@ void dlsym_EGL() {
         }
     }
 
-    // Check if namespace bypass should be used (only for Freedreno and plain library name)
+    // Determine if namespace bypass should be used (only for Freedreno and plain library name)
     int use_namespace = 0;
     if (use_freedreno && eglName && strchr(eglName, '/') == NULL) {
         use_namespace = 1;
     }
 
-    // Initialize namespace if needed
     if (use_namespace) {
         static int ns_initialized = 0;
         static int ns_load_success = 0;   // 0=not tried, 1=success, -1=fail
 
-        // Determine search path: environment variable POJAV_DRIVER_PATH, else fallback to LD_LIBRARY_PATH or default
-        const char* driver_path = getenv("POJAV_DRIVER_PATH");
-        char search_path[PATH_MAX];
-        if (driver_path && strlen(driver_path) > 0) {
-            strncpy(search_path, driver_path, sizeof(search_path) - 1);
-            search_path[sizeof(search_path) - 1] = '\0';
-        } else {
-            const char* ld_path = getenv("LD_LIBRARY_PATH");
-            if (ld_path && strlen(ld_path) > 0) {
-                strncpy(search_path, ld_path, sizeof(search_path) - 1);
-                search_path[sizeof(search_path) - 1] = '\0';
-            } else {
-                strcpy(search_path, "/vendor/lib64:/system/lib64");
-            }
+        const char* search_path = getenv("LD_LIBRARY_PATH");
+        if (!search_path || strlen(search_path) == 0) {
+            // fallback if not set
+            search_path = "/vendor/lib64:/system/lib64";
         }
 
         if (!ns_initialized) {
@@ -103,23 +90,20 @@ void dlsym_EGL() {
                 fprintf(stderr, "[EGL] Namespace loaded successfully with path: %s\n", search_path);
             } else {
                 ns_load_success = -1;
-                fprintf(stderr, "[EGL] Failed to load namespace with path: %s, falling back to normal dlopen\n", search_path);
+                fprintf(stderr, "[EGL] Failed to load namespace with path: %s\n", search_path);
             }
             ns_initialized = 1;
         }
 
         if (ns_load_success == 1) {
-            dl_handle = linker_ns_dlopen(eglName, RTLD_GLOBAL | RTLD_NOW);
+            dl_handle = linker_ns_dlopen(eglName, RTLD_LOCAL | RTLD_NOW);
             if (!dl_handle) {
                 fprintf(stderr, "[EGL] linker_ns_dlopen(%s) failed: %s\n", eglName, dlerror());
             } else {
                 fprintf(stderr, "[EGL] Loaded %s via namespace\n", eglName);
             }
         }
-    }
-
-    // Fallback to normal dlopen if namespace not used or failed
-    if (!use_namespace || dl_handle == nullptr) {
+    } else {
         if (eglName)
             dl_handle = dlopen(eglName, RTLD_GLOBAL | RTLD_LAZY);
         if (dl_handle == nullptr)
@@ -141,7 +125,6 @@ void dlsym_EGL() {
     setenv("EGL_PTR", ptr_str, 1);
     fprintf(stderr, "[EGL] EGL_PTR set to %s\n", ptr_str);
 
-    // Resolve all EGL function pointers
     eglBindAPI_p = GLGetProcAddress(dl_handle, "eglBindAPI");
     eglChooseConfig_p = GLGetProcAddress(dl_handle, "eglChooseConfig");
     eglCreateContext_p = GLGetProcAddress(dl_handle, "eglCreateContext");
