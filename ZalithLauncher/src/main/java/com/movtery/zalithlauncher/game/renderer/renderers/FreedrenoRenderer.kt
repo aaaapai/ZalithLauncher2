@@ -21,15 +21,24 @@ package com.movtery.zalithlauncher.game.renderer.renderers
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 
 object FreedrenoRenderer : RendererInterface {
-    override fun getRendererId(): String = "gallium_freedreno"
+    override fun getRendererId(): String = "opengles3_desktopgl_freedreno_kgsl"
 
     override fun getUniqueIdentifier(): String = "1ad7249f-5784-4f00-bc72-174b3578ee46"
 
-    override fun getRendererName(): String = "Freedreno (Adreno)"
+    override fun getRendererName(): String = "Freedreno Mesa 26.3.0-devel"
 
-    override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { emptyMap() }
+    override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
+        mapOf(
+            "LIBGL_ES" to "3",
+            "mesa_glthread" to "true",
+            "GALLIUM_DRIVER" to "freedreno",
+            "MESA_LOADER_DRIVER_OVERRIDE" to "kgsl"
+        )
+    }
 
     override fun getDlopenLibrary(): Lazy<List<String>> = lazy { emptyList() }
 
-    override fun getRendererLibrary(): String = "libOSMesa_8.so"
+    override fun getRendererLibrary(): String = "libgallium_dri.so"
+
+    override fun getRendererEGL(): String = "libEGL_mesa.so"
 }
