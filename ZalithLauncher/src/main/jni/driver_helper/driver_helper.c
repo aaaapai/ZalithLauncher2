@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <android/dlext.h>
+#include <stdio.h>          // 添加 printf
 #include "nsbypass.h"
 #include "GL/gl.h"
-#include "log.h"
 
 //#define ADRENO_POSSIBLE
 #ifdef ADRENO_POSSIBLE
@@ -61,38 +61,38 @@ bool checkAdrenoGraphics() {
 
 void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const char* cache_dir) {
     if (!checkAdrenoGraphics()) {
-        LOGE("Not Adreno graphics, skipping Turnip");
+        printf("Not Adreno graphics, skipping Turnip\n");
         return NULL;
     }
 
     if (!native_dir) {
-        LOGE("native_dir is NULL");
+        printf("native_dir is NULL\n");
         return NULL;
     }
 
     // 加载命名空间
     if (!linker_ns_load(native_dir)) {
-        LOGE("linker_ns_load failed for %s", native_dir);
+        printf("linker_ns_load failed for %s\n", native_dir);
         return NULL;
     }
 
     void* linkerhook = linker_ns_dlopen("liblinkerhook.so", RTLD_LOCAL | RTLD_NOW);
     if (!linkerhook) {
-        LOGE("Failed to load liblinkerhook.so: %s", dlerror());
+        printf("Failed to load liblinkerhook.so: %s\n", dlerror());
         return NULL;
     }
 
     const char* target_driver = (driver_path && strlen(driver_path) > 0) ? driver_path : "libvulkan_freedreno.so";
     void* turnip_driver_handle = linker_ns_dlopen(target_driver, RTLD_LOCAL | RTLD_NOW);
     if (!turnip_driver_handle) {
-        LOGE("Failed to load Turnip driver: %s", dlerror());
+        printf("Failed to load Turnip driver: %s\n", dlerror());
         dlclose(linkerhook);
         return NULL;
     }
 
     void* dl_android = linker_ns_dlopen("libdl_android.so", RTLD_LOCAL | RTLD_LAZY);
     if (!dl_android) {
-        LOGE("Failed to load libdl_android.so");
+        printf("Failed to load libdl_android.so\n");
         dlclose(linkerhook);
         dlclose(turnip_driver_handle);
         return NULL;
@@ -103,8 +103,8 @@ void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const ch
     void (*linkerhookPassHandles)(void*, void*, void*) = dlsym(linkerhook, "app__pojav_linkerhook_pass_handles");
 
     if (!linkerhookPassHandles || !android_get_exported_namespace) {
-        LOGE("Missing symbols: linkerhookPassHandles=%p, android_get_exported_namespace=%p",
-             linkerhookPassHandles, android_get_exported_namespace);
+        printf("Missing symbols: linkerhookPassHandles=%p, android_get_exported_namespace=%p\n",
+               linkerhookPassHandles, android_get_exported_namespace);
         dlclose(dl_android);
         dlclose(linkerhook);
         dlclose(turnip_driver_handle);
@@ -114,17 +114,17 @@ void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const ch
     linkerhookPassHandles(turnip_driver_handle, android_dlopen_ext, android_get_exported_namespace);
 
     // 使用唯一的 patch_name
-    const char* patch_name = "libhhlvlk.so";
+    const char* patch_name = "libhhlvlk.so";  // 长度必须与 libvulkan.so 相同 (12)
     void* libvulkan = linker_ns_dlopen_unique(cache_dir, "libvulkan.so", patch_name, RTLD_LOCAL | RTLD_NOW);
     if (!libvulkan) {
-        LOGE("Failed to load patched libvulkan.so");
+        printf("Failed to load patched libvulkan.so\n");
         dlclose(dl_android);
         dlclose(linkerhook);
         dlclose(turnip_driver_handle);
         return NULL;
     }
 
-    LOGI("Turnip Vulkan loaded successfully");
+    printf("Turnip Vulkan loaded successfully\n");
     return libvulkan;
 }
 
