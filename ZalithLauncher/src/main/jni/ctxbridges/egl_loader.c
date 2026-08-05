@@ -109,7 +109,7 @@ void dlsym_EGL() {
         }
 
         if (ns_load_success == 1) {
-            dl_handle = linker_ns_dlopen(eglName, RTLD_GLOBAL | RTLD_LAZY);
+            dl_handle = linker_ns_dlopen(eglName, RTLD_GLOBAL | RTLD_NOW);
             if (!dl_handle) {
                 fprintf(stderr, "[EGL] linker_ns_dlopen(%s) failed: %s\n", eglName, dlerror());
             } else {
