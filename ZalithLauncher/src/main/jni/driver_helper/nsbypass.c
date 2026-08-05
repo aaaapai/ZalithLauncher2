@@ -17,11 +17,11 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <elf.h>
-#include <elf_defs.h>
+#include "elf_defs.h"
 #include <inttypes.h>
 
 #define TAG __FILE_NAME__
-#include <log.h>
+#include "log.h"
 
 /* Library search path */
 #ifdef PLATFORM_64
