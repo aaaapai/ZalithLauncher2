@@ -1,13 +1,17 @@
 //
 // Created by maks on 21.09.2022.
+// Modified to support namespace hijacking for Freedreno/Turnip drivers.
 //
 #include <stddef.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <limits.h>          // for PATH_MAX
 #include "br_loader.h"
 #include "egl_loader.h"
+#include "../driver_helper/nsbypass.h"        // for linker_ns_load / linker_ns_dlopen
 
+// EGL function pointers (all as before)
 EGLBoolean (*eglMakeCurrent_p) (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
 EGLBoolean (*eglDestroyContext_p) (EGLDisplay dpy, EGLContext ctx);
 EGLBoolean (*eglDestroySurface_p) (EGLDisplay dpy, EGLSurface surface);
@@ -30,10 +34,11 @@ EGLBoolean (*eglQuerySurface_p)(EGLDisplay display, EGLSurface surface, EGLint a
 EGLBoolean (*eglQueryContext_p)(EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value);
 
 void dlsym_EGL() {
-    void* dl_handle = NULL;
-    char* eglName = NULL;
+    void* dl_handle = nullptr;
+    char* eglName = nullptr;
     char* gles = getenv("LIBGL_GLES");
 
+    // Determine EGL library name (original logic)
     if (gles && !strncmp(gles, "libGLESv2_angle.so", 18))
     {
         eglName = "libEGL_angle.so";
@@ -42,14 +47,52 @@ void dlsym_EGL() {
         eglName = gles ? gles : (execEgl ? execEgl : "libEGL.so");
     }
 
-    if (eglName)
-        dl_handle = dlopen(eglName, RTLD_GLOBAL | RTLD_LAZY);
+    // Check if we should use namespace hijacking for Freedreno/Turnip
+    const char* renderer = getenv("POJAV_RENDERER");
+    int use_namespace = 0;
+    if (renderer && strcmp(renderer, "opengles3_desktopgl_freedreno_kgsl") == 0) {
+        // Only use namespace if the library name is a plain name (no path)
+        if (eglName && strchr(eglName, '/') == nullptr) {
+            use_namespace = 1;
+        }
+    }
 
-    if (dl_handle == NULL)
-        dl_handle = dlopen("libEGL.so", RTLD_GLOBAL | RTLD_LAZY);
+    // If namespace mode is requested, try to load via ns bypass
+    if (use_namespace) {
+        static int ns_initialized = 0;
+        const char* search_path = getenv("LD_LIBRARY_PATH");
+        if (!search_path || strlen(search_path) == 0) {
+            search_path = "/vendor/lib64:/system/lib64";   // typical location for Turnip drivers
+        }
 
-    if (dl_handle == NULL) abort();
+        // Initialize namespace only once
+        if (!ns_initialized) {
+            if (linker_ns_load(search_path)) {
+                ns_initialized = 1;
+            } else {
+                // If namespace creation fails, fall back to normal loading
+                use_namespace = 0;
+            }
+        }
 
+        if (ns_initialized) {
+            dl_handle = linker_ns_dlopen(eglName, RTLD_GLOBAL | RTLD_LAZY);
+            // If namespace dlopen fails, fallback to normal dlopen (handled later)
+        }
+    }
+
+    // Fallback to normal dlopen if namespace loading was not used or failed
+    if (!use_namespace || dl_handle == nullptr) {
+        if (eglName)
+            dl_handle = dlopen(eglName, RTLD_GLOBAL | RTLD_LAZY);
+        if (dl_handle == nullptr)
+            dl_handle = dlopen("libEGL.so", RTLD_GLOBAL | RTLD_LAZY);
+    }
+
+    // Abort if we still don't have a handle
+    if (dl_handle == nullptr) abort();
+
+    // Resolve all EGL function pointers (same as original)
     eglBindAPI_p = GLGetProcAddress(dl_handle, "eglBindAPI");
     eglChooseConfig_p = GLGetProcAddress(dl_handle, "eglChooseConfig");
     eglCreateContext_p = GLGetProcAddress(dl_handle, "eglCreateContext");
@@ -67,7 +110,8 @@ void dlsym_EGL() {
     eglReleaseThread_p = GLGetProcAddress(dl_handle, "eglReleaseThread");
     eglSwapInterval_p = GLGetProcAddress(dl_handle, "eglSwapInterval");
     eglTerminate_p = GLGetProcAddress(dl_handle, "eglTerminate");
-    eglGetCurrentSurface_p = GLGetProcAddress(dl_handle,"eglGetCurrentSurface");
+    eglGetCurrentSurface_p = GLGetProcAddress(dl_handle, "eglGetCurrentSurface");
     eglQuerySurface_p = GLGetProcAddress(dl_handle, "eglQuerySurface");
     eglQueryContext_p = GLGetProcAddress(dl_handle, "eglQueryContext");
 }
+
