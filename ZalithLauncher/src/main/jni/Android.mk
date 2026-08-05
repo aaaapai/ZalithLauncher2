@@ -76,7 +76,12 @@ LOCAL_MODULE := driver_helper
 LOCAL_STATIC_LIBRARIES := log_stub                          # 新增
 LOCAL_SRC_FILES := \
     driver_helper/driver_helper.c \
-    driver_helper/nsbypass.c
+    driver_helper/nsbypass.c \
+    driver_helper/arm64_func_locator.c \
+    driver_helper/fake_dlfcn.c \
+    driver_helper/hook.c \
+    driver_helper/func_locator.c
+
 LOCAL_CFLAGS += -g -rdynamic
 LOCAL_CFLAGS += -O2 -D_FILE_OFFSET_BITS=64 -D_ALLBSD_SOURCE -DLINUX -D__USE_BSD -DANDROID -U_GNU_SOURCE -U__USE_GNU -std=c23
 
