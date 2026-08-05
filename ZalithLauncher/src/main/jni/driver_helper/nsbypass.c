@@ -47,6 +47,13 @@ bool linker_ns_load(const char* lib_search_path) {
                                                       full_path,
                                                       3 /* TYPE_SHAFED | TYPE_ISOLATED */,
                                                       "/system/:/system_ext/:/data/:/vendor/:/apex/:/dev", nullptr);
+    // Check if namespace creation succeeded
+    if (driver_namespace == nullptr) {
+        LOGW("Failed to create namespace");
+        ldfuncs.close(ldfuncs.dl_handle);
+        return false;
+    }
+
     // THIS IS VERY IMPORTANT and how I trolled FoldCraft:
     // You need to link the new driver_namespace with nullptr and and add ld-android.so
     // in the link list, to pass through the driver_namespace correctly.
@@ -67,10 +74,19 @@ bool linker_ns_load(const char* lib_search_path) {
 }
 
 void* linker_ns_dlopen(const char* name, int flag) {
+    // If namespace not initialized, fallback to regular dlopen
+    if (driver_namespace == nullptr) {
+        LOGW("Namespace not initialized, using dlopen fallback for %s", name);
+        return dlopen(name, flag);
+    }
     android_dlextinfo dlextinfo;
     dlextinfo.flags = ANDROID_DLEXT_USE_NAMESPACE;
     dlextinfo.library_namespace = driver_namespace;
-    return android_dlopen_ext(name, flag, &dlextinfo);
+    void* handle = android_dlopen_ext(name, flag, &dlextinfo);
+    if (!handle) {
+        LOGE("android_dlopen_ext failed for %s: %s", name, dlerror());
+    }
+    return handle;
 }
 
 bool patch_elf_soname(int patchfd, int realfd, size_t size, const char* patchname) {
@@ -111,6 +127,11 @@ bool patch_elf_soname(int patchfd, int realfd, size_t size, const char* patchnam
 #define PAGE_ALIGN(addr)        (((addr)+pagesize-1)&(~(pagesize-1)))
 
 void* linker_ns_dlopen_unique(const char* tmpdir, const char* name, const char* patch_name, int flags) {
+    // If namespace not initialized, fallback to regular dlopen of original library
+    if (driver_namespace == nullptr) {
+        LOGW("Namespace not initialized, using dlopen fallback for %s", name);
+        return dlopen(name, flags);
+    }
     int pagesize = getpagesize();
     char pathbuf[PATH_MAX];
     static uint16_t patchid;
@@ -119,11 +140,17 @@ void* linker_ns_dlopen_unique(const char* tmpdir, const char* name, const char* 
 
     snprintf(pathbuf, PATH_MAX, "%s/%s", SEARCH_PATH, name);
     real_fd = open(pathbuf, O_RDONLY);
-    if(real_fd == -1) return nullptr;
+    if(real_fd == -1) {
+        LOGE("Failed to open %s from system: %s", pathbuf, strerror(errno));
+        return nullptr;
+    }
 
     {
         struct stat64 real_stat;
-        if (fstat64(real_fd, &real_stat)) goto fail_real;
+        if (fstat64(real_fd, &real_stat)) {
+            LOGE("fstat64 failed for %s: %s", pathbuf, strerror(errno));
+            goto fail_real;
+        }
         fsize = real_stat.st_size;
         totalsize = PAGE_ALIGN(fsize);
     }
@@ -135,13 +162,20 @@ void* linker_ns_dlopen_unique(const char* tmpdir, const char* name, const char* 
         snprintf(pathbuf, PATH_MAX, "%s/%"PRIu16"", tmpdir, patchid++);
         patch_fd = open(pathbuf, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     }
-    if(patch_fd == -1) goto fail_real;
+    if(patch_fd == -1) {
+        LOGE("Failed to create patch fd: %s", strerror(errno));
+        goto fail_real;
+    }
 
-    if(ftruncate64(patch_fd, totalsize) == -1) goto fail_both;
+    if(ftruncate64(patch_fd, totalsize) == -1) {
+        LOGE("ftruncate64 failed: %s", strerror(errno));
+        goto fail_both;
+    }
 
     bool patch_result = patch_elf_soname(patch_fd, real_fd, fsize, patch_name);
     close(real_fd);
     if(!patch_result) {
+        LOGE("Failed to patch SONAME of %s", name);
         close(patch_fd);
         return nullptr;
     }
