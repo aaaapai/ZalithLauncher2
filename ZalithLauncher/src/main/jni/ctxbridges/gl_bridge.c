@@ -48,7 +48,18 @@ bool gl_init() {
         return false;
     }
 
+    // 尝试从 RTLD_DEFAULT 加载 ANativeWindow_setSwapInterval
     g_ANativeWindow_setSwapInterval = (void (*)(ANativeWindow*, int))dlsym(RTLD_DEFAULT, "ANativeWindow_setSwapInterval");
+    if (UNLIKELY(g_ANativeWindow_setSwapInterval == NULL)) {
+        // 若未找到，尝试显式 dlopen libnativewindow.so
+        void* nativewindow = dlopen("libnativewindow.so", RTLD_LAZY);
+        if (nativewindow) {
+            g_ANativeWindow_setSwapInterval = (void (*)(ANativeWindow*, int))dlsym(nativewindow, "ANativeWindow_setSwapInterval");
+            __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                                "Loaded ANativeWindow_setSwapInterval from libnativewindow.so: %p", g_ANativeWindow_setSwapInterval);
+        }
+    }
+
     if (UNLIKELY(g_ANativeWindow_setSwapInterval == NULL)) {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                             "ANativeWindow_setSwapInterval not found, EGL only fallback");
@@ -479,6 +490,7 @@ void gl_setup_window() {
     }
 }
 
+// 增强版 gl_swap_interval，在失败时重建上下文和表面
 void gl_swap_interval(int swapInterval) {
     g_userSwapInterval = swapInterval;
     const char* renderer = getenv("POJAV_RENDERER");
@@ -501,8 +513,59 @@ void gl_swap_interval(int swapInterval) {
         return;
     }
 
-    eglSwapInterval_p(g_EglDisplay, swapInterval);
+    // 尝试设置间隔
+    if (UNLIKELY(!eglSwapInterval_p(g_EglDisplay, swapInterval))) {
+        EGLint err = eglGetError_p();
+        __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                            "eglSwapInterval(%d) failed: 0x%04x, attempting full context rebuild", swapInterval, err);
+        // 获取当前 bundle
+        gl_render_window_t* bundle = gl_get_current();
+        if (bundle) {
+            // 解绑当前上下文
+            eglMakeCurrent_p(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+            // 销毁所有表面
+            if (bundle->surface != EGL_NO_SURFACE) {
+                eglDestroySurface_p(g_EglDisplay, bundle->surface);
+                bundle->surface = EGL_NO_SURFACE;
+            }
+            if (bundle->pbuffer_surface != EGL_NO_SURFACE) {
+                eglDestroySurface_p(g_EglDisplay, bundle->pbuffer_surface);
+                bundle->pbuffer_surface = EGL_NO_SURFACE;
+                bundle->pbuffer_created = false;
+            }
+            if (bundle->nativeSurface != nullptr) {
+                ANativeWindow_release(bundle->nativeSurface);
+                bundle->nativeSurface = nullptr;
+            }
+            // 重建上下文
+            if (gl_rebuild_context(bundle)) {
+                // 重建表面
+                bundle->newNativeSurface = pojav_environ->pojavWindow;
+                if (bundle->newNativeSurface != nullptr) {
+                    ANativeWindow_acquire(bundle->newNativeSurface);
+                }
+                gl_swap_surface(bundle);
+                if (bundle->surface != EGL_NO_SURFACE) {
+                    eglMakeCurrent_p(g_EglDisplay, bundle->surface, bundle->surface, bundle->context);
+                    // 再次尝试设置间隔
+                    eglSwapInterval_p(g_EglDisplay, swapInterval);
+                    __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                                        "Context and surface rebuilt after swap interval failure");
+                } else {
+                    __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                                        "Failed to rebuild surface after swap interval failure");
+                }
+            } else {
+                __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                                    "Failed to rebuild context after swap interval failure");
+            }
+        }
+    } else {
+        __android_log_print(ANDROID_LOG_DEBUG, g_LogTag,
+                            "eglSwapInterval(%d) succeeded", swapInterval);
+    }
 
+    // 更新 native window 的间隔
     gl_render_window_t* bundle = gl_get_current();
     if (LIKELY(bundle && bundle->nativeSurface && g_ANativeWindow_setSwapInterval)) {
         g_ANativeWindow_setSwapInterval(bundle->nativeSurface, swapInterval);
