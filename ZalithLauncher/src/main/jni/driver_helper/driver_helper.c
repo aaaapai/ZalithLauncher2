@@ -59,32 +59,51 @@ bool checkAdrenoGraphics() {
 }
 
 void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const char* cache_dir) {
-    if (!checkAdrenoGraphics())
+    if (!checkAdrenoGraphics()) {
+        LOGE("Not Adreno graphics, skipping Turnip");
         return NULL;
+    }
 
-    if (!native_dir || !linker_ns_load(native_dir)) return NULL;
+    if (!native_dir) {
+        LOGE("native_dir is NULL");
+        return NULL;
+    }
+
+    // 加载命名空间
+    if (!linker_ns_load(native_dir)) {
+        LOGE("linker_ns_load failed for %s", native_dir);
+        return NULL;
+    }
 
     void* linkerhook = linker_ns_dlopen("liblinkerhook.so", RTLD_LOCAL | RTLD_NOW);
-    if (!linkerhook) return NULL;
+    if (!linkerhook) {
+        LOGE("Failed to load liblinkerhook.so: %s", dlerror());
+        return NULL;
+    }
 
     const char* target_driver = (driver_path && strlen(driver_path) > 0) ? driver_path : "libvulkan_freedreno.so";
     void* turnip_driver_handle = linker_ns_dlopen(target_driver, RTLD_LOCAL | RTLD_NOW);
     if (!turnip_driver_handle) {
+        LOGE("Failed to load Turnip driver: %s", dlerror());
         dlclose(linkerhook);
         return NULL;
     }
 
     void* dl_android = linker_ns_dlopen("libdl_android.so", RTLD_LOCAL | RTLD_LAZY);
     if (!dl_android) {
+        LOGE("Failed to load libdl_android.so");
         dlclose(linkerhook);
         dlclose(turnip_driver_handle);
         return NULL;
     }
 
     void* android_get_exported_namespace = dlsym(dl_android, "android_get_exported_namespace");
-    void (*linkerhookPassHandles)(void*, void*, void*) = dlsym(linkerhook, "linker_hook_set_handles");
+    // 使用 hook.c 中导出的正确符号名
+    void (*linkerhookPassHandles)(void*, void*, void*) = dlsym(linkerhook, "app__pojav_linkerhook_pass_handles");
 
     if (!linkerhookPassHandles || !android_get_exported_namespace) {
+        LOGE("Missing symbols: linkerhookPassHandles=%p, android_get_exported_namespace=%p",
+             linkerhookPassHandles, android_get_exported_namespace);
         dlclose(dl_android);
         dlclose(linkerhook);
         dlclose(turnip_driver_handle);
@@ -93,15 +112,18 @@ void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const ch
 
     linkerhookPassHandles(turnip_driver_handle, android_dlopen_ext, android_get_exported_namespace);
 
-    // 修正：补上 patch_name 参数
-    void* libvulkan = linker_ns_dlopen_unique(cache_dir, "libvulkan.so", "libvulkan.so", RTLD_LOCAL | RTLD_NOW);
+    // 使用唯一的 patch_name
+    const char* patch_name = "libhhlvlk.so";
+    void* libvulkan = linker_ns_dlopen_unique(cache_dir, "libvulkan.so", patch_name, RTLD_LOCAL | RTLD_NOW);
     if (!libvulkan) {
+        LOGE("Failed to load patched libvulkan.so");
         dlclose(dl_android);
         dlclose(linkerhook);
         dlclose(turnip_driver_handle);
         return NULL;
     }
 
+    LOGI("Turnip Vulkan loaded successfully");
     return libvulkan;
 }
 
