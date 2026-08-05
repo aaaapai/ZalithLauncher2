@@ -30,10 +30,10 @@
 #define SEARCH_PATH "/system/lib"
 #endif
 
-static struct android_namespace_t* driver_namespace = NULL;
+static struct android_namespace_t* driver_namespace = nullptr;
 
 bool linker_ns_load(const char* lib_search_path) {
-    if(driver_namespace != NULL) return true; // Do not initialize namespaces multiple times, this caused very funny bugs we spent hours debugging
+    if(driver_namespace != nullptr) return true; // Do not initialize namespaces multiple times
     android_ldfuncs_t ldfuncs;
     if(!locate_namespace_funcs(&ldfuncs)) {
         return false;
@@ -46,22 +46,22 @@ bool linker_ns_load(const char* lib_search_path) {
                                                       full_path,
                                                       full_path,
                                                       3 /* TYPE_SHAFED | TYPE_ISOLATED */,
-                                                      "/system/:/system_ext/:/data/:/vendor/:/apex/", NULL);
+                                                      "/system/:/system_ext/:/data/:/vendor/:/apex/:/dev", nullptr);
     // THIS IS VERY IMPORTANT and how I trolled FoldCraft:
-    // You need to link the new driver_namespace with NULL and and add ld-android.so
+    // You need to link the new driver_namespace with nullptr and and add ld-android.so
     // in the link list, to pass through the driver_namespace correctly.
     // Not doing this fucks up internal __loader symbol lookup
     // inside the new driver_namespace, thus breaking it on
     // a lot of android versions
     // FoldCraft got trolled because they copied the
     // old broken code verbatim and didn't even test it thoroughly
-    ldfuncs.link_namespaces(driver_namespace, NULL, "ld-android.so");
+    ldfuncs.link_namespaces(driver_namespace, nullptr, "ld-android.so");
     // Also establish links to use the libnativeloader(_lazy).so libraries
     // from the global namespace. This is a workaround for an EMUI issue where
     // the newly loaded libnativeloader_lazy for some unknown reason links
     // to itself and causes a deadlock when loading the vulkan driver.
-    ldfuncs.link_namespaces(driver_namespace, NULL, "libnativeloader.so");
-    ldfuncs.link_namespaces(driver_namespace, NULL, "libnativeloader_lazy.so");
+    ldfuncs.link_namespaces(driver_namespace, nullptr, "libnativeloader.so");
+    ldfuncs.link_namespaces(driver_namespace, nullptr, "libnativeloader_lazy.so");
     ldfuncs.close(ldfuncs.dl_handle);
     return true;
 }
@@ -74,7 +74,7 @@ void* linker_ns_dlopen(const char* name, int flag) {
 }
 
 bool patch_elf_soname(int patchfd, int realfd, size_t size, const char* patchname) {
-    char* target = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, patchfd, 0);
+    char* target = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, patchfd, 0);
     if(!target) return false;
     if(read(realfd, target, size) != size) goto fail;
 
@@ -119,7 +119,7 @@ void* linker_ns_dlopen_unique(const char* tmpdir, const char* name, const char* 
 
     snprintf(pathbuf, PATH_MAX, "%s/%s", SEARCH_PATH, name);
     real_fd = open(pathbuf, O_RDONLY);
-    if(real_fd == -1) return NULL;
+    if(real_fd == -1) return nullptr;
 
     {
         struct stat64 real_stat;
@@ -143,7 +143,7 @@ void* linker_ns_dlopen_unique(const char* tmpdir, const char* name, const char* 
     close(real_fd);
     if(!patch_result) {
         close(patch_fd);
-        return NULL;
+        return nullptr;
     }
 
     android_dlextinfo extinfo;
@@ -156,5 +156,5 @@ void* linker_ns_dlopen_unique(const char* tmpdir, const char* name, const char* 
     close(patch_fd);
     fail_real:
     close(real_fd);
-    return NULL;
+    return nullptr;
 }
