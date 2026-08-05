@@ -105,9 +105,9 @@ void dlsym_EGL() {
         }
     } else {
         if (eglName)
-            dl_handle = dlopen(eglName, RTLD_GLOBAL | RTLD_LAZY);
+            dl_handle = dlopen(eglName, RTLD_LOCAL | RTLD_LAZY);
         if (dl_handle == nullptr)
-            dl_handle = dlopen("libEGL.so", RTLD_GLOBAL | RTLD_LAZY);
+            dl_handle = dlopen("libEGL.so", RTLD_LOCAL | RTLD_LAZY);
         if (dl_handle) {
             fprintf(stderr, "[EGL] Loaded %s via normal dlopen\n", eglName ? eglName : "libEGL.so");
         }
