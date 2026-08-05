@@ -79,7 +79,6 @@ LOCAL_SRC_FILES := \
     driver_helper/nsbypass.c \
     driver_helper/arm64_func_locator.c \
     driver_helper/fake_dlfcn.c \
-    driver_helper/hook.c \
     driver_helper/func_locator.c
 
 LOCAL_CFLAGS += -g -rdynamic
