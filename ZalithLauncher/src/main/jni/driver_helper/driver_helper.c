@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <android/dlext.h>
-#include <stdio.h>          // 添加 printf
+#include <stdio.h>
 #include "nsbypass.h"
 #include "GL/gl.h"
 
@@ -76,6 +76,7 @@ void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const ch
         return NULL;
     }
 
+    // 加载 liblinkerhook.so
     void* linkerhook = linker_ns_dlopen("liblinkerhook.so", RTLD_LOCAL | RTLD_NOW);
     if (!linkerhook) {
         printf("Failed to load liblinkerhook.so: %s\n", dlerror());
@@ -99,22 +100,23 @@ void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const ch
     }
 
     void* android_get_exported_namespace = dlsym(dl_android, "android_get_exported_namespace");
-    // 使用 hook.c 中导出的正确符号名
-    void (*linkerhookPassHandles)(void*, void*, void*) = dlsym(linkerhook, "app__pojav_linkerhook_pass_handles");
+    // 注意：liblinkerhook 导出的是 set_handles
+    void (*set_handles)(void*, void*, void*) = (void (*)(void*, void*, void*))
+        dlsym(linkerhook, "set_handles");
 
-    if (!linkerhookPassHandles || !android_get_exported_namespace) {
-        printf("Missing symbols: linkerhookPassHandles=%p, android_get_exported_namespace=%p\n",
-               linkerhookPassHandles, android_get_exported_namespace);
+    if (!set_handles || !android_get_exported_namespace) {
+        printf("Missing symbols: set_handles=%p, android_get_exported_namespace=%p\n",
+               set_handles, android_get_exported_namespace);
         dlclose(dl_android);
         dlclose(linkerhook);
         dlclose(turnip_driver_handle);
         return NULL;
     }
 
-    linkerhookPassHandles(turnip_driver_handle, android_dlopen_ext, android_get_exported_namespace);
+    set_handles(turnip_driver_handle, android_dlopen_ext, android_get_exported_namespace);
 
-    // 使用唯一的 patch_name
-    const char* patch_name = "libhhlvlk.so";  // 长度必须与 libvulkan.so 相同 (12)
+    // 加载 patched libvulkan
+    const char* patch_name = "libhhlvlk.so";
     void* libvulkan = linker_ns_dlopen_unique(cache_dir, "libvulkan.so", patch_name, RTLD_LOCAL | RTLD_NOW);
     if (!libvulkan) {
         printf("Failed to load patched libvulkan.so\n");
