@@ -65,7 +65,7 @@ bool linker_ns_load(const char* lib_search_path) {
     driver_namespace = ldfuncs.create_namespace("pojav-driver",
                                                       full_path,
                                                       full_path,
-                                                      3 /* TYPE_SHAFED | TYPE_ISOLATED */,
+                                                      2,
                                                       "/system/:/system_ext/:/data/:/vendor/:/apex/:/dev", nullptr);
     if (driver_namespace == nullptr) {
         LOGI("Failed to create namespace");
