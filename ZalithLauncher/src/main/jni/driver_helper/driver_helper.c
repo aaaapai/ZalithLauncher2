@@ -11,6 +11,9 @@
 #include "nsbypass.h"
 #include "GL/gl.h"
 
+// 声明 nsbypass 提供的设置函数
+extern void linker_ns_set_android_dlopen_ext(void* (*func)(const char*, int, const android_dlextinfo*));
+
 //#define ADRENO_POSSIBLE
 #ifdef ADRENO_POSSIBLE
 
@@ -114,6 +117,16 @@ void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const ch
     }
 
     set_handles(turnip_driver_handle, android_dlopen_ext, android_get_exported_namespace);
+
+    // 获取 liblinkerhook 的 android_dlopen_ext 包装函数，并设置到 nsbypass 中
+    void* (*hook_android_dlopen_ext)(const char*, int, const android_dlextinfo*) =
+        (void* (*)(const char*, int, const android_dlextinfo*))dlsym(linkerhook, "android_dlopen_ext");
+    if (hook_android_dlopen_ext) {
+        linker_ns_set_android_dlopen_ext(hook_android_dlopen_ext);
+        printf("Set android_dlopen_ext to hook version from liblinkerhook\n");
+    } else {
+        printf("Warning: cannot find android_dlopen_ext in liblinkerhook, using system version\n");
+    }
 
     // 加载 patched libvulkan
     const char* patch_name = "libhhlvlk.so";
