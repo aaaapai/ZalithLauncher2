@@ -49,17 +49,7 @@ void dlsym_EGL() {
     char* gles = getenv("LIBGL_GLES");
     const char* renderer = getenv("POJAV_RENDERER");
 
-    // Determine EGL library name
-    int use_freedreno = 0;
-    if (renderer && strcmp(renderer, "opengles3_desktopgl_freedreno_kgsl") == 0) {
-        use_freedreno = 1;
-        char* execEgl = getenv("POJAVEXEC_EGL");
-        if (execEgl && strlen(execEgl) > 0) {
-            eglName = execEgl;
-        } else {
-            eglName = "libEGL_mesa.so";
-        }
-    } else {
+    {
         if (gles && !strncmp(gles, "libGLESv2_angle.so", 18)) {
             eglName = "libEGL_angle.so";
         } else {
@@ -71,10 +61,7 @@ void dlsym_EGL() {
     // Determine if namespace bypass should be used
     int use_namespace = 0;
     if (eglName && strchr(eglName, '/') == NULL) {
-        if (use_freedreno) {
-            use_namespace = 1;
-        } else if (strcmp(eglName, "libEGL_angle.so") == 0) {
-            // 对 ANGLE 也启用命名空间，避免系统自带 ANGLE 干扰
+        if (strcmp(eglName, "libEGL_angle.so") == 0) {
             use_namespace = 1;
         }
     }
