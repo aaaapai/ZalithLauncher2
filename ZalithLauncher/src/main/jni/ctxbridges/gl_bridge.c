@@ -56,6 +56,13 @@ static const uint64_t CONTEXT_REBUILD_COOLDOWN_MS = 5000; // 5 秒
 #endif
 
 bool gl_init() {
+    static bool initialized = false;
+    if (initialized) {
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag,
+                            "EGL already initialized, skipping");
+        return true;
+    }
+
     dlsym_EGL();
     g_EglDisplay = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
 
@@ -89,6 +96,8 @@ bool gl_init() {
     }
 
     check_env_once();
+
+    initialized = true;
     return true;
 }
 
