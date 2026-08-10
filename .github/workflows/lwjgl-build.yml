@@ -1,0 +1,49 @@
+name: LWJGL BUILD
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: ["arm"]
+      fail-fast: false
+
+    env:
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+      CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          submodules: false
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@main
+        with:
+          distribution: "temurin"
+          java-version: "25"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@main
+        with:
+          add-job-summary: "on-failure"
+
+      - name: Build lwjgl for ${{ matrix.arch }}
+        run: |
+          chmod +x gradlew
+          ./gradlew LWJGL:build --no-daemon
+
+      - name: Upload lwjgl for ${{ matrix.arch }}
+        continue-on-error: true
+        uses: actions/upload-artifact@main
+        with:
+          name: debug apk (${{ matrix.arch }})
+          path: |
+                **/lwjgl3/lwjgl-glfw-classes.jar
+                **/lwjgl3/version

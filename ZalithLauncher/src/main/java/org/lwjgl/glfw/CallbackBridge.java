@@ -7,6 +7,7 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.util.DisplayMetrics;
 import android.view.Choreographer;
 
 import androidx.annotation.Keep;
@@ -20,6 +21,7 @@ import com.movtery.zalithlauncher.bridge.ZLBridgeStates;
 import com.movtery.zalithlauncher.bridge.ZLNativeInvoker;
 import com.movtery.zalithlauncher.context.ContextsKt;
 
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 import dalvik.annotation.optimization.CriticalNative;
@@ -50,8 +52,50 @@ public class CallbackBridge {
     public static volatile int windowWidth, windowHeight;
     public static volatile int physicalWidth, physicalHeight;
     public static float mouseX, mouseY;
-    public volatile static boolean holdingAlt, holdingCapslock, holdingCtrl,
+    public static volatile boolean holdingAlt, holdingCapslock, holdingCtrl,
             holdingNumlock, holdingShift;
+
+    // ========== 定义内部接口，避免外部缺失 ==========
+    public interface GrabListener {
+        void onGrabState(boolean isGrabbing);
+    }
+
+    public interface GraphicOutputListener {
+        void onGraphicOutput();
+    }
+
+    private static final ArrayList<GrabListener> grabListeners = new ArrayList<>();
+    private static GraphicOutputListener sGraphicOutputListener;
+
+    // ========== 公共方法 ==========
+    public static void addGrabListener(GrabListener listener) {
+        synchronized (grabListeners) {
+            listener.onGrabState(isGrabbing);
+            grabListeners.add(listener);
+        }
+    }
+
+    public static void removeGrabListener(GrabListener listener) {
+        synchronized (grabListeners) {
+            grabListeners.remove(listener);
+        }
+    }
+
+    public static void setGraphicOutputListener(GraphicOutputListener listener) {
+        sGraphicOutputListener = listener;
+    }
+
+    @Keep
+    private static float getAndroidDPI() {
+        // 修复：获取真实的屏幕密度，而不是默认值
+        return ContextsKt.getGlobalContext().getResources().getDisplayMetrics().density;
+    }
+
+    @SuppressWarnings("unused")
+    @Keep
+    public static boolean notifyLauncher(int type, int... action) {
+        return false;
+    }
 
     public static void putMouseEventWithCoords(int button, float x, float y) {
         sendCursorPos(x, y);
@@ -67,7 +111,6 @@ public class CallbackBridge {
         sendMouseKeycode(button, CallbackBridge.getCurrentMods(), isDown);
     }
 
-
     public static void sendCursorPos(float x, float y) {
         mouseX = x;
         mouseY = y;
@@ -79,7 +122,6 @@ public class CallbackBridge {
     }
 
     public static void sendKeycode(int keycode, char keychar, int scancode, int modifiers, boolean isDown) {
-        // TODO CHECK: This may cause input issue, not receive input!
         if (keycode != 0) nativeSendKey(keycode, scancode, isDown ? 1 : 0, modifiers);
         if (isDown && !Character.isISOControl(keychar)) {
             nativeSendCharMods(keychar, modifiers);
@@ -88,7 +130,7 @@ public class CallbackBridge {
     }
 
     public static void sendChar(char keychar, int modifiers){
-        nativeSendCharMods(keychar,modifiers);
+        nativeSendCharMods(keychar, modifiers);
         nativeSendChar(keychar);
     }
 
@@ -114,7 +156,6 @@ public class CallbackBridge {
     }
 
     public static void sendMouseKeycode(int button, int modifiers, boolean isDown) {
-        // if (isGrabbing()) DEBUG_STRING.append("MouseGrabStrace: " + android.util.Log.getStackTraceString(new Throwable()) + "\n");
         nativeSendMouseButton(button, isDown ? 1 : 0, modifiers);
     }
 
@@ -132,11 +173,9 @@ public class CallbackBridge {
     }
 
     public static boolean isGrabbing() {
-        // Avoid going through the JNI each time.
         return isGrabbing;
     }
 
-    // Called from JRE side
     @SuppressWarnings("unused")
     @Keep
     public static @Nullable String accessAndroidClipboard(int type, String copy) {
@@ -161,7 +200,6 @@ public class CallbackBridge {
         return result;
     }
 
-
     public static int getCurrentMods() {
         int currMods = 0;
         if (holdingAlt) {
@@ -183,97 +221,59 @@ public class CallbackBridge {
             case LwjglGlfwKeycode.GLFW_KEY_LEFT_SHIFT:
                 CallbackBridge.holdingShift = isDown;
                 return;
-
             case LwjglGlfwKeycode.GLFW_KEY_LEFT_CONTROL:
                 CallbackBridge.holdingCtrl = isDown;
                 return;
-
             case LwjglGlfwKeycode.GLFW_KEY_LEFT_ALT:
                 CallbackBridge.holdingAlt = isDown;
                 return;
-
             case LwjglGlfwKeycode.GLFW_KEY_CAPS_LOCK:
                 CallbackBridge.holdingCapslock = isDown;
                 return;
-
             case LwjglGlfwKeycode.GLFW_KEY_NUM_LOCK:
                 CallbackBridge.holdingNumlock = isDown;
         }
     }
 
-    //Called from JRE side
+    // ========== JNI 回调（由 C++ 调用） ==========
     @SuppressWarnings("unused")
     @Keep
     private static void onGrabStateChanged(final boolean grabbing) {
         isGrabbing = grabbing;
         sChoreographer.postFrameCallbackDelayed((time) -> {
-            // If the grab re-changed, skip notify process
             if(isGrabbing != grabbing) return;
-
             System.out.println("Grab changed : " + grabbing);
-            synchronized (grabListener) {
-                grabListener.accept(isGrabbing);
+            synchronized (grabListeners) {
+                for (GrabListener g : grabListeners) {
+                    g.onGrabState(grabbing);
+                }
             }
-
+            grabListener.accept(isGrabbing);
         }, 16);
     }
 
-    //Called from JRE side
     @SuppressWarnings("unused")
     @Keep
     private static void onCursorShapeChanged(final int shape) {
         cursorShape = shape;
         sChoreographer.postFrameCallbackDelayed((time) -> {
             if (cursorShape != shape) return;
-
-            synchronized (cursorShapeListener) {
-                CursorShape shape1;
-                switch (cursorShape) {
-                    // IBeam
-                    case GLFW_IBEAM_CURSOR:
-                        shape1 = CursorShape.IBeam;
-                        break;
-                    // Hand
-                    case GLFW_HAND_CURSOR:
-                        shape1 = CursorShape.Hand;
-                        break;
-                    // Cross Hair
-                    case GLFW_CROSSHAIR_CURSOR:
-                        shape1 = CursorShape.CrossHair;
-                        break;
-                    // Resize NS
-                    case GLFW_RESIZE_NS_CURSOR:
-                        shape1 = CursorShape.ResizeNS;
-                        break;
-                    // Resize EW
-                    case GLFW_RESIZE_EW_CURSOR:
-                        shape1 = CursorShape.ResizeEW;
-                        break;
-                    // Resize All
-                    case GLFW_RESIZE_ALL_CURSOR:
-                        shape1 = CursorShape.ResizeAll;
-                        break;
-                    // Not Allowed
-                    case GLFW_NOT_ALLOWED_CURSOR:
-                        shape1 = CursorShape.NotAllowed;
-                        break;
-                    // Arrow
-                    case GLFW_ARROW_CURSOR:
-                    default:
-                        shape1 = CursorShape.Arrow;
-                }
-
-                cursorShapeListener.accept(shape1);
+            CursorShape shape1;
+            switch (cursorShape) {
+                case GLFW_IBEAM_CURSOR:     shape1 = CursorShape.IBeam; break;
+                case GLFW_HAND_CURSOR:      shape1 = CursorShape.Hand; break;
+                case GLFW_CROSSHAIR_CURSOR: shape1 = CursorShape.CrossHair; break;
+                case GLFW_RESIZE_NS_CURSOR: shape1 = CursorShape.ResizeNS; break;
+                case GLFW_RESIZE_EW_CURSOR: shape1 = CursorShape.ResizeEW; break;
+                case GLFW_RESIZE_ALL_CURSOR:shape1 = CursorShape.ResizeAll; break;
+                case GLFW_NOT_ALLOWED_CURSOR:shape1 = CursorShape.NotAllowed; break;
+                case GLFW_ARROW_CURSOR:
+                default:                    shape1 = CursorShape.Arrow;
             }
+            cursorShapeListener.accept(shape1);
         }, 16);
     }
 
-    private static GraphicOutputListener sGraphicOutputListener;
-    public static void setGraphicOutputListener(GraphicOutputListener listener) {
-        sGraphicOutputListener = listener;
-    }
-
-    //Called from JRE side
     @SuppressWarnings("unused")
     @Keep
     private static void onGraphicOutput() {
@@ -282,13 +282,11 @@ public class CallbackBridge {
         }
     }
 
+    // ========== Native 方法 ==========
     @Keep @CriticalNative public static native void nativeSetUseInputStackQueue(boolean useInputStackQueue);
-
     @Keep @CriticalNative private static native boolean nativeSendChar(char codepoint);
-    // GLFW: GLFWCharModsCallback deprecated, but is Minecraft still use?
     @Keep @CriticalNative private static native boolean nativeSendCharMods(char codepoint, int mods);
     @Keep @CriticalNative private static native void nativeSendKey(int key, int scancode, int action, int mods);
-    // private static native void nativeSendCursorEnter(int entered);
     @Keep @CriticalNative private static native void nativeSendCursorPos(float x, float y);
     @Keep @CriticalNative private static native void nativeSendMouseButton(int button, int action, int mods);
     @Keep @CriticalNative private static native void nativeSendScroll(double xoffset, double yoffset);
@@ -300,4 +298,3 @@ public class CallbackBridge {
         NativeLibraryLoader.loadPojavLib();
     }
 }
-

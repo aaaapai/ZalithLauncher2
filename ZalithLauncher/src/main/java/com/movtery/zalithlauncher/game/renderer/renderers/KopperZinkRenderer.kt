@@ -25,17 +25,20 @@ object KopperZinkRenderer : RendererInterface {
 
     override fun getUniqueIdentifier(): String = "0fa435e2-46df-45c9-906c-b29606aaef00"
 
-    override fun getRendererName(): String = "Kopper Zink"
+    override fun getRendererName(): String = "Zink Mesa 26.3.0-devel"
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
         mapOf(
-            "LIBGL_ES" to "3"
+            "LIBGL_ES" to "3",
+            "mesa_glthread" to "true",
+            "MESA_ANDROID_NO_KMS_SWRAST" to "1",
+            "MESA_LOADER_DRIVER_OVERRIDE" to "zink"
         )
     }
 
     override fun getDlopenLibrary(): Lazy<List<String>> = lazy { emptyList() }
 
-    override fun getRendererLibrary(): String = "libglxshim.so"
+    override fun getRendererLibrary(): String = "libgallium_dri.so"
 
     override fun getRendererEGL(): String = "libEGL_mesa.so"
 }

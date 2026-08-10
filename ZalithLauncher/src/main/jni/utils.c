@@ -97,7 +97,7 @@ JNIEXPORT void JNICALL Java_com_movtery_zalithlauncher_bridge_ZLBridge_setLdLibr
 	android_update_LD_LIBRARY_PATH = (android_update_LD_LIBRARY_PATH_t) updateLdLibPath;
 	const char* ldLibPathUtf = (*env)->GetStringUTFChars(env, ldLibraryPath, 0);
 	android_update_LD_LIBRARY_PATH(ldLibPathUtf);
-	(*env)->ReleaseStringUTFChars(env, ldLibraryPath, ldLibPathUtf);
+	(*env)->ReleaseStringUTFChars(env, (char*)ldLibraryPath, ldLibPathUtf);
 }
 
 JNIEXPORT jboolean JNICALL Java_com_movtery_zalithlauncher_bridge_ZLBridge_dlopen(JNIEnv *env, jclass clazz, jstring name) {
@@ -118,4 +118,3 @@ JNIEXPORT jint JNICALL Java_com_movtery_zalithlauncher_bridge_ZLBridge_chdir(JNI
 	(*env)->ReleaseStringUTFChars(env, nameStr, name);
 	return retval;
 }
-

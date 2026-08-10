@@ -339,6 +339,9 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        display?.supportedModes?.maxOfOrNull { it.refreshRate }?.let { refreshRate ->
+            window.attributes = window.attributes.apply { preferredRefreshRate = refreshRate }
+        }
         //加载渲染器
         Renderers.init()
         //加载插件
@@ -632,6 +635,10 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
         withHandler { mIsSurfaceDestroyed = false }
         lifecycleScope.launch(Dispatchers.Default) {
+
+            delay(200)
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY)
+            android.os.Process.setThreadPriority(android.os.Process.myTid(), android.os.Process.THREAD_PRIORITY_DISPLAY)
             val screenSize = vmViewModel.screenSizeBridge.awaitData()
             val currentSize = refreshWindowSize(screenSize = screenSize)
             withHandler {
@@ -668,6 +675,10 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
         withHandler { mIsSurfaceDestroyed = false }
         lifecycleScope.launch(Dispatchers.Default) {
+
+            delay(200)
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY)
+            android.os.Process.setThreadPriority(android.os.Process.myTid(), android.os.Process.THREAD_PRIORITY_DISPLAY)
             val screenSize = vmViewModel.screenSizeBridge.awaitData()
             val currentSize = refreshWindowSize(screenSize = screenSize)
             withHandler {
@@ -723,6 +734,8 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
                         //使用 SurfaceView 渲染
                         SurfaceView(context).apply {
                             holder.addCallback(this@VMActivity)
+                            setZOrderOnTop(false)
+                            holder.setFormat(android.graphics.PixelFormat.RGBA_8888)
                         }.also { view ->
                             applySizeToSurface = { width, height ->
                                 view.holder.setFixedSize(width, height)

@@ -39,17 +39,25 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
         LOG_TO_I("<%s> %s", "Native", "Saving DVM environ...");
         //Save dalvik global JavaVM pointer
         pojav_environ->dalvikJavaVMPtr = vm;
-        (*vm)->GetEnv(vm, (void**) &pojav_environ->dalvikJNIEnvPtr_ANDROID, JNI_VERSION_1_4);
+        (*vm)->GetEnv(vm, (void**) &pojav_environ->dalvikJNIEnvPtr_ANDROID, JNI_VERSION_1_6);
         pojav_environ->bridgeClazz = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->NewGlobalRef(pojav_environ->dalvikJNIEnvPtr_ANDROID,(*pojav_environ->dalvikJNIEnvPtr_ANDROID) ->FindClass(pojav_environ->dalvikJNIEnvPtr_ANDROID,"org/lwjgl/glfw/CallbackBridge"));
         pojav_environ->method_accessAndroidClipboard = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "accessAndroidClipboard", "(ILjava/lang/String;)Ljava/lang/String;");
         pojav_environ->method_onGrabStateChanged = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onGrabStateChanged", "(Z)V");
         pojav_environ->method_onCursorShapeChanged = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onCursorShapeChanged", "(I)V");
         pojav_environ->method_onGraphicOutput = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(pojav_environ->dalvikJNIEnvPtr_ANDROID, pojav_environ->bridgeClazz, "onGraphicOutput", "()V");
         pojav_environ->isUseStackQueueCall = JNI_FALSE;
+
+        pojav_environ->method_getAndroidDPI = (*pojav_environ->dalvikJNIEnvPtr_ANDROID)->GetStaticMethodID(
+            pojav_environ->dalvikJNIEnvPtr_ANDROID,
+            pojav_environ->bridgeClazz,
+            "getAndroidDPI",
+            "()F"
+        );
+
     } else if (pojav_environ->dalvikJavaVMPtr != vm) {
         LOG_TO_I("<%s> %s", "Native", "Saving JVM environ...");
         pojav_environ->runtimeJavaVMPtr = vm;
-        (*vm)->GetEnv(vm, (void**) &pojav_environ->runtimeJNIEnvPtr_JRE, JNI_VERSION_1_4);
+        (*vm)->GetEnv(vm, (void**) &pojav_environ->runtimeJNIEnvPtr_JRE, JNI_VERSION_1_6);
         pojav_environ->vmGlfwClass = (*pojav_environ->runtimeJNIEnvPtr_JRE)->NewGlobalRef(pojav_environ->runtimeJNIEnvPtr_JRE, (*pojav_environ->runtimeJNIEnvPtr_JRE)->FindClass(pojav_environ->runtimeJNIEnvPtr_JRE, "org/lwjgl/glfw/GLFW"));
         pojav_environ->method_glftSetWindowAttrib = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticMethodID(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, "glfwSetWindowAttrib", "(JII)V");
         pojav_environ->method_internalWindowSizeChanged = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticMethodID(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, "internalWindowSizeChanged", "(JII)V");
@@ -59,21 +67,29 @@ jint JNI_OnLoad(JavaVM* vm, __attribute__((unused)) void* reserved) {
         jfieldID field_mouseDownBuffer = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticFieldID(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, "mouseDownBuffer", "Ljava/nio/ByteBuffer;");
         jobject mouseDownBufferJ = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetStaticObjectField(pojav_environ->runtimeJNIEnvPtr_JRE, pojav_environ->vmGlfwClass, field_mouseDownBuffer);
         pojav_environ->mouseDownBuffer = (*pojav_environ->runtimeJNIEnvPtr_JRE)->GetDirectBufferAddress(pojav_environ->runtimeJNIEnvPtr_JRE, mouseDownBufferJ);
+
+        if (pojav_environ->runtimeJNIEnvPtr_JRE != NULL && pojav_environ->vmGlfwClass != NULL) {
         hookExec();
         installLwjglDlopenHook();
         installEMUIIteratorMititgation();
+        } else {
+        LOG_TO_W("<%s> %s", "Native", "JRE env not ready, skipping hooks");
+        }
+  
     }
 
     if(pojav_environ->dalvikJavaVMPtr == vm) {
         //perform in all DVM instances, not only during first ever set up
         JNIEnv *env;
-        (*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_4);
+        (*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_6);
         registerFunctions(env);
     }
     pojav_environ->isGrabbing = JNI_FALSE;
     
-    return JNI_VERSION_1_4;
+    return JNI_VERSION_1_6;
 }
+jint JNI_OnLoad_pojavexec(JavaVM* vm, void* reserved)
+    __attribute__((alias("JNI_OnLoad")));
 
 #define ADD_CALLBACK_WWIN(NAME) \
 JNIEXPORT jlong JNICALL Java_org_lwjgl_glfw_GLFW_nglfwSet##NAME##Callback(JNIEnv * env, jclass cls, jlong window, jlong callbackptr) { \
@@ -243,11 +259,19 @@ jint getLibraryPath_fix(__attribute__((unused)) JNIEnv *env,
  * Install the linker hang mitigation that is meant to prevent linker hangs on old EMUI firmware.
  */
 void installEMUIIteratorMititgation() {
-    if(getenv("POJAV_EMUI_ITERATOR_MITIGATE") == NULL) return;
-    LOG_TO_I("<%s> %s", "EMUIIteratorFix", "Installing...");
+    if (getenv("POJAV_EMUI_ITERATOR_MITIGATE") == NULL) return;
+
+    if (pojav_environ == NULL) {
+        return;
+    }
     JNIEnv* env = pojav_environ->runtimeJNIEnvPtr_JRE;
+    if (env == NULL) {
+        return;
+    }
+
+    LOG_TO_I("<%s> %s", "EMUIIteratorFix", "Installing...");
     jclass sharedLibraryUtil = (*env)->FindClass(env, "org/lwjgl/system/SharedLibraryUtil");
-    if(sharedLibraryUtil == NULL) {
+    if (sharedLibraryUtil == NULL) {
         LOG_TO_E("<%s> %s", "EMUIIteratorFix", "Failed to find the target class");
         (*env)->ExceptionClear(env);
         return;
@@ -255,7 +279,7 @@ void installEMUIIteratorMititgation() {
     JNINativeMethod getLibraryPathMethod[] = {
             {"getLibraryPath", "(JJI)I", &getLibraryPath_fix}
     };
-    if((*env)->RegisterNatives(env, sharedLibraryUtil, getLibraryPathMethod, 1) != 0) {
+    if ((*env)->RegisterNatives(env, sharedLibraryUtil, getLibraryPathMethod, 1) != 0) {
         LOG_TO_E("<%s> %s", "EMUIIteratorFix", "Failed to register the mitigation method");
         (*env)->ExceptionClear(env);
     }
@@ -490,7 +514,7 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
     // (very rarely, only in lifecycle callbacks) so i dont care
     JavaVM* jvm = pojav_environ->runtimeJavaVMPtr;
     JNIEnv *jvm_env = NULL;
-    jint env_result = (*jvm)->GetEnv(jvm, (void**)&jvm_env, JNI_VERSION_1_4);
+    jint env_result = (*jvm)->GetEnv(jvm, (void**)&jvm_env, JNI_VERSION_1_6);
     if(env_result == JNI_EDETACHED) {
         env_result = (*jvm)->AttachCurrentThread(jvm, &jvm_env, NULL);
     }
@@ -506,6 +530,76 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(
 
     // Attaching every time is annoying, so stick the attachment to the Android GUI thread around
 }
+
+/*JNIEXPORT jfloat JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeGetAndroidDPI(JNIEnv* env, __attribute__((unused)) jclass clazz) {
+    JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
+    JNIEnv *dvm_env = NULL;
+    jfloat result = 0.0f;
+
+    // 获取或附着到 Dalvik VM
+    if ((*dvm)->GetEnv(dvm, (void**)&dvm_env, JNI_VERSION_1_6) != JNI_OK) {
+        (*dvm)->AttachCurrentThread(dvm, &dvm_env, NULL);
+        if (dvm_env == NULL) {
+            LOG_TO_E("getAndroidDPI: Failed to attach Dalvik thread");
+            return 0.0f;
+        }
+    }
+
+    result = (*dvm_env)->CallStaticFloatMethod(dvm_env, pojav_environ->bridgeClazz,
+                                               pojav_environ->method_getAndroidDPI);
+
+    // 如果这里不希望 Detach，可以注释掉；但为了线程安全，建议保持附着（如果之前已附着则不会重复附着）
+    // 简单起见，这里不 Detach，因为该线程可能还会被用于其他 Dalvik 调用。
+    // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
+    return result;
+}*/
+__attribute__((used)) float pojavGetAndroidDPI() {
+
+ JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
+    JNIEnv *dvm_env = NULL;
+    jfloat result = 0.0f;
+
+    // 获取或附着到 Dalvik VM
+    if ((*dvm)->GetEnv(dvm, (void**)&dvm_env, JNI_VERSION_1_6) != JNI_OK) {
+        (*dvm)->AttachCurrentThread(dvm, &dvm_env, NULL);
+        if (dvm_env == NULL) {
+            LOG_TO_E("getAndroidDPI: Failed to attach Dalvik thread");
+            return 0.0f;
+        }
+    }
+
+    result = (*dvm_env)->CallStaticFloatMethod(dvm_env, pojav_environ->bridgeClazz,
+                                               pojav_environ->method_getAndroidDPI);
+
+    // 如果这里不希望 Detach，可以注释掉；但为了线程安全，建议保持附着（如果之前已附着则不会重复附着）
+    // 简单起见，这里不 Detach，因为该线程可能还会被用于其他 Dalvik 调用。
+    // 若你确定不再使用，可以 Detach，但必须确保后续没有其他 Dalvik 调用。
+    return result;
+}
+
+
+/*JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeNotifyLauncher(JNIEnv* env, __attribute__((unused)) jclass clazz, jint type, jintArray action) {
+    JavaVM* dvm = pojav_environ->dalvikJavaVMPtr;
+    JNIEnv *dvm_env = NULL;
+    jboolean result = JNI_FALSE;
+
+    if ((*dvm)->GetEnv(dvm, (void**)&dvm_env, JNI_VERSION_1_6) != JNI_OK) {
+        (*dvm)->AttachCurrentThread(dvm, &dvm_env, NULL);
+        if (dvm_env == NULL) {
+            LOG_TO_E("nativeNotifyLauncher: Failed to attach Dalvik thread");
+            return JNI_FALSE;
+        }
+    }
+
+    // 直接传递 action（jintArray），不需要转换
+    result = (*dvm_env)->CallStaticBooleanMethod(dvm_env, pojav_environ->bridgeClazz,
+                                                 pojav_environ->method_notifyLauncher,
+                                                 type, action);
+
+    // 同上，不 Detach
+    return result;
+}*/
+
 const static JNINativeMethod critical_fcns[] = {
         {"nativeSetUseInputStackQueue", "(Z)V", critical_set_stackqueue},
         {"nativeSendChar", "(C)Z", critical_send_char},

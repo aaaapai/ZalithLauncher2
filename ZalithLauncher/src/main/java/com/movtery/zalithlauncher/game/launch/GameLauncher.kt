@@ -164,6 +164,29 @@ class GameLauncher(
 
     override fun getLogFile(): File = VersionsManager.getLatestLog(version)
 
+    private fun setCustomEnv(envMap: MutableMap<String, String>) {
+       val customEnvFile = File(PathManager.DIR_FILES_EXTERNAL, "custom_env.txt")
+       if (customEnvFile.exists() && customEnvFile.isFile) {
+           try {
+               customEnvFile.bufferedReader().use { reader ->
+                   reader.forEachLine { line ->
+                       val index = line.indexOf('=')
+                       if (index > 0 && index < line.length - 1) {
+                           val key = line.substring(0, index)
+                           val value = line.substring(index + 1)
+                           envMap[key] = value
+                           Logger.info(TAG, "Loaded custom env: $key=$value")
+                       } else {
+                        Logger.warning(TAG, "Invalid custom env line: $line")
+                       }
+                  }
+               }
+           } catch (e: Exception) {
+                Logger.error(TAG, "Failed to read custom_env.txt", e)
+           }
+       }
+    }
+
     override fun initEnv(screenSize: IntSize): MutableMap<String, String> {
         val envMap = super.initEnv(screenSize)
 
@@ -178,6 +201,9 @@ class GameLauncher(
             setRendererEnv(envMap)
         }
         envMap["ZALITH_VERSION_CODE"] = BuildConfig.VERSION_CODE.toString()
+
+        setCustomEnv(envMap)
+
         return envMap
     }
 
@@ -389,9 +415,8 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
     if (RendererPluginManager.selectedRendererPlugin != null) return
 
     if (renderer != GL4ESRenderer && renderer != NGGL4ESRenderer) {
-        envMap["MESA_LOADER_DRIVER_OVERRIDE"] = "zink"
         envMap["MESA_GLSL_CACHE_DIR"] = PathManager.DIR_CACHE.absolutePath
-        envMap["MESA_GL_VERSION_OVERRIDE"] = "4.6"
+        envMap["MESA_GL_VERSION_OVERRIDE"] = "4.6compat"
         envMap["MESA_GLSL_VERSION_OVERRIDE"] = "460"
         envMap["force_glsl_extensions_warn"] = "true"
         envMap["allow_higher_compat_version"] = "true"

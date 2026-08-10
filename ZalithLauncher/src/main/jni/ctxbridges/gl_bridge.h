@@ -1,7 +1,7 @@
 //
 // Created by maks on 17.09.2022.
 //
-#include <EGL//egl.h>
+#include <EGL/egl.h>
 #include <stdbool.h>
 #ifndef POJAVLAUNCHER_GL_BRIDGE_H
 #define POJAVLAUNCHER_GL_BRIDGE_H
@@ -14,6 +14,12 @@ typedef struct {
     EGLint     format;
     EGLContext context;
     EGLSurface surface;
+    EGLSurface pbuffer_surface;
+    bool       pbuffer_created;
+    uint64_t   last_fail_time;
+    EGLContext share_context;
+    int        client_version;
+    bool       context_lost;
 } gl_render_window_t;
 
 bool gl_init();

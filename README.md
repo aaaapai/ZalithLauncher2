@@ -1,3 +1,7 @@
+HahahaLauncher基于ZalithLauncher2，只是做了非常简单的修改来满足我个人的使用awa
+
+不知道这是什么东西的千万不要乱用哦，出事了我才不负责呢
+
 # Zalith Launcher 2
 ![Downloads](https://img.shields.io/github/downloads/ZalithLauncher/ZalithLauncher2/total)
 [![Sponsor](https://img.shields.io/badge/sponsor-30363D?logo=GitHub-Sponsors)](https://afdian.com/a/MovTery)

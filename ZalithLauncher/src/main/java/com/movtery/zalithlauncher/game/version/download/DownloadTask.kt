@@ -18,19 +18,22 @@
 
 package com.movtery.zalithlauncher.game.version.download
 
+import com.movtery.zalithlauncher.path.DOWNLOAD_OKHTTP_CLIENT
+import com.movtery.zalithlauncher.utils.network.downloadFromMirrorList
 import com.movtery.zalithlauncher.utils.file.check7z
 import com.movtery.zalithlauncher.utils.file.checkZip
 import com.movtery.zalithlauncher.utils.file.compareSHA1
 import com.movtery.zalithlauncher.utils.logging.Logger
-import com.movtery.zalithlauncher.utils.network.downloadFromMirrorList
 import com.movtery.zalithlauncher.utils.string.getMessageOrToString
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import okhttp3.Request
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 
 private const val TAG = "DownloadTask"
 
@@ -44,7 +47,9 @@ class DownloadTask(
     val isDownloadable: Boolean,
     private val onDownloadFailed: (DownloadTask) -> Unit = {},
     private val onFileDownloadedSize: (Long) -> Unit = {},
-    private val onFileDownloaded: () -> Unit = {}
+    private val onFileDownloaded: () -> Unit = {},
+    // 新增回调：下载开始时通知文件总大小（用于设置进度条最大值）
+    private val onDownloadStart: (Long) -> Unit = {}
 ) {
     /**
      * 文件下载成功后执行的任务
@@ -52,14 +57,15 @@ class DownloadTask(
     var fileDownloadedTask: (suspend () -> Unit)? = null
 
     suspend fun download() {
-        //若目标文件存在，验证通过或关闭完整性验证时，跳过此次下载
         val file = targetFile
+        // 若目标文件存在且校验通过，直接跳过
         if (file.exists() && verifySha1(file)) {
             downloadedSize(FileUtils.sizeOf(file))
             downloadedFile()
             return
         }
 
+        // 优先使用原有的 downloadFromMirrorList（内部已处理好进度和总大小）
         runCatching {
             runInterruptible {
                 downloadFromMirrorList(
@@ -72,14 +78,81 @@ class DownloadTask(
                 }
             }
             downloadedFile()
+            return
         }.onFailure { e ->
             if (e is CancellationException) throw e
-            //fix: 下载中途断开网络，导致过多文本刷入日志
-            //此处不再详细记录堆栈信息
-            Logger.error(TAG, "Download failed: ${file.absolutePath}\nurls: ${urls.joinToString("\n")}, string = ${e.getMessageOrToString()}")
-            if (!isDownloadable && e is FileNotFoundException) throw e
-            onDownloadFailed(this)
+            Logger.warning(TAG, "downloadFromMirrorList 失败，回退到 OkHttp 手动下载", e)
         }
+
+        // ---------- 回退方案：使用 OkHttp 手动下载 ----------
+        val client = DOWNLOAD_OKHTTP_CLIENT
+        var lastException: Exception? = null
+
+        for (url in urls) {
+            try {
+                Logger.debug(TAG, "回退下载尝试: $url")
+                val request = Request.Builder().url(url).build()
+                val response = client.newCall(request).execute()
+
+                if (!response.isSuccessful) {
+                    val errorMsg = "HTTP ${response.code} for $url"
+                    Logger.error(TAG, errorMsg)
+                    lastException = IOException(errorMsg)
+                    continue
+                }
+
+                // 获取文件总大小并通知 UI（用于进度条）
+                val contentLength = response.body?.contentLength() ?: -1L
+                if (contentLength > 0) {
+                    onDownloadStart(contentLength)
+                } else {
+                    // 无法获取总大小时传递 -1，UI 可据此隐藏百分比或显示“计算中…”
+                    onDownloadStart(-1)
+                }
+
+                // 确保目标目录存在
+                file.parentFile?.mkdirs()
+
+                // 写入文件
+                response.body?.let { body ->
+                    file.outputStream().use { output ->
+                        body.byteStream().use { input ->
+                            val buffer = ByteArray(bufferSize)
+                            var bytesRead: Int
+                            var totalBytes = 0L
+                            while (input.read(buffer).also { bytesRead = it } != -1) {
+                                output.write(buffer, 0, bytesRead)
+                                totalBytes += bytesRead
+                                onFileDownloadedSize(totalBytes)
+                            }
+                        }
+                    }
+                } ?: throw IOException("响应体为空")
+
+                // 验证 SHA1（如果需要）
+                if (sha1 != null && !compareSHA1(file, sha1)) {
+                    FileUtils.deleteQuietly(file)
+                    throw IOException("SHA1 校验失败")
+                }
+
+                // 下载成功
+                downloadedSize(FileUtils.sizeOf(file))
+                downloadedFile()
+                return
+
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Logger.error(TAG, "下载失败: $url", e)
+                lastException = e
+                // 继续尝试下一个镜像
+            }
+        }
+
+        // 所有镜像均失败
+        val finalError = lastException ?: IOException("所有镜像均无法下载")
+        if (!isDownloadable && finalError is FileNotFoundException) throw finalError
+        onDownloadFailed(this)
+        throw finalError
     }
 
     private fun downloadedSize(size: Long) {

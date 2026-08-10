@@ -73,17 +73,42 @@ static jint hooked_ProcessImpl_forkAndExec(JNIEnv *env, jobject process, jint mo
 
 // Hook the forkAndExec method in the Java runtime for custom executable overriding.
 void hookExec() {
-    jclass cls;
-    orig_ProcessImpl_forkAndExec = dlsym(RTLD_DEFAULT, "Java_java_lang_UNIXProcess_forkAndExec");
-    if (!orig_ProcessImpl_forkAndExec) {
-        orig_ProcessImpl_forkAndExec = dlsym(RTLD_DEFAULT, "Java_java_lang_ProcessImpl_forkAndExec");
-        cls = (*pojav_environ->runtimeJNIEnvPtr_JRE)->FindClass(pojav_environ->runtimeJNIEnvPtr_JRE, "java/lang/ProcessImpl");
-    } else {
-        cls = (*pojav_environ->runtimeJNIEnvPtr_JRE)->FindClass(pojav_environ->runtimeJNIEnvPtr_JRE, "java/lang/UNIXProcess");
+    if (pojav_environ == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "hookExec", "pojav_environ is NULL, aborting hook");
+        return;
     }
+
+    JNIEnv* env = pojav_environ->runtimeJNIEnvPtr_JRE;
+    if (env == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "hookExec", "runtimeJNIEnvPtr_JRE is NULL, aborting hook");
+        return;
+    }
+
+    jclass cls = NULL;
+    orig_ProcessImpl_forkAndExec = (jint (*)(JNIEnv*, jobject, jint, jbyteArray, jbyteArray, jbyteArray, jint, jbyteArray, jint, jbyteArray, jintArray, jboolean))
+        dlsym(RTLD_DEFAULT, "Java_java_lang_UNIXProcess_forkAndExec");
+    if (!orig_ProcessImpl_forkAndExec) {
+        orig_ProcessImpl_forkAndExec = (jint (*)(JNIEnv*, jobject, jint, jbyteArray, jbyteArray, jbyteArray, jint, jbyteArray, jint, jbyteArray, jintArray, jboolean))
+            dlsym(RTLD_DEFAULT, "Java_java_lang_ProcessImpl_forkAndExec");
+        cls = (*env)->FindClass(env, "java/lang/ProcessImpl");
+    } else {
+        cls = (*env)->FindClass(env, "java/lang/UNIXProcess");
+    }
+
+    if (cls == NULL) {
+        __android_log_print(ANDROID_LOG_ERROR, "hookExec", "Failed to find class for forkAndExec hook");
+        (*env)->ExceptionClear(env);
+        return;
+    }
+
     JNINativeMethod methods[] = {
-            {"forkAndExec", "(I[B[B[BI[BI[B[IZ)I", (void *)&hooked_ProcessImpl_forkAndExec}
+        {"forkAndExec", "(I[B[B[BI[BI[B[IZ)I", (void *)&hooked_ProcessImpl_forkAndExec}
     };
-    (*pojav_environ->runtimeJNIEnvPtr_JRE)->RegisterNatives(pojav_environ->runtimeJNIEnvPtr_JRE, cls, methods, 1);
-    printf("Registered forkAndExec\n");
+    jint ret = (*env)->RegisterNatives(env, cls, methods, 1);
+    if (ret != 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "hookExec", "Failed to register natives for forkAndExec, ret=%d", ret);
+        (*env)->ExceptionClear(env);
+    } else {
+        __android_log_print(ANDROID_LOG_INFO, "hookExec", "Registered forkAndExec hook successfully");
+    }
 }

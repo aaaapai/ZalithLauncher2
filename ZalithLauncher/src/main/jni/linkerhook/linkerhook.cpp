@@ -37,11 +37,23 @@ void* dlopen_ext(const char* filename, int flags, const android_dlextinfo* extin
     if (strstr(filename, "vulkan."))
         return checkIfGlobalReadyHandle();
 
+    if (strstr(filename, "libGLES_"))
+        return checkIfGlobalReadyHandle();
+
+    if (strstr(filename, "libvulkanmemoryallocator"))
+        return checkIfGlobalReadyHandle();
+
     return dlopen_ext_impl(filename, flags, extinfo, reinterpret_cast<const void*>(&dlopen_ext));
 }
 
 void* load_sphal_library(const char* filename, int flags) {
     if (strstr(filename, "vulkan."))
+        return checkIfGlobalReadyHandle();
+
+    if (strstr(filename, "libGLES_"))
+        return checkIfGlobalReadyHandle();
+
+    if (strstr(filename, "libvulkanmemoryallocator"))
         return checkIfGlobalReadyHandle();
 
     struct android_namespace_t* androidNamespace = nullptr;
@@ -61,4 +73,9 @@ void* load_sphal_library(const char* filename, int flags) {
 
 uint64_t hook_atrace_get_enabled_tags() {
     return 0;
+}
+
+extern "C" __attribute__((visibility("default"), used))
+void app__pojav_linkerhook_pass_handles(void* handle, void* dlopen_ext, void* get_namespace) {
+    set_handles(handle, dlopen_ext, get_namespace);
 }

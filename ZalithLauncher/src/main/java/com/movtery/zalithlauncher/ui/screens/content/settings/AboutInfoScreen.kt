@@ -123,7 +123,7 @@ fun AboutInfoScreen(
                         ButtonIconItem(
                             icon = painterResource(R.drawable.img_avatar_movtery),
                             title = stringResource(R.string.about_launcher_author_movtery_title),
-                            text = stringResource(R.string.about_launcher_author_movtery_text, BuildKeys.LAUNCHER_NAME),
+                            text = stringResource(R.string.about_launcher_author_movtery_text, "ZalithLauncher2"),
                             button = {
                                 Button(
                                     onClick = { openLink(URL_SUPPORT) }
@@ -132,6 +132,20 @@ fun AboutInfoScreen(
                                 }
                             }
                         )
+
+                        ButtonIconItem(
+                            icon = painterResource(R.drawable.ic_github),
+                            title = "aaaa派",
+                            text = stringResource(R.string.about_launcher_author_movtery_text, "HahaLauncher(based on ZalithLauncher2)"),
+                            button = {
+                                Button(
+                                    onClick = { openLink("https://github.com/aaaapai") }
+                                ) {
+                                    Text(text = "Github")
+                                }
+                            }
+                        )
+        
                     }
                 }
             }

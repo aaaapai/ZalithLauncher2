@@ -21,6 +21,7 @@ package com.movtery.zalithlauncher.path
 import com.movtery.zalithlauncher.BuildConfig
 import com.movtery.zalithlauncher.BuildKeys
 import com.movtery.zalithlauncher.utils.network.ResilientDns
+import com.movtery.zalithlauncher.utils.logging.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
@@ -48,7 +49,7 @@ const val URL_MCMOD: String = "https://www.mcmod.cn/"
 const val URL_MINECRAFT_VERSION_REPOS: String = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 const val URL_MINECRAFT_ASSETS_INDEX: String = "https://launchermeta.mojang.com/v1/packages"
 const val URL_MINECRAFT_PURCHASE = "https://www.xbox.com/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj"
-const val URL_PROJECT: String = "https://github.com/ZalithLauncher/ZalithLauncher2"
+const val URL_PROJECT: String = "https://github.com/aaaapai/HahahaLauncher"
 const val URL_PROJECT_INFO: String = "https://api.github.com/repos/ZalithLauncher/Zalith-Info/contents/v2"
 const val URL_COMMUNITY: String = "https://github.com/ZalithLauncher/ZalithLauncher2/graphs/contributors"
 const val URL_WEBLATE: String = "https://hosted.weblate.org/projects/zalithlauncher2"
@@ -174,15 +175,20 @@ fun createOkHttpClientBuilder(action: (OkHttpClient.Builder) -> Unit = { }): OkH
  * HttpURLConnection 在 Android 上更加可靠，能有效避免"卡 0b/s"问题。
  */
 val DOWNLOAD_OKHTTP_CLIENT: OkHttpClient by lazy {
+    Logger.debug("DownloadClient", "Using DOWNLOAD_OKHTTP_CLIENT with browser UA")
     OkHttpClient.Builder()
-        .dns(ResilientDns) //系统 DNS 解析失败时，自动回退到 DoH 解析
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .dns(ResilientDns)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .addInterceptor(CURSEFORGE_INTERCEPTOR)
-        .addInterceptor(USER_AGENT_INTERCEPTOR)
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val newRequest = request.newBuilder()
+                .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; MXW-AN00 Build/HONORMXW-AN00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.196 Mobile Safari/537.36")
+                .build()
+            chain.proceed(newRequest)
+        }
         .build()
-        // 注意：不设置 callTimeout，因为文件大小差异极大
-        // 协程层的 withTimeout 提供整体兜底保护
 }

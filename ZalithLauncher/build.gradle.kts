@@ -46,9 +46,9 @@ android {
 
     signingConfigs {
         create("releaseBuild") {
-            storeFile = file("zalith_launcher.jks")
+            storeFile = file("aaaapai_signature.jks")
             storePassword = getKeyFromLocal("STORE_PASSWORD", ".store_password.txt")
-            keyAlias = "movtery_zalith"
+            keyAlias = "apai"
             keyPassword = getKeyFromLocal("KEY_PASSWORD", ".key_password.txt")
         }
         create("debugBuild") {
@@ -61,9 +61,9 @@ android {
 
     defaultConfig {
         applicationId = zalithPackageName
-        applicationIdSuffix = ".v2"
+        applicationIdSuffix = ".v2.ap"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 37
         versionCode = launcherVersionCode
         versionName = launcherVersionName
         manifestPlaceholders["launcher_name"] = launcherAPPName
@@ -101,7 +101,7 @@ android {
         }
     }
 
-    ndkVersion = "25.2.9519653"
+    ndkVersion = "29.0.14206865"
 
     externalNativeBuild {
         ndkBuild {
@@ -117,8 +117,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
     }
     buildFeatures {
         compose = true
@@ -168,7 +168,7 @@ androidComponents {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_25)
         optIn.addAll(
             "androidx.compose.material3.ExperimentalMaterial3Api",
         )
@@ -228,7 +228,6 @@ dependencies {
     implementation(project(":Terracotta"))
     implementation(project(":InputMap"))
     //Utils
-    implementation(libs.bytehook)
     implementation(libs.gson)
     implementation(libs.commons.io)
     implementation(libs.commons.codec)
