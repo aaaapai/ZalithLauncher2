@@ -58,41 +58,60 @@ static const uint64_t CONTEXT_REBUILD_COOLDOWN_MS = 5000; // 5 秒
 bool gl_init() {
     static bool initialized = false;
     if (initialized) {
-        __android_log_print(ANDROID_LOG_INFO, g_LogTag,
-                            "EGL already initialized, skipping");
+        __android_log_print(ANDROID_LOG_INFO, g_LogTag, "EGL already initialized, skipping");
         return true;
     }
 
     dlsym_EGL();
-    g_EglDisplay = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
+
+    if (UNLIKELY(eglGetDisplay_p == nullptr || eglInitialize_p == nullptr ||
+                 eglTerminate_p == nullptr)) {
+        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
+                            "Critical EGL function pointers missing");
+        return false;
+    }
+
+    for (int retry = 0; retry < 3; ++retry) {
+        g_EglDisplay = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
+        if (g_EglDisplay == EGL_NO_DISPLAY) {
+            __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                                "eglGetDisplay failed (attempt %d)", retry + 1);
+            usleep(100000);
+            continue;
+        }
+
+        if (eglInitialize_p(g_EglDisplay, nullptr, nullptr) == EGL_TRUE) {
+            break;
+        }
+
+        EGLint err = eglGetError_p();
+        __android_log_print(ANDROID_LOG_WARN, g_LogTag,
+                            "eglInitialize failed: 0x%04x (attempt %d)", err, retry + 1);
+        eglTerminate_p(g_EglDisplay);
+        g_EglDisplay = EGL_NO_DISPLAY;
+        usleep(100000);
+    }
 
     if (UNLIKELY(g_EglDisplay == EGL_NO_DISPLAY)) {
         __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
-                            "eglGetDisplay_p(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
-        return false;
-    }
-    if (UNLIKELY(eglInitialize_p(g_EglDisplay, nullptr, nullptr) != EGL_TRUE)) {
-        __android_log_print(ANDROID_LOG_ERROR, g_LogTag,
-                            "eglInitialize_p() failed: %04x", eglGetError_p());
+                            "EGL initialization failed after 3 attempts");
         return false;
     }
 
     g_ANativeWindow_setSwapInterval = (void (*)(ANativeWindow*, int))dlsym(RTLD_DEFAULT, "ANativeWindow_setSwapInterval");
-    if (UNLIKELY(g_ANativeWindow_setSwapInterval == NULL)) {
-        void* nativewindow = dlopen("libnativewindow.so", RTLD_LAZY);
+    if (g_ANativeWindow_setSwapInterval == nullptr) {
+        void* nativewindow = dlopen("libnativewindow.so", RTLD_NOLOAD);
+        if (!nativewindow) nativewindow = dlopen("libnativewindow.so", RTLD_LAZY);
         if (nativewindow) {
             g_ANativeWindow_setSwapInterval = (void (*)(ANativeWindow*, int))dlsym(nativewindow, "ANativeWindow_setSwapInterval");
-            __android_log_print(ANDROID_LOG_INFO, g_LogTag,
-                                "Loaded ANativeWindow_setSwapInterval from libnativewindow.so: %p", g_ANativeWindow_setSwapInterval);
         }
     }
-
-    if (UNLIKELY(g_ANativeWindow_setSwapInterval == NULL)) {
+    if (g_ANativeWindow_setSwapInterval == nullptr) {
         __android_log_print(ANDROID_LOG_WARN, g_LogTag,
                             "ANativeWindow_setSwapInterval not found, EGL only fallback");
     } else {
         __android_log_print(ANDROID_LOG_INFO, g_LogTag,
-                            "ANativeWindow_setSwapInterval loaded successfully");
+                            "ANativeWindow_setSwapInterval loaded");
     }
 
     check_env_once();
