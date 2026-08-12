@@ -19,6 +19,19 @@ static const char* supported_namespaces[] = {"sphal", "vendor", "default"};
 
 typedef struct android_namespace_t* (*get_namespace_func_t)(const char*);
 
+static bool g_intercept_enabled = false;
+static bool g_intercept_checked = false;
+
+static bool should_intercept_libEGL() {
+    if (!g_intercept_checked) {
+        const char* override = getenv("MESA_LOADER_DRIVER_OVERRIDE");
+        g_intercept_enabled = (override && strcmp(override, "kgsl") == 0);
+        g_intercept_checked = true;
+        fprintf(stderr, "[LinkerHook] Intercept libEGL: %s\n", g_intercept_enabled ? "ENABLED" : "DISABLED");
+    }
+    return g_intercept_enabled;
+}
+
 static struct android_namespace_t* multi_get_namespace(const char* name) {
     get_namespace_func_t func = nullptr;
     struct android_namespace_t* ns = nullptr;
@@ -86,15 +99,23 @@ static void* checkIfGlobalReadyHandle() {
 }
 
 void* dlopen_ext(const char* filename, int flags, const android_dlextinfo* extinfo) {
-    if (strstr(filename, "vulkan.") || strstr(filename, "libEGL.") || strstr(filename, "libvulkanmemoryallocator"))
+    if (strstr(filename, "vulkan.") || strstr(filename, "vulkanmemoryallocator")) {
         return checkIfGlobalReadyHandle();
-
+    }
+    if (should_intercept_libEGL() && strstr(filename, "EGL.")) {
+        return checkIfGlobalReadyHandle();
+    }
     return dlopen_ext_impl(filename, flags, extinfo, reinterpret_cast<const void*>(&dlopen_ext));
 }
 
 void* load_sphal_library(const char* filename, int flags) {
-    if (strstr(filename, "vulkan.") || strstr(filename, "EGL.") || strstr(filename, "vulkanmemoryallocator."))
+    if (strstr(filename, "vulkan.") || strstr(filename, "vulkanmemoryallocator.")) {
         return checkIfGlobalReadyHandle();
+    }
+
+    if (should_intercept_libEGL() && strstr(filename, "EGL.")) {
+        return checkIfGlobalReadyHandle();
+    }
 
     if (!dlopen_ext_impl) {
         fprintf(stderr, "[LinkerHook] dlopen_ext_impl is null, using dlopen\n");
