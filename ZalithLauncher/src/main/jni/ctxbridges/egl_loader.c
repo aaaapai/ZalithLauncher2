@@ -47,77 +47,120 @@ void dlsym_EGL() {
     void* dl_handle = nullptr;
     char* eglName = nullptr;
     char* gles = getenv("LIBGL_GLES");
-    const char* renderer = getenv("POJAV_RENDERER");
 
-    {
-        if (gles && !strncmp(gles, "libGLESv2_angle.so", 18)) {
+    if (gles) {
+        if (strstr(gles, "mesa") != NULL) {
+            eglName = "libEGL_mesa.so";
+        } else if (strstr(gles, "angle") != NULL) {
             eglName = "libEGL_angle.so";
         } else {
-            char* execEgl = getenv("POJAVEXEC_EGL");
-            eglName = gles ? gles : (execEgl ? execEgl : "libEGL.so");
+            eglName = gles;
         }
+    } else {
+        eglName = getenv("POJAVEXEC_EGL") ? getenv("POJAVEXEC_EGL") : "libEGL.so";
     }
 
-    // Determine if namespace bypass should be used
     int use_namespace = 0;
-    if (eglName && strchr(eglName, '/') == NULL) {
-        if (strcmp(eglName, "libEGL_angle.so") == 0) {
+    if (eglName) {
+        if (strcmp(eglName, "libEGL_mesa.so") == 0 || strcmp(eglName, "libEGL_angle.so") == 0) {
             use_namespace = 1;
         }
     }
 
-    if (use_namespace) {
-        static int ns_initialized = 0;
-        static int ns_load_success = 0;   // 0=not tried, 1=success, -1=fail
-
-        const char* search_path = getenv("LD_LIBRARY_PATH");
-        if (!search_path || strlen(search_path) == 0) {
-            // fallback if not set
-            search_path = "/vendor/lib64:/system/lib64";
-        }
-
-        if (!ns_initialized) {
-            if (linker_ns_load(search_path)) {
-                ns_load_success = 1;
-                fprintf(stderr, "[EGL] Namespace loaded successfully with path: %s\n", search_path);
-            } else {
-                ns_load_success = -1;
-                fprintf(stderr, "[EGL] Failed to load namespace with path: %s\n", search_path);
-            }
-            ns_initialized = 1;
-        }
-
-        if (ns_load_success == 1) {
-            dl_handle = linker_ns_dlopen(eglName, RTLD_GLOBAL | RTLD_NOW);
-            if (!dl_handle) {
-                fprintf(stderr, "[EGL] linker_ns_dlopen(%s) failed: %s\n", eglName, dlerror());
-            } else {
-                fprintf(stderr, "[EGL] Loaded %s via namespace\n", eglName);
-            }
-        }
-    } else {
-        if (eglName)
-            dl_handle = dlopen(eglName, RTLD_GLOBAL | RTLD_LAZY);
-        if (dl_handle == nullptr)
-            dl_handle = dlopen("libEGL.so", RTLD_GLOBAL | RTLD_LAZY);
-        if (dl_handle) {
-            fprintf(stderr, "[EGL] Loaded %s via normal dlopen\n", eglName ? eglName : "libEGL.so");
+    const char* ns_path = getenv("DRIVER_PATH");
+    if (!ns_path || strlen(ns_path) == 0) {
+        const char* ld_path = getenv("LD_LIBRARY_PATH");
+        if (ld_path) {
+            static char path_buf[512];
+            strncpy(path_buf, ld_path, sizeof(path_buf) - 1);
+            char* colon = strchr(path_buf, ':');
+            if (colon) *colon = '\0';
+            ns_path = path_buf;
         }
     }
 
-    if (dl_handle == nullptr) {
-        fprintf(stderr, "[EGL] Failed to load EGL library, aborting\n");
+    if (use_namespace && ns_path && strlen(ns_path) > 0) {
+        if (!linker_ns_load(ns_path)) {
+            fprintf(stderr, "[EGL Loader] Namespace init failed for %s, fallback to dlopen\n", ns_path);
+            goto fallback_dlopen;
+        }
+
+        if (strstr(eglName, "mesa") != NULL) {
+            void* existing = dlopen("libgallium_dri.so", RTLD_NOLOAD | RTLD_GLOBAL);
+            if (existing) {
+                fprintf(stderr, "[EGL Loader] libgallium_dri.so already loaded, closing to reload from namespace\n");
+                dlclose(existing);
+            }
+            void* gallium = linker_ns_dlopen("libgallium_dri.so", RTLD_GLOBAL | RTLD_NOW);
+            if (gallium) {
+                fprintf(stderr, "[EGL Loader] Preloaded libgallium_dri.so from namespace\n");
+            } else {
+                fprintf(stderr, "[EGL Loader] WARNING: libgallium_dri.so not found in namespace, Mesa may fail\n");
+            }
+        }
+
+        void* linkerhook = linker_ns_dlopen("liblinkerhook.so", RTLD_LOCAL | RTLD_NOW);
+        void* (*hook_android_dlopen_ext)(const char*, int, const android_dlextinfo*) = nullptr;
+        void (*set_handles)(void*, void*, void*) = nullptr;
+        if (linkerhook) {
+            set_handles = (void (*)(void*, void*, void*)) dlsym(linkerhook, "set_handles");
+            hook_android_dlopen_ext = (void* (*)(const char*, int, const android_dlextinfo*))
+                                       dlsym(linkerhook, "android_dlopen_ext");
+            if (set_handles && hook_android_dlopen_ext) {
+                linker_ns_set_android_dlopen_ext(hook_android_dlopen_ext);
+                fprintf(stderr, "[EGL Loader] linkerhook installed\n");
+            } else {
+                fprintf(stderr, "[EGL Loader] linkerhook symbols missing\n");
+                dlclose(linkerhook);
+                linkerhook = nullptr;
+            }
+        } else {
+            fprintf(stderr, "[EGL Loader] liblinkerhook not found, dependencies may leak\n");
+        }
+
+        dl_handle = linker_ns_dlopen(eglName, RTLD_GLOBAL | RTLD_NOW);
+        if (dl_handle) {
+            fprintf(stderr, "[EGL Loader] Loaded %s via namespace from %s\n", eglName, ns_path);
+            if (linkerhook && set_handles && hook_android_dlopen_ext) {
+                void* dl_android = linker_ns_dlopen("libdl_android.so", RTLD_LOCAL | RTLD_LAZY);
+                void* (*android_get_exported_namespace)(const char*) = nullptr;
+                if (dl_android) {
+                    android_get_exported_namespace = (void* (*)(const char*))
+                                                     dlsym(dl_android, "android_get_exported_namespace");
+                }
+                if (android_get_exported_namespace) {
+                    set_handles(dl_handle, hook_android_dlopen_ext, android_get_exported_namespace);
+                } else {
+                    set_handles(dl_handle, hook_android_dlopen_ext, nullptr);
+                }
+            }
+            goto success;
+        } else {
+            fprintf(stderr, "[EGL Loader] Namespace dlopen failed: %s\n", dlerror());
+            if (linkerhook) dlclose(linkerhook);
+        }
+    }
+
+fallback_dlopen:
+    if (eglName) {
+        dl_handle = dlopen(eglName, RTLD_LOCAL | RTLD_LAZY);
+    }
+    if (!dl_handle) {
+        dl_handle = dlopen("libEGL.so", RTLD_LOCAL | RTLD_LAZY);
+    }
+    if (!dl_handle) {
+        fprintf(stderr, "[EGL Loader] All dlopen attempts failed, aborting\n");
         abort();
     }
+    fprintf(stderr, "[EGL Loader] Loaded via normal dlopen\n");
 
-    // Store the handle globally and export via environment variable
+success:
     g_egl_handle = dl_handle;
     char ptr_str[32];
     snprintf(ptr_str, sizeof(ptr_str), "%p", dl_handle);
     setenv("EGL_PTR", ptr_str, 1);
-    fprintf(stderr, "[EGL] EGL_PTR set to %s\n", ptr_str);
+    fprintf(stderr, "[EGL Loader] EGL_PTR set to %s\n", ptr_str);
 
-    // Resolve all EGL function pointers
     eglBindAPI_p = GLGetProcAddress(dl_handle, "eglBindAPI");
     eglChooseConfig_p = GLGetProcAddress(dl_handle, "eglChooseConfig");
     eglCreateContext_p = GLGetProcAddress(dl_handle, "eglCreateContext");
@@ -139,3 +182,4 @@ void dlsym_EGL() {
     eglQuerySurface_p = GLGetProcAddress(dl_handle, "eglQuerySurface");
     eglQueryContext_p = GLGetProcAddress(dl_handle, "eglQueryContext");
 }
+
