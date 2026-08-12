@@ -205,28 +205,26 @@ success:
         abort();
     }
 
-    #define RESOLVE(name) name##_p = (decltype(name##_p))dlsym(g_mesa_handle, #name)
-    RESOLVE(eglBindAPI);
-    RESOLVE(eglChooseConfig);
-    RESOLVE(eglCreateContext);
-    RESOLVE(eglCreatePbufferSurface);
-    RESOLVE(eglCreateWindowSurface);
-    RESOLVE(eglDestroyContext);
-    RESOLVE(eglDestroySurface);
-    RESOLVE(eglGetConfigAttrib);
-    RESOLVE(eglGetCurrentContext);
-    RESOLVE(eglGetDisplay);
-    RESOLVE(eglGetError);
-    RESOLVE(eglInitialize);
-    RESOLVE(eglMakeCurrent);
-    RESOLVE(eglSwapBuffers);
-    RESOLVE(eglReleaseThread);
-    RESOLVE(eglSwapInterval);
-    RESOLVE(eglTerminate);
-    RESOLVE(eglGetCurrentSurface);
-    RESOLVE(eglQuerySurface);
-    RESOLVE(eglQueryContext);
-    #undef RESOLVE
+    eglBindAPI_p = GLGetProcAddress(dl_handle, "eglBindAPI");
+    eglChooseConfig_p = GLGetProcAddress(dl_handle, "eglChooseConfig");
+    eglCreateContext_p = GLGetProcAddress(dl_handle, "eglCreateContext");
+    eglCreatePbufferSurface_p = GLGetProcAddress(dl_handle, "eglCreatePbufferSurface");
+    eglCreateWindowSurface_p = GLGetProcAddress(dl_handle, "eglCreateWindowSurface");
+    eglDestroyContext_p = GLGetProcAddress(dl_handle, "eglDestroyContext");
+    eglDestroySurface_p = GLGetProcAddress(dl_handle, "eglDestroySurface");
+    eglGetConfigAttrib_p = GLGetProcAddress(dl_handle, "eglGetConfigAttrib");
+    eglGetCurrentContext_p = GLGetProcAddress(dl_handle, "eglGetCurrentContext");
+    eglGetDisplay_p = GLGetProcAddress(dl_handle, "eglGetDisplay");
+    eglGetError_p = GLGetProcAddress(dl_handle, "eglGetError");
+    eglInitialize_p = GLGetProcAddress(dl_handle, "eglInitialize");
+    eglMakeCurrent_p = GLGetProcAddress(dl_handle, "eglMakeCurrent");
+    eglSwapBuffers_p = GLGetProcAddress(dl_handle, "eglSwapBuffers");
+    eglReleaseThread_p = GLGetProcAddress(dl_handle, "eglReleaseThread");
+    eglSwapInterval_p = GLGetProcAddress(dl_handle, "eglSwapInterval");
+    eglTerminate_p = GLGetProcAddress(dl_handle, "eglTerminate");
+    eglGetCurrentSurface_p = GLGetProcAddress(dl_handle, "eglGetCurrentSurface");
+    eglQuerySurface_p = GLGetProcAddress(dl_handle, "eglQuerySurface");
+    eglQueryContext_p = GLGetProcAddress(dl_handle, "eglQueryContext");
 
     if (!eglMakeCurrent_p || !eglSwapBuffers_p || !eglGetDisplay_p) {
         fprintf(stderr, "[EGL Loader] WARNING: Some EGL functions not resolved\n");
