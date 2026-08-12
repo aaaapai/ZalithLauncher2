@@ -37,7 +37,7 @@ void* dlopen_ext(const char* filename, int flags, const android_dlextinfo* extin
     if (strstr(filename, "vulkan."))
         return checkIfGlobalReadyHandle();
 
-    if (strstr(filename, "libGLES_"))
+    if (strstr(filename, "libEGL."))
         return checkIfGlobalReadyHandle();
 
     if (strstr(filename, "libvulkanmemoryallocator"))
@@ -50,7 +50,7 @@ void* load_sphal_library(const char* filename, int flags) {
     if (strstr(filename, "vulkan."))
         return checkIfGlobalReadyHandle();
 
-    if (strstr(filename, "libGLES_"))
+    if (strstr(filename, "libEGL."))
         return checkIfGlobalReadyHandle();
 
     if (strstr(filename, "libvulkanmemoryallocator"))
