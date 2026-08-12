@@ -1,8 +1,3 @@
-//
-// Created by maks on 21.09.2022.
-// Modified to support Freedreno/Turnip driver namespace bypass,
-// and export EGL handle via environment variable and function.
-//
 #include <stddef.h>
 #include <stdlib.h>
 #include <dlfcn.h>
@@ -16,7 +11,7 @@
 
 extern void linker_ns_set_android_dlopen_ext(void* (*func)(const char*, int, const android_dlextinfo*));
 
-// EGL function pointers (unchanged)
+// EGL function pointers (will be resolved from Mesa driver)
 EGLBoolean (*eglMakeCurrent_p) (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
 EGLBoolean (*eglDestroyContext_p) (EGLDisplay dpy, EGLContext ctx);
 EGLBoolean (*eglDestroySurface_p) (EGLDisplay dpy, EGLSurface surface);
@@ -38,10 +33,9 @@ EGLSurface (*eglGetCurrentSurface_p) (EGLint readdraw);
 EGLBoolean (*eglQuerySurface_p)(EGLDisplay display, EGLSurface surface, EGLint attribute, EGLint * value);
 EGLBoolean (*eglQueryContext_p)(EGLDisplay dpy, EGLContext ctx, EGLint attribute, EGLint *value);
 
-// Global handle for the loaded EGL library
+static void* g_mesa_handle = nullptr;
 static void* g_egl_handle = nullptr;
 
-// Exported function: returns the EGL library handle
 void* pojavGetEGLptr(void) {
     return g_egl_handle;
 }
@@ -52,9 +46,9 @@ void dlsym_EGL() {
     char* gles = getenv("LIBGL_GLES");
 
     if (gles) {
-        if (strstr(gles, "mesa") != NULL) {
+        if (strstr(gles, "mesa") != nullptr) {
             eglName = "libEGL_mesa.so";
-        } else if (strstr(gles, "angle") != NULL) {
+        } else if (strstr(gles, "angle") != nullptr) {
             eglName = "libEGL_angle.so";
         } else {
             eglName = gles;
@@ -69,6 +63,8 @@ void dlsym_EGL() {
             use_namespace = 1;
         }
     }
+    
+    if (use_namespace != 1) goto fallback_dlopen;
 
     const char* ns_path = getenv("DRIVER_PATH");
     if (!ns_path || strlen(ns_path) == 0) {
@@ -76,6 +72,7 @@ void dlsym_EGL() {
         if (ld_path) {
             static char path_buf[512];
             strncpy(path_buf, ld_path, sizeof(path_buf) - 1);
+            path_buf[sizeof(path_buf) - 1] = '\0';
             char* colon = strchr(path_buf, ':');
             if (colon) *colon = '\0';
             ns_path = path_buf;
@@ -88,13 +85,13 @@ void dlsym_EGL() {
             goto fallback_dlopen;
         }
 
-        if (strstr(eglName, "mesa") != NULL) {
+        if (strstr(eglName, "mesa") != nullptr) {
             void* existing = dlopen("libgallium_dri.so", RTLD_NOLOAD | RTLD_GLOBAL);
             if (existing) {
                 fprintf(stderr, "[EGL Loader] libgallium_dri.so already loaded, closing to reload from namespace\n");
                 dlclose(existing);
             }
-            void* gallium = linker_ns_dlopen("libgallium_dri.so", RTLD_GLOBAL | RTLD_NOW);
+            void* gallium = linker_ns_dlopen("libgallium_dri.so", RTLD_LOCAL | RTLD_NOW);
             if (gallium) {
                 fprintf(stderr, "[EGL Loader] Preloaded libgallium_dri.so from namespace\n");
             } else {
@@ -103,45 +100,83 @@ void dlsym_EGL() {
         }
 
         void* linkerhook = linker_ns_dlopen("liblinkerhook.so", RTLD_LOCAL | RTLD_NOW);
-        void* (*hook_android_dlopen_ext)(const char*, int, const android_dlextinfo*) = nullptr;
-        void (*set_handles)(void*, void*, void*) = nullptr;
-        if (linkerhook) {
-            set_handles = (void (*)(void*, void*, void*)) dlsym(linkerhook, "set_handles");
-            hook_android_dlopen_ext = (void* (*)(const char*, int, const android_dlextinfo*))
-                                       dlsym(linkerhook, "android_dlopen_ext");
-            if (set_handles && hook_android_dlopen_ext) {
-                linker_ns_set_android_dlopen_ext(hook_android_dlopen_ext);
-                fprintf(stderr, "[EGL Loader] linkerhook installed\n");
-            } else {
-                fprintf(stderr, "[EGL Loader] linkerhook symbols missing\n");
-                dlclose(linkerhook);
-                linkerhook = nullptr;
-            }
-        } else {
-            fprintf(stderr, "[EGL Loader] liblinkerhook not found, dependencies may leak\n");
+        if (!linkerhook) {
+            fprintf(stderr, "[EGL Loader] liblinkerhook.so not found, fallback to normal dlopen\n");
+            goto fallback_dlopen;
         }
 
-        dl_handle = linker_ns_dlopen(eglName, RTLD_GLOBAL | RTLD_NOW);
-        if (dl_handle) {
-            fprintf(stderr, "[EGL Loader] Loaded %s via namespace from %s\n", eglName, ns_path);
-            if (linkerhook && set_handles && hook_android_dlopen_ext) {
-                void* dl_android = linker_ns_dlopen("libdl_android.so", RTLD_LOCAL | RTLD_LAZY);
-                void* (*android_get_exported_namespace)(const char*) = nullptr;
-                if (dl_android) {
-                    android_get_exported_namespace = (void* (*)(const char*))
-                                                     dlsym(dl_android, "android_get_exported_namespace");
-                }
-                if (android_get_exported_namespace) {
-                    set_handles(dl_handle, hook_android_dlopen_ext, android_get_exported_namespace);
-                } else {
-                    set_handles(dl_handle, hook_android_dlopen_ext, nullptr);
-                }
-            }
-            goto success;
-        } else {
-            fprintf(stderr, "[EGL Loader] Namespace dlopen failed: %s\n", dlerror());
-            if (linkerhook) dlclose(linkerhook);
+        void (*set_handles)(void*, void*, void*) = (void (*)(void*, void*, void*))
+                dlsym(linkerhook, "set_handles");
+        void* (*hook_android_dlopen_ext)(const char*, int, const android_dlextinfo*) =
+                (void* (*)(const char*, int, const android_dlextinfo*))
+                dlsym(linkerhook, "android_dlopen_ext");
+
+        if (!set_handles || !hook_android_dlopen_ext) {
+            fprintf(stderr, "[EGL Loader] linkerhook missing set_handles or android_dlopen_ext\n");
+            dlclose(linkerhook);
+            goto fallback_dlopen;
         }
+
+        // 4. Get system android_dlopen_ext (real implementation)
+        void* sys_android_dlopen_ext = dlsym(RTLD_DEFAULT, "android_dlopen_ext");
+        if (!sys_android_dlopen_ext) {
+            void* dl_android_tmp = dlopen("libdl_android.so", RTLD_NOW);
+            if (dl_android_tmp) {
+                sys_android_dlopen_ext = dlsym(dl_android_tmp, "android_dlopen_ext");
+                // Do not dlclose, keep symbol available
+            }
+        }
+        if (!sys_android_dlopen_ext) {
+            fprintf(stderr, "[EGL Loader] Cannot find system android_dlopen_ext\n");
+            dlclose(linkerhook);
+            goto fallback_dlopen;
+        }
+
+        // 5. Get android_get_exported_namespace (optional, but needed by hook)
+        void* (*android_get_exported_namespace)(const char*) =
+                (void* (*)(const char*))dlsym(RTLD_DEFAULT, "android_get_exported_namespace");
+        if (!android_get_exported_namespace) {
+            void* dl_android = dlopen("libdl_android.so", RTLD_LAZY);
+            if (dl_android) {
+                android_get_exported_namespace = (void* (*)(const char*))
+                        dlsym(dl_android, "android_get_exported_namespace");
+            }
+        }
+
+        // 6. Load Mesa driver (actual backend)
+        void* mesa_handle = linker_ns_dlopen(eglName, RTLD_LOCAL | RTLD_NOW);
+        if (!mesa_handle) {
+            fprintf(stderr, "[EGL Loader] Failed to load Mesa EGL: %s\n", dlerror());
+            dlclose(linkerhook);
+            goto fallback_dlopen;
+        }
+        g_mesa_handle = mesa_handle;
+        fprintf(stderr, "[EGL Loader] Mesa driver loaded at %p\n", mesa_handle);
+
+        set_handles(mesa_handle, sys_android_dlopen_ext, android_get_exported_namespace);
+        fprintf(stderr, "[EGL Loader] set_handles called with Mesa driver handle\n");
+
+        linker_ns_set_android_dlopen_ext(hook_android_dlopen_ext);
+        fprintf(stderr, "[EGL Loader] Hook installed, dlopen(\"libEGL.so\") will return Mesa handle\n");
+
+        const char* cache_dir = getenv("CACHE_DIR");
+        const char* patch_name = getenv("SYSTEM_EGL_PATCH_NAME") ? getenv("SYSTEM_EGL_PATCH_NAME") : "libHGL.so";
+        if (cache_dir && strlen(cache_dir) > 0) {
+            void* sys_egl = linker_ns_dlopen_unique(cache_dir, "libEGL.so", patch_name, RTLD_LOCAL | RTLD_NOW);
+            if (sys_egl) {
+                g_egl_handle = sys_egl;
+                fprintf(stderr, "[EGL Loader] Patched system libEGL loaded as %s (handle %p)\n", patch_name, sys_egl);
+            } else {
+                fprintf(stderr, "[EGL Loader] Failed to load patched system libEGL: %s\n", dlerror());
+                g_egl_handle = mesa_handle;
+            }
+        } else {
+            fprintf(stderr, "[EGL Loader] CACHE_DIR not set, using Mesa handle as placeholder\n");
+            g_egl_handle = mesa_handle;
+        }
+
+        dl_handle = g_egl_handle;
+        goto success;
     }
 
 fallback_dlopen:
@@ -156,33 +191,46 @@ fallback_dlopen:
         abort();
     }
     fprintf(stderr, "[EGL Loader] Loaded via normal dlopen\n");
+    g_mesa_handle = dl_handle;
+    g_egl_handle = dl_handle;
 
 success:
-    g_egl_handle = dl_handle;
-    char ptr_str[32];
-    snprintf(ptr_str, sizeof(ptr_str), "%p", dl_handle);
-    setenv("EGL_PTR", ptr_str, 1);
-    fprintf(stderr, "[EGL Loader] EGL_PTR set to %s\n", ptr_str);
+    if (g_egl_handle) {
+        char ptr_str[32];
+        snprintf(ptr_str, sizeof(ptr_str), "%p", g_egl_handle);
+        setenv("EGL_PTR", ptr_str, 1);
+        fprintf(stderr, "[EGL Loader] EGL_PTR set to %s\n", ptr_str);
+    } else {
+        fprintf(stderr, "[EGL Loader] FATAL: g_egl_handle is null\n");
+        abort();
+    }
 
-    eglBindAPI_p = GLGetProcAddress(dl_handle, "eglBindAPI");
-    eglChooseConfig_p = GLGetProcAddress(dl_handle, "eglChooseConfig");
-    eglCreateContext_p = GLGetProcAddress(dl_handle, "eglCreateContext");
-    eglCreatePbufferSurface_p = GLGetProcAddress(dl_handle, "eglCreatePbufferSurface");
-    eglCreateWindowSurface_p = GLGetProcAddress(dl_handle, "eglCreateWindowSurface");
-    eglDestroyContext_p = GLGetProcAddress(dl_handle, "eglDestroyContext");
-    eglDestroySurface_p = GLGetProcAddress(dl_handle, "eglDestroySurface");
-    eglGetConfigAttrib_p = GLGetProcAddress(dl_handle, "eglGetConfigAttrib");
-    eglGetCurrentContext_p = GLGetProcAddress(dl_handle, "eglGetCurrentContext");
-    eglGetDisplay_p = GLGetProcAddress(dl_handle, "eglGetDisplay");
-    eglGetError_p = GLGetProcAddress(dl_handle, "eglGetError");
-    eglInitialize_p = GLGetProcAddress(dl_handle, "eglInitialize");
-    eglMakeCurrent_p = GLGetProcAddress(dl_handle, "eglMakeCurrent");
-    eglSwapBuffers_p = GLGetProcAddress(dl_handle, "eglSwapBuffers");
-    eglReleaseThread_p = GLGetProcAddress(dl_handle, "eglReleaseThread");
-    eglSwapInterval_p = GLGetProcAddress(dl_handle, "eglSwapInterval");
-    eglTerminate_p = GLGetProcAddress(dl_handle, "eglTerminate");
-    eglGetCurrentSurface_p = GLGetProcAddress(dl_handle, "eglGetCurrentSurface");
-    eglQuerySurface_p = GLGetProcAddress(dl_handle, "eglQuerySurface");
-    eglQueryContext_p = GLGetProcAddress(dl_handle, "eglQueryContext");
+    #define RESOLVE(name) name##_p = (decltype(name##_p))dlsym(g_mesa_handle, #name)
+    RESOLVE(eglBindAPI);
+    RESOLVE(eglChooseConfig);
+    RESOLVE(eglCreateContext);
+    RESOLVE(eglCreatePbufferSurface);
+    RESOLVE(eglCreateWindowSurface);
+    RESOLVE(eglDestroyContext);
+    RESOLVE(eglDestroySurface);
+    RESOLVE(eglGetConfigAttrib);
+    RESOLVE(eglGetCurrentContext);
+    RESOLVE(eglGetDisplay);
+    RESOLVE(eglGetError);
+    RESOLVE(eglInitialize);
+    RESOLVE(eglMakeCurrent);
+    RESOLVE(eglSwapBuffers);
+    RESOLVE(eglReleaseThread);
+    RESOLVE(eglSwapInterval);
+    RESOLVE(eglTerminate);
+    RESOLVE(eglGetCurrentSurface);
+    RESOLVE(eglQuerySurface);
+    RESOLVE(eglQueryContext);
+    #undef RESOLVE
+
+    if (!eglMakeCurrent_p || !eglSwapBuffers_p || !eglGetDisplay_p) {
+        fprintf(stderr, "[EGL Loader] WARNING: Some EGL functions not resolved\n");
+    } else {
+        fprintf(stderr, "[EGL Loader] All EGL functions resolved\n");
+    }
 }
-
