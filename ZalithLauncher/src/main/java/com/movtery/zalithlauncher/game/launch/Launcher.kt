@@ -399,6 +399,7 @@ abstract class Launcher(
             map["JAVA_HOME"] = getJavaHome()
             map["HOME"] = PathManager.DIR_FILES_EXTERNAL.absolutePath
             map["TMPDIR"] = PathManager.DIR_CACHE.absolutePath
+            map["CACHE_DIR"] = PathManager.DIR_CACHE.absolutePath
             map["LD_LIBRARY_PATH"] = getLibraryPath()
             map["PATH"] = path.joinToString(":")
             map["AWTSTUB_WIDTH"] = screenSize.width.toString()
