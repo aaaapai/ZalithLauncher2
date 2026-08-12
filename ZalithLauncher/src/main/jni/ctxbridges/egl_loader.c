@@ -91,7 +91,7 @@ void dlsym_EGL() {
                 fprintf(stderr, "[EGL Loader] libgallium_dri.so already loaded, closing to reload from namespace\n");
                 dlclose(existing);
             }
-            void* gallium = linker_ns_dlopen("libgallium_dri.so", RTLD_LOCAL | RTLD_NOW);
+            void* gallium = linker_ns_dlopen("libgallium_dri.so", RTLD_GLOBAL | RTLD_NOW);
             if (gallium) {
                 fprintf(stderr, "[EGL Loader] Preloaded libgallium_dri.so from namespace\n");
             } else {
