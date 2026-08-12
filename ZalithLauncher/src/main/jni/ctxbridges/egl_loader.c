@@ -12,6 +12,9 @@
 #include "br_loader.h"
 #include "egl_loader.h"
 #include "../driver_helper/nsbypass.h"
+#include <android/dlext.h>
+
+extern void linker_ns_set_android_dlopen_ext(void* (*func)(const char*, int, const android_dlextinfo*));
 
 // EGL function pointers (unchanged)
 EGLBoolean (*eglMakeCurrent_p) (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
