@@ -117,13 +117,11 @@ void dlsym_EGL() {
             goto fallback_dlopen;
         }
 
-        // 4. Get system android_dlopen_ext (real implementation)
         void* sys_android_dlopen_ext = dlsym(RTLD_DEFAULT, "android_dlopen_ext");
         if (!sys_android_dlopen_ext) {
             void* dl_android_tmp = dlopen("libdl_android.so", RTLD_NOW);
             if (dl_android_tmp) {
                 sys_android_dlopen_ext = dlsym(dl_android_tmp, "android_dlopen_ext");
-                // Do not dlclose, keep symbol available
             }
         }
         if (!sys_android_dlopen_ext) {
@@ -132,18 +130,15 @@ void dlsym_EGL() {
             goto fallback_dlopen;
         }
 
-        // 5. Get android_get_exported_namespace (optional, but needed by hook)
-        void* (*android_get_exported_namespace)(const char*) =
-                (void* (*)(const char*))dlsym(RTLD_DEFAULT, "android_get_exported_namespace");
+        void* (*android_get_exported_namespace)(const char*) = (void* (*)(const char*))dlsym(RTLD_DEFAULT, "android_get_exported_namespace");
         if (!android_get_exported_namespace) {
-            void* dl_android = dlopen("libdl_android.so", RTLD_LAZY);
-            if (dl_android) {
+           void* dl_android = dlopen("libdl_android.so", RTLD_LAZY);
+           if (dl_android) {
                 android_get_exported_namespace = (void* (*)(const char*))
-                        dlsym(dl_android, "android_get_exported_namespace");
-            }
+                       dlsym(dl_android, "android_get_exported_namespace");
+           }
         }
 
-        // 6. Load Mesa driver (actual backend)
         void* mesa_handle = linker_ns_dlopen(eglName, RTLD_LOCAL | RTLD_NOW);
         if (!mesa_handle) {
             fprintf(stderr, "[EGL Loader] Failed to load Mesa EGL: %s\n", dlerror());
