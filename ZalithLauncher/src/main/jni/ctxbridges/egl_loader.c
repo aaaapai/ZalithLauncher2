@@ -58,10 +58,11 @@ void dlsym_EGL() {
     }
 
     int use_namespace = 0;
-    if (eglName) {
-        if (strcmp(eglName, "libEGL_mesa.so") == 0 || strcmp(eglName, "libEGL_angle.so") == 0) {
-            use_namespace = 1;
-        }
+    if (eglName && strcmp(eglName, "libEGL_mesa.so") == 0) {
+       const char *mesa_override = getenv("MESA_LOADER_DRIVER_OVERRIDE");
+       if (mesa_override && strcmp(mesa_override, "kgsl") == 0) {
+          use_namespace = 1;
+       }
     }
     
     if (use_namespace != 1) goto fallback_dlopen;
