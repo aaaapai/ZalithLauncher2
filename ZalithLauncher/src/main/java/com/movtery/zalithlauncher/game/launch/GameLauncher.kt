@@ -359,6 +359,8 @@ class GameLauncher(
      * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L372-L391)
      */
     private fun disableSplash(dir: File) {
+
+        return
         File(dir, "config").let { configDir ->
             if (configDir.ensureDirectorySilently()) {
                 val forgeSplashFile = configDir.child("splash.properties")
