@@ -40,7 +40,7 @@ LOCAL_SRC_FILES := \
     utils.c \
     stdio_is.c \
     java_exec_hooks.c \
-    lwjgl_dlopen_hook.c
+    lwjgl_dlopen_hook.c \
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 LOCAL_CFLAGS += -DADRENO_POSSIBLE -D_FILE_OFFSET_BITS=64 -D_ALLBSD_SOURCE -DLINUX -D__USE_BSD -DANDROID -D_GNU_SOURCE -U__USE_GNU -std=c23
@@ -63,11 +63,12 @@ endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := exithook
-LOCAL_LDLIBS := -ldl                                        # 移除了 -llog
+LOCAL_LDLIBS := -ldl
 LOCAL_SHARED_LIBRARIES := bytehook pojavexec
-LOCAL_STATIC_LIBRARIES := log_stub                          # 新增
-LOCAL_SRC_FILES := exit_hook.c
+LOCAL_STATIC_LIBRARIES := log_stub
 LOCAL_CFLAGS += -O2 -D_FILE_OFFSET_BITS=64 -D_ALLBSD_SOURCE -DLINUX -D__USE_BSD -DANDROID -D_GNU_SOURCE -U__USE_GNU -std=c23
+LOCAL_SRC_FILES := exit_hook.c \
+    sdl_hook.c
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)

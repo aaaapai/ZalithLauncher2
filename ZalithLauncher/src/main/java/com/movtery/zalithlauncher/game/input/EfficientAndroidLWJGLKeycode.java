@@ -20,6 +20,7 @@ package com.movtery.zalithlauncher.game.input;
 
 import static org.lwjgl.glfw.CallbackBridge.sendKeyPress;
 
+import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
 import com.movtery.inputmap.keycodes.LwjglGlfwKeycode;
@@ -229,5 +230,28 @@ public class EfficientAndroidLWJGLKeycode {
         sLwjglKeycodes[mTmpCount] = LWJGLKeycode;
 
         mTmpCount ++;
+    }
+
+    private static final KeyCharacterMap mKcm = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
+    private static final char[] buffer = new char[1];
+
+    /**
+     * Takes a GLFW keycode and returns equivalent android keycode（SDL 输入转发用）。
+     */
+    public static int getAndroidKeycode(int lwjglGlfwKeycode){
+        if (lwjglGlfwKeycode == LwjglGlfwKeycode.GLFW_KEY_2) return KeyEvent.KEYCODE_2;
+        if (lwjglGlfwKeycode == LwjglGlfwKeycode.GLFW_KEY_3) return KeyEvent.KEYCODE_3;
+        return sAndroidKeycodes[getIndexByValue(lwjglGlfwKeycode)];
+    }
+
+    /**
+     * Takes a char and returns equivalent android keycode（SDL 输入转发用）。
+     */
+    public static int getAndroidKeycode(char c){
+        buffer[0] = c;
+        KeyEvent[] events = mKcm.getEvents(buffer);
+        return events != null && events.length > 0
+                ? events[0].getKeyCode()
+                : KeyEvent.KEYCODE_UNKNOWN;
     }
 }

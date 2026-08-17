@@ -25,5 +25,6 @@ class UnpackComponentsTask(context: Context, val component: Components) : Unpack
     context = context,
     rootDir = PathManager.DIR_COMPONENTS,
     assetsDirName = "components",
-    fileDirName = component.component
+    fileDirName = component.component,
+    companionComponent = component.companionComponent
 )

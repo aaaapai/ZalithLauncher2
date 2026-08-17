@@ -40,9 +40,9 @@ private const val LICENSE_BSD_3_CLAUSE = "BSD 3-Clause License"
 private const val URL_KTOR = "https://ktor.io"
 
 val libraryData = listOf(
+    LibraryInfo("androidx-appcompat", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/jetpack/androidx/releases/appcompat"),
     LibraryInfo("androidx-constraintlayout-compose", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/develop/ui/compose/layouts/constraintlayout"),
-    LibraryInfo("androidx-material-icons-core", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/jetpack/androidx/releases/compose-material"),
-    LibraryInfo("androidx-material-icons-extended", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/jetpack/androidx/releases/compose-material"),
+    LibraryInfo("androidx-webkit", COPYRIGHT_AOSP, LICENSE_APACHE_2, "https://developer.android.com/jetpack/androidx/releases/webkit"),
     LibraryInfo("ANGLE", "Copyright 2018 The ANGLE Project Authors", License(LICENSE_BSD_3_CLAUSE, R.raw.angle_license), "http://angleproject.org/"),
     LibraryInfo("Apache Commons Codec", null, LICENSE_APACHE_2, "https://commons.apache.org/proper/commons-codec"),
     LibraryInfo("Apache Commons Compress", null, LICENSE_APACHE_2, "https://commons.apache.org/proper/commons-compress"),
@@ -56,9 +56,9 @@ val libraryData = listOf(
     LibraryInfo("gl4es_extra_extra", "Copyright © 2016-2018 Sebastien Chevalier; Copyright © 2013-2016 Ryan Hileman", License(LICENSE_MIT, R.raw.gl4es_license), "https://github.com/PojavLauncherTeam/gl4es_extra_extra"),
     LibraryInfo("Gson", "Copyright © 2008 Google Inc.", LICENSE_APACHE_2, "https://github.com/google/gson"),
     LibraryInfo("kotlinx.coroutines", "Copyright © 2000-2020 JetBrains s.r.o.", LICENSE_APACHE_2, "https://github.com/Kotlin/kotlinx.coroutines"),
-    LibraryInfo("ktor-client-cio", COPYRIGHT_KTOR, LICENSE_APACHE_2, URL_KTOR),
     LibraryInfo("ktor-client-content-negotiation", COPYRIGHT_KTOR, LICENSE_APACHE_2, URL_KTOR),
     LibraryInfo("ktor-client-core", COPYRIGHT_KTOR, LICENSE_APACHE_2, URL_KTOR),
+    LibraryInfo("ktor-client-okhttp", COPYRIGHT_KTOR, LICENSE_APACHE_2, URL_KTOR),
     LibraryInfo("ktor-http", COPYRIGHT_KTOR, LICENSE_APACHE_2, URL_KTOR),
     LibraryInfo("ktor-serialization-kotlinx-json", COPYRIGHT_KTOR, LICENSE_APACHE_2, URL_KTOR),
     LibraryInfo("LWJGL - Lightweight Java Game Library", "Copyright © 2012-present Lightweight Java Game Library All rights reserved.", License(LICENSE_BSD_3_CLAUSE, R.raw.lwjgl_license), "https://github.com/LWJGL/lwjgl3"),

@@ -40,7 +40,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.scrollbar
+import androidx.compose.material3.nonInteractiveScrollbar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -170,8 +170,8 @@ private fun ChoseLayersLayout(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .scrollbar(
-                        state = listState.scrollIndicatorState,
+                    .nonInteractiveScrollbar(
+                        state = listState.scrollIndicatorState!!,
                         orientation = Orientation.Vertical,
                     )
                     .padding(vertical = 4.dp),

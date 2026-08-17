@@ -60,6 +60,23 @@ abstract class Launcher(
     lateinit var runtime: Runtime
         protected set
 
+    /** 当前启动版本要求的 LWJGL 版本（见 [detectLwjglVersion]），0 = 未探测/默认 */
+    protected var lwjglVersion: Int = 0
+
+    /** LWJGL 组件目录名（3.3.6 / 3.4.1） */
+    protected fun getLwjglVersionDir(): String = lwjglVersionDir(lwjglVersion)
+
+    /** LWJGL natives 组件目录名 */
+    protected fun getLwjglNativesDirName(): String =
+        if (lwjglVersion >= 341) "lwjgl-3.4.1-natives" else "lwjgl-3.3.6-natives"
+
+    /** 当前启动版本的 LWJGL natives 目录（per-version natives，组件解包后） */
+    protected val lwjglNativesDir: String
+        get() = File(
+            PathManager.DIR_COMPONENTS,
+            "${getLwjglNativesDirName()}/${Architecture.archAsStringAndroid(Architecture.getDeviceArchitecture())}"
+        ).absolutePath
+
     private val runtimeHome: String by lazy {
         RuntimesManager.getRuntimeHome(runtime.name).absolutePath
     }
@@ -172,6 +189,9 @@ abstract class Launcher(
             put("pojav.path.minecraft", getGameHome())
             put("pojav.path.private.account", PathManager.DIR_DATA_BASES.absolutePath)
             put("org.lwjgl.vulkan.libname", "libvulkan.so")
+            // LWJGL 3.4 的 Library.loadSystem 通过该属性定位 native。
+            // 指向 per-version natives 组件，保证 3.4.x 游戏加载对应版本的 liblwjgl.so 等。
+            put("org.lwjgl.librarypath", lwjglNativesDir)
             put("glfwstub.windowWidth", screenSize.width.toString())
             put("glfwstub.windowHeight", screenSize.height.toString())
             put("glfwstub.initEgl", "false")
@@ -193,6 +213,8 @@ abstract class Launcher(
             put("loader.disable_forked_guis", "true")
 
             put("sodium.checks.issue2561", "false")
+
+            put("cpu.name", getSocName())
 
             putJavaArgs()
         }.map { entry ->
@@ -257,8 +279,10 @@ abstract class Launcher(
         args.add("-Dorg.lwjgl.openal.libname=${PathManager.DIR_NATIVE_LIB}/libopenal.so")
 
         // Force LWJGL to use the Freetype library intended for it, instead of using the one
-        // that we ship with Java (since it may be older than what's needed)
-        args.add("-Dorg.lwjgl.freetype.libname=${PathManager.DIR_NATIVE_LIB}/libfreetype.so")
+        // that we ship with Java (since it may be older than what's needed).
+        // Prefer the per-version LWJGL natives component so 3.4.x games get the matching freetype.
+        val freetypeLib = File(lwjglNativesDir, "libfreetype.so")
+        args.add("-Dorg.lwjgl.freetype.libname=" + if (freetypeLib.exists()) freetypeLib.absolutePath else "${PathManager.DIR_NATIVE_LIB}/libfreetype.so")
 
         // Our spirv-cross is compiled shared, so it gets named shared.
         args.add("-Dorg.lwjgl.spvc.libname=spirv-cross-c-shared")
@@ -334,6 +358,7 @@ abstract class Launcher(
     protected fun getLibraryPath(): String {
         val libDirName = if (is64BitsDevice) "lib64" else "lib"
         val path = listOfNotNull(
+            lwjglNativesDir,
             "/system/$libDirName",
             "/vendor/$libDirName",
             "/vendor/$libDirName/hw",
@@ -506,4 +531,19 @@ fun getCacioJavaArgs(
     argsList.add(cacioClassPath.toString())
 
     return argsList
+}
+
+/**
+ * 获取设备 SoC 名称，在 API 31+ 读取系统属性 ro.soc.model，若失败则返回 Build.HARDWARE
+ */
+fun getSocName(): String {
+    return runCatching {
+        ProcessBuilder("getprop", "ro.soc.model")
+            .start()
+            .inputStream
+            .bufferedReader()
+            .use { reader ->
+                reader.readLine()
+            }
+    }.getOrNull()?.takeIf { it.isNotBlank() } ?: Build.HARDWARE
 }

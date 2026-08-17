@@ -9,6 +9,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.util.DisplayMetrics;
 import android.view.Choreographer;
+import android.view.MotionEvent;
 
 import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
@@ -16,10 +17,15 @@ import androidx.annotation.Nullable;
 import com.movtery.inputmap.keycodes.LwjglGlfwKeycode;
 import com.movtery.zalithlauncher.BuildKeys;
 import com.movtery.zalithlauncher.bridge.CursorShape;
+import com.movtery.zalithlauncher.bridge.LoggerBridge;
 import com.movtery.zalithlauncher.bridge.NativeLibraryLoader;
 import com.movtery.zalithlauncher.bridge.ZLBridgeStates;
 import com.movtery.zalithlauncher.bridge.ZLNativeInvoker;
 import com.movtery.zalithlauncher.context.ContextsKt;
+import com.movtery.zalithlauncher.game.input.EfficientAndroidLWJGLKeycode;
+import com.movtery.zalithlauncher.game.sdl.SdlBridge;
+
+import org.libsdl.app.SDLActivity;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -48,11 +54,67 @@ public class CallbackBridge {
     public static final int CLIPBOARD_COPY = 2000;
     public static final int CLIPBOARD_PASTE = 2001;
     public static final int CLIPBOARD_OPEN = 2002;
+
+    // --- SDL launcher integration（参考 AAMC 的实现；由 JNI 侧 sdl_hook 回调，或 org.lwjgl.sdl 绑定调用） ---
+    // Notification types
+    public static final int NOTIF_TYPE_SDL = 0;
+
+    // Notification actions
+    public static final int ACTION_INIT_LAUNCHER_INTEGRATION = 0;
+    public static final int ACTION_SEND_TEXTBOX_RECT = 1;
+
+    // org.lwjgl.sdl.SDLInit 通过这两个常量调用 nativeNotifyLauncher
+    public static final int SDL = NOTIF_TYPE_SDL;
+    public static final int INIT = ACTION_INIT_LAUNCHER_INTEGRATION;
+
+    /**
+     * 由 JRE 侧（sdl_hook JNI）调用的通知入口。
+     * @return 通知是否处理成功
+     */
+    @SuppressWarnings("unused")
+    @Keep
+    public static boolean notifyLauncher(int type, int... action) {
+        switch (type) {
+            case NOTIF_TYPE_SDL:
+                if (action[0] == ACTION_INIT_LAUNCHER_INTEGRATION) {
+                    try {
+                        // 部分模组跳过加载 SDL 库，这里自己再加载一遍以确保就绪
+                        System.loadLibrary("SDL3");
+                        System.loadLibrary("SDL2");
+                        org.libsdl.app.SDL.setupJNI();
+                        SdlBridge.setSdlEnabled(true);
+                        if (org.libsdl.app.SDLActivity.getSDLSurface() != null) {
+                            // 通知 SDL 原生 surface 尺寸（输入处理需要）
+                            org.libsdl.app.SDLActivity.getSDLSurface().nativeResize(windowWidth, windowHeight);
+                        }
+                        LoggerBridge.append("ZalithLauncher: SDL support enabled!");
+                        return true;
+                    } catch (Exception e) {
+                        LoggerBridge.append("ZalithLauncher: Failed to initialize SDL launcher-side integration! We will likely crash");
+                    }
+                }
+                if (action[0] == ACTION_SEND_TEXTBOX_RECT) {
+                    // TODO: 输入框位置同步（后续接入）
+                }
+        }
+        return false;
+    }
+
+    /**
+     * org.lwjgl.sdl.SDLInit（LWJGL 3.4.1 的 SDL Java 绑定）调用的入口，转发到 {@link #notifyLauncher}。
+     * 注意：LWJGL 组件内声明为 native，运行时以本实现为准（避免依赖额外 C 符号）。
+     */
+    @SuppressWarnings("unused")
+    @Keep
+    public static void nativeNotifyLauncher(int type, int... action) {
+        notifyLauncher(type, action);
+    }
     
     public static volatile int windowWidth, windowHeight;
     public static volatile int physicalWidth, physicalHeight;
-    public static float mouseX, mouseY;
-    public static volatile boolean holdingAlt, holdingCapslock, holdingCtrl,
+    public static float mouseX, mouseY, deltaX, deltaY;
+    private static int sMouseButtonState = 0;
+    public volatile static boolean holdingAlt, holdingCapslock, holdingCtrl,
             holdingNumlock, holdingShift;
 
     // ========== 定义内部接口，避免外部缺失 ==========
@@ -115,9 +177,17 @@ public class CallbackBridge {
         mouseX = x;
         mouseY = y;
         nativeSendCursorPos(mouseX, mouseY);
+        // SDL 输入双路：HOVER_MOVE 与 MOVE 在 SDL 中等价
+        if (!SdlBridge.getSdlEnabled()) return;
+        if (!isGrabbing())
+            SDLActivity.onNativeMouse(0, MotionEvent.ACTION_MOVE, x, y, false);
+        else
+            SDLActivity.onNativeMouse(0, MotionEvent.ACTION_MOVE, deltaX, deltaY, true);
     }
 
     public static void sendCursorDelta(float x, float y) {
+        deltaX = x;
+        deltaY = y;
         sendCursorPos(mouseX + x, mouseY + y);
     }
 
@@ -127,11 +197,22 @@ public class CallbackBridge {
             nativeSendCharMods(keychar, modifiers);
             nativeSendChar(keychar);
         }
+        // SDL 输入双路
+        if (!SdlBridge.getSdlEnabled()) return;
+        if (isDown) {
+            SDLActivity.onNativeKeyDown(EfficientAndroidLWJGLKeycode.getAndroidKeycode(keycode));
+        } else {
+            SDLActivity.onNativeKeyUp(EfficientAndroidLWJGLKeycode.getAndroidKeycode(keycode));
+        }
     }
 
     public static void sendChar(char keychar, int modifiers){
         nativeSendCharMods(keychar, modifiers);
         nativeSendChar(keychar);
+        // SDL 输入双路
+        if (!SdlBridge.getSdlEnabled()) return;
+        SDLActivity.onNativeKeyDown(EfficientAndroidLWJGLKeycode.getAndroidKeycode(keychar));
+        SDLActivity.onNativeKeyUp(EfficientAndroidLWJGLKeycode.getAndroidKeycode(keychar));
     }
 
     public static void sendKeyPress(int keyCode, int modifiers, boolean status) {
@@ -157,6 +238,35 @@ public class CallbackBridge {
 
     public static void sendMouseKeycode(int button, int modifiers, boolean isDown) {
         nativeSendMouseButton(button, isDown ? 1 : 0, modifiers);
+        // SDL 输入双路（按键状态累积后一次性上报，SDL 需要 MotionEvent.getButtonState()）
+        if (!SdlBridge.getSdlEnabled()) return;
+        int aKey = -1;
+        switch (button) {
+            case LwjglGlfwKeycode.GLFW_MOUSE_BUTTON_LEFT:
+                aKey = MotionEvent.BUTTON_PRIMARY;
+                break;
+            case LwjglGlfwKeycode.GLFW_MOUSE_BUTTON_RIGHT:
+                aKey = MotionEvent.BUTTON_SECONDARY;
+                break;
+            case LwjglGlfwKeycode.GLFW_MOUSE_BUTTON_MIDDLE:
+                aKey = MotionEvent.BUTTON_TERTIARY;
+                break;
+            // Yes, back and forward are flipped, for some reason it's just flipped on SDL, don't ask
+            case LwjglGlfwKeycode.GLFW_MOUSE_BUTTON_5:
+                aKey = MotionEvent.BUTTON_BACK;
+                break;
+            case LwjglGlfwKeycode.GLFW_MOUSE_BUTTON_4:
+                aKey = MotionEvent.BUTTON_FORWARD;
+                break;
+        }
+        if (aKey != -1) {
+            if (isDown) {
+                sMouseButtonState |= aKey;
+            } else {
+                sMouseButtonState &= ~aKey;
+            }
+            SDLActivity.onNativeMouse(sMouseButtonState, isDown ? MotionEvent.ACTION_DOWN : MotionEvent.ACTION_UP, mouseX, mouseY, false);
+        }
     }
 
     public static void sendMouseKeycode(int keycode) {
@@ -166,6 +276,9 @@ public class CallbackBridge {
     
     public static void sendScroll(double xoffset, double yoffset) {
         nativeSendScroll(xoffset, yoffset);
+        // SDL 输入双路
+        if (!SdlBridge.getSdlEnabled()) return;
+        SDLActivity.onNativeMouse(0, MotionEvent.ACTION_SCROLL, (float) xoffset, (float) yoffset, false);
     }
 
     public static void sendUpdateWindowSize(int w, int h) {

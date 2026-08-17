@@ -48,7 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.scrollbar
+import androidx.compose.material3.nonInteractiveScrollbar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -534,8 +534,8 @@ private fun ProfileListPanel(
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .scrollbar(
-                    state = scrollState.scrollIndicatorState,
+                .nonInteractiveScrollbar(
+                    state = scrollState.scrollIndicatorState!!,
                     orientation = Orientation.Vertical,
                 ),
             verticalArrangement = Arrangement.spacedBy(8.dp),

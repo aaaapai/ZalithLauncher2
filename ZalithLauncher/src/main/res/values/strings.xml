@@ -69,6 +69,7 @@
     <!-- Unit -->
     <string name="unit_day">day</string>
     <string name="date_format">MMM d, yyyy, h:mm:ss a</string>
+    <string name="duration_format">%s Days %s Hours %s Minutes</string>
     <string name="just_now">just now</string>
     <string name="minutes_ago">%d minutes ago</string>
     <string name="hours_ago">%d hours ago</string>
@@ -790,6 +791,7 @@
     <string name="saves_manage_allow_commands">Allow Commands</string>
     <string name="saves_manage_world_seed">World Seed: %s</string>
     <string name="saves_manage_exists">Save with this name exists</string>
+    <string name="saves_manage_playtime">Play Time: %s</string>
     <string name="saves_manage_save_name">Save Name</string>
     <string name="saves_manage_backup">Backup Save</string>
     <string name="saves_manage_delete_warning">Are you sure you want to delete the save file %s? This action cannot be undone!</string>

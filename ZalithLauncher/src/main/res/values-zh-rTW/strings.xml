@@ -66,6 +66,7 @@
     <!--  单位  -->
     <string name="unit_day">天</string>
     <string name="date_format">yyyy \'年\' MM \'月\' dd \'日\' HH:mm:ss</string>
+    <string name="duration_format">%s 天 %s 小時 %s 分鐘</string>
     <!--  啟動器版本  -->
     <string name="launcher_version_debug_warning">您正在使用 %s 的測試版本！此版本可能不穩定，主要用於功能測試與搶先體驗，不建議長期使用！如果您在測試過程中發現任何問題，請透過 GitHub 回報給我們，我們會儘快處理。</string>
     <string name="launcher_version_debug_warning_cant_close">此警告無法關閉</string>
@@ -738,6 +739,7 @@
     <string name="saves_manage_allow_commands">允許作弊</string>
     <string name="saves_manage_world_seed">世界種子碼：%s</string>
     <string name="saves_manage_exists">此名稱的存檔已存在</string>
+    <string name="saves_manage_playtime">遊戲時長：%s</string>
     <string name="saves_manage_save_name">存檔名稱</string>
     <string name="saves_manage_backup">備份存檔</string>
     <string name="saves_manage_delete_warning">您確定要刪除存檔 %s 嗎？此操作無法復原！</string>

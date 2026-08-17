@@ -42,7 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.scrollbar
+import androidx.compose.material3.nonInteractiveScrollbar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -114,8 +114,8 @@ fun StyleListDialog(
                                 .fadeEdge(state = scrollState)
                                 .weight(1f, fill = false)
                                 .fillMaxWidth()
-                                .scrollbar(
-                                    state = scrollState.scrollIndicatorState,
+                                .nonInteractiveScrollbar(
+                                    state = scrollState.scrollIndicatorState!!,
                                     orientation = Orientation.Vertical,
                                 )
                                 .animateContentSize(),

@@ -69,6 +69,7 @@
     <!--  单位  -->
     <string name="unit_day">天</string>
     <string name="date_format">yyyy \'年\' MM \'月\' dd \'日\' HH:mm:ss</string>
+    <string name="duration_format">%s 天 %s 小时 %s 分钟</string>
     <string name="just_now">刚刚</string>
     <string name="minutes_ago">%d 分钟前</string>
     <string name="hours_ago">%d 小时前</string>
@@ -790,6 +791,7 @@
     <string name="saves_manage_allow_commands">使用命令</string>
     <string name="saves_manage_world_seed">世界种子：%s</string>
     <string name="saves_manage_exists">该名称的存档已经存在</string>
+    <string name="saves_manage_playtime">游戏时长：%s</string>
     <string name="saves_manage_save_name">存档名称</string>
     <string name="saves_manage_backup">备份存档</string>
     <string name="saves_manage_delete_warning">您确定要删除存档 %s 吗？该操作不可撤销！</string>

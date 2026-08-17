@@ -43,7 +43,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.scrollbar
+import androidx.compose.material3.nonInteractiveScrollbar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -242,8 +242,8 @@ private fun DownloadDialog(
                                     modifier = Modifier
                                         .fadeEdge(state = listState)
                                         .weight(1f)
-                                        .scrollbar(
-                                            state = listState.scrollIndicatorState,
+                                        .nonInteractiveScrollbar(
+                                            state = listState.scrollIndicatorState!!,
                                             orientation = Orientation.Vertical,
                                         ),
                                     contentPadding = PaddingValues(vertical = 8.dp),
@@ -345,8 +345,8 @@ private fun ChoseGameVersionLayout(
 ) {
     if (versions.isNotEmpty()) {
         LazyColumn(
-            modifier = modifier.scrollbar(
-                state = listState.scrollIndicatorState,
+            modifier = modifier.nonInteractiveScrollbar(
+                state = listState.scrollIndicatorState!!,
                 orientation = Orientation.Vertical,
             ),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),

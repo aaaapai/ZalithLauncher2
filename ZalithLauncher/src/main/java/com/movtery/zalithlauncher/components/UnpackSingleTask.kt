@@ -26,6 +26,7 @@ import com.movtery.zalithlauncher.utils.logging.Logger
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.FileInputStream
+import java.io.IOException
 import java.io.InputStream
 
 private const val TAG = "UnpackSingleTask"
@@ -35,6 +36,7 @@ abstract class UnpackSingleTask(
     val rootDir: File,
     val assetsDirName: String,
     val fileDirName: String,
+    private val companionComponent: String? = null,
 ) : AbstractUnpackTask() {
     private lateinit var am: AssetManager
     private lateinit var versionFile: File
@@ -70,8 +72,15 @@ abstract class UnpackSingleTask(
                     requestEmptyParentDir(versionFile)
                     InstallableItem.State.PENDING
                 } else {
-                    Logger.info(TAG, "$fileDirName: Pack is up-to-date with the launcher, continuing...")
-                    InstallableItem.State.FINISHED
+                    val companionMissing = companionComponent != null &&
+                            !File(rootDir, companionComponent).exists()
+                    if (companionMissing) {
+                        Logger.info(TAG, "$fileDirName: Pack is up-to-date but companion $companionComponent is missing, re-unpacking...")
+                        InstallableItem.State.PENDING
+                    } else {
+                        Logger.info(TAG, "$fileDirName: Pack is up-to-date with the launcher, continuing...")
+                        InstallableItem.State.FINISHED
+                    }
                 }
             }.onFailure { e ->
                 Logger.error("CheckComponent", "An exception occurred while detecting the assets resource.", e)
@@ -86,25 +95,55 @@ abstract class UnpackSingleTask(
         val dir = File(rootDir, fileDirName)
         FileUtils.deleteDirectory(dir)
 
-        val fileList = am.list("$assetsDirName/$fileDirName")!!
-            .map { fileName -> File(dir, fileName) }
-        val versionFile = fileList.find { it.name == "version" }!!
-
-        for (file in fileList) {
-            context.copyAssetFile(
-                fileName = "$assetsDirName/$fileDirName/${file.name}",
-                output = file,
-                overwrite = true
-            )
-            moreProgress(file)
+        // 伴随组件与主组件，主组件重解时一并删除并重解
+        companionComponent?.let { companion ->
+            val companionDir = File(rootDir, companion)
+            FileUtils.deleteDirectory(companionDir)
+            copyAssetDirectory("$assetsDirName/$companion", companionDir)
+            Logger.info(TAG, "$companion: unpacked together with $fileDirName")
         }
+
+        copyAssetDirectory("$assetsDirName/$fileDirName", dir)
 
         //最后才写入version
         context.copyAssetFile(
             fileName = "$assetsDirName/$fileDirName/version",
-            output = versionFile,
+            output = File(dir, "version"),
             overwrite = true
         )
+        val fileCount = dir.walkTopDown().count { it.isFile }
+        Logger.info(TAG, "$fileDirName: unpacked $fileCount files")
+    }
+
+    /**
+     * 递归复制 assets 目录下的所有文件。
+     * 组件资产里可能存在子目录（如 lwjgl3/<ver>/natives/<abi>/），
+     * 而 copyAssetFile 仅支持文件，这里对子目录做递归处理。
+     */
+    private suspend fun copyAssetDirectory(assetPath: String, outputDir: File) {
+        outputDir.mkdirs()
+        val children = am.list(assetPath) ?: emptyArray()
+        Logger.debug(TAG, "copyAssetDirectory: $assetPath (${children.size} entries)")
+        children.forEach { child ->
+            val childAssetPath = "$assetPath/$child"
+            val childOutput = File(outputDir, child)
+            if (isAssetDirectory(childAssetPath)) {
+                copyAssetDirectory(childAssetPath, childOutput)
+            } else {
+                context.copyAssetFile(childAssetPath, childOutput, overwrite = true)
+                moreProgress(childOutput)
+            }
+        }
+    }
+
+    private fun isAssetDirectory(assetPath: String): Boolean {
+        // 目录无法用 open() 打开，而 list() 能列出其子项；空目录会误判为文件，但组件内不存在空目录
+        return try {
+            am.open(assetPath).close()
+            false
+        } catch (e: IOException) {
+            true
+        }
     }
 
     /**

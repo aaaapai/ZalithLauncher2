@@ -53,7 +53,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.scrollbar
+import androidx.compose.material3.nonInteractiveScrollbar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -763,8 +763,8 @@ private fun CustomThemeDialog(
                                 modifier = Modifier
                                     .weight(1f)
                                     .fadeEdge(scrollState)
-                                    .scrollbar(
-                                        state = scrollState.scrollIndicatorState,
+                                    .nonInteractiveScrollbar(
+                                        state = scrollState.scrollIndicatorState!!,
                                         orientation = Orientation.Vertical,
                                     ),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
