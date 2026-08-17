@@ -158,8 +158,7 @@ class LaunchArgs(
      * lwjgl.jar 核心优先 -> merged-modules -> 其余模块。
      */
     private fun getLWJGL3ClassPath(lwjglVersion: Int): String {
-        val versionDir = lwjglVersionDir(lwjglVersion)
-        val dir = File(PathManager.DIR_COMPONENTS, "lwjgl3/$versionDir")
+        val dir = File(PathManager.DIR_COMPONENTS, "lwjgl3")
         val isLwjgl2 = lwjglVersion in 1..299
         return dir.listFiles { file -> file.name.endsWith(".jar") }
             ?.sortedBy { file -> lwjglJarOrder(file.name, versionDir, isLwjgl2) }
@@ -170,7 +169,7 @@ class LaunchArgs(
 
     private fun lwjglJarOrder(name: String, versionDir: String, isLwjgl2: Boolean): Int = when (name) {
         "lwjgl.jar" -> 0
-        "lwjgl-$versionDir-merged-modules.jar" -> 1
+        "lwjgl-glfw-classes.jar" -> 1
         "lwjgl-lwjglx.jar" -> 3 // 桥接层放最后，仅 LWJGL2 使用
         else -> 2
     }
@@ -241,9 +240,8 @@ class LaunchArgs(
 //        }
 
         val varArgMap: MutableMap<String, String> = android.util.ArrayMap()
-        val lwjglVersion = detectLwjglVersion(gameManifest)
         Logger.info(TAG, "Detected LWJGL requirement version=$lwjglVersion")
-        val launchClassPath = "${getLWJGL3ClassPath(lwjglVersion)}:${generateLaunchClassPath(gameManifest)}"
+        val launchClassPath = "${getLWJGL3ClassPath()}:${generateLaunchClassPath(gameManifest)}"
         var hasClasspath = false //是否已经在jvm参数中包含 ${classpath} 配置
 
         varArgMap["classpath_separator"] = ":"
@@ -419,9 +417,3 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
     }
     return 0
 }
-
-/**
- * LWJGL 版本整数 -> 组件目录名。
- * 版本 >= 3.4.1 -> 3.4.1 组件；否则（含 LWJGL2 桥接场景）-> 3.3.6 组件
- */
-fun lwjglVersionDir(lwjglVersion: Int): String = if (lwjglVersion >= 341) "3.4.1" else "3.3.6"
