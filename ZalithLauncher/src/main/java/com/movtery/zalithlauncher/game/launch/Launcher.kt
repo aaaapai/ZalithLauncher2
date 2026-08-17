@@ -66,7 +66,7 @@ abstract class Launcher(
     /** LWJGL 组件目录名（3.3.6 / 3.4.1） */
     protected fun getLwjglVersionDir(): String = lwjglVersionDir(lwjglVersion)
 
-    /** LWJGL natives 组件目录名（AAMC 原版布局：lwjgl-3.3.6-natives / lwjgl-3.4.1-natives） */
+    /** LWJGL natives 组件目录名 */
     protected fun getLwjglNativesDirName(): String =
         if (lwjglVersion >= 341) "lwjgl-3.4.1-natives" else "lwjgl-3.3.6-natives"
 
@@ -189,7 +189,7 @@ abstract class Launcher(
             put("pojav.path.minecraft", getGameHome())
             put("pojav.path.private.account", PathManager.DIR_DATA_BASES.absolutePath)
             put("org.lwjgl.vulkan.libname", "libvulkan.so")
-            // LWJGL 3.4 的 Library.loadSystem 通过该属性定位 native 库（AAMC 同款机制）。
+            // LWJGL 3.4 的 Library.loadSystem 通过该属性定位 native。
             // 指向 per-version natives 组件，保证 3.4.x 游戏加载对应版本的 liblwjgl.so 等。
             put("org.lwjgl.librarypath", lwjglNativesDir)
             put("glfwstub.windowWidth", screenSize.width.toString())
@@ -366,7 +366,6 @@ abstract class Launcher(
     protected fun getLibraryPath(): String {
         val libDirName = if (is64BitsDevice) "lib64" else "lib"
         val path = listOfNotNull(
-            // per-version LWJGL natives 优先，避免 APK 内旧版 native 抢占（AAMC lwjgl-<ver>-natives 机制）
             lwjglNativesDir,
             "/system/$libDirName",
             "/vendor/$libDirName",

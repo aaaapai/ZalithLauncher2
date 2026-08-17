@@ -390,6 +390,11 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
 
     envMap["POJAV_RENDERER"] = rendererId
 
+    // SDL 渲染器 env（参考 AAMC 的实现）：SDL 使用与 GLFW 相同的渲染库/EGL 库
+    // （MC 26.3 等通过 lwjgl-sdl 绑定初始化 SDL 时按这两个变量加载渲染库）
+    envMap["SDL_OPENGL_LIBRARY"] = loadGraphicsLibrary() ?: "libGLESv2.so"
+    envMap["SDL_EGL_LIBRARY"] = "${PathManager.DIR_NATIVE_LIB}/${envMap["POJAVEXEC_EGL"] ?: "libEGL.so"}"
+
     if (RendererPluginManager.selectedRendererPlugin != null) return
 
     if (renderer != GL4ESRenderer && renderer != NGGL4ESRenderer) {

@@ -47,6 +47,7 @@ struct pojav_environ_s {
     jmethodID method_onGraphicOutput;
     jmethodID method_glftSetWindowAttrib;
     jmethodID method_internalWindowSizeChanged;
+    jmethodID method_notifyLauncher;
     jclass bridgeClazz;
     jclass vmGlfwClass;
     jboolean isGrabbing;

@@ -34,7 +34,7 @@ LOCAL_SRC_FILES := \
     utils.c \
     stdio_is.c \
     java_exec_hooks.c \
-    lwjgl_dlopen_hook.c
+    lwjgl_dlopen_hook.c \
 
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 LOCAL_CFLAGS += -DADRENO_POSSIBLE
@@ -59,7 +59,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := exithook
 LOCAL_LDLIBS := -ldl -llog
 LOCAL_SHARED_LIBRARIES := bytehook pojavexec
-LOCAL_SRC_FILES := exit_hook.c
+LOCAL_SRC_FILES := exit_hook.c \
+    sdl_hook.c
 include $(BUILD_SHARED_LIBRARY)
 
 
