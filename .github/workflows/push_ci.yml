@@ -1,6 +1,7 @@
 name: Build CI
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
