@@ -240,8 +240,9 @@ class LaunchArgs(
 //        }
 
         val varArgMap: MutableMap<String, String> = android.util.ArrayMap()
-        Logger.info(TAG, "Detected LWJGL requirement version=$lwjglVersion")
-        val launchClassPath = "${getLWJGL3ClassPath()}:${generateLaunchClassPath(gameManifest)}"
+        Logger.info(TAG, "Detected LWJGL requirement")
+        val lwjglVersion = detectLwjglVersion(gameManifest)
+        val launchClassPath = "${getLWJGL3ClassPath(lwjglVersion)}:${generateLaunchClassPath(gameManifest)}"
         var hasClasspath = false //是否已经在jvm参数中包含 ${classpath} 配置
 
         varArgMap["classpath_separator"] = ":"

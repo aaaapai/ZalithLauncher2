@@ -115,9 +115,7 @@ class GameLauncher(
             .setInheriting()
             .build()
 
-        // 探测版本 JSON 要求的 LWJGL 版本，决定组件与 natives
-        lwjglVersion = detectLwjglVersion(gameManifest)
-        Logger.info(TAG, "Detected LWJGL requirement version=$lwjglVersion, using component=${getLwjglVersionDir()}")
+        Logger.info(TAG, "Detected LWJGL requirement}")
 
         //jna
         jnaDir = gameManifest.libraries?.find { library ->
