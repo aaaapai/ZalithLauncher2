@@ -161,13 +161,13 @@ class LaunchArgs(
         val dir = File(PathManager.DIR_COMPONENTS, "lwjgl3")
         val isLwjgl2 = lwjglVersion in 1..299
         return dir.listFiles { file -> file.name.endsWith(".jar") }
-            ?.sortedBy { file -> lwjglJarOrder(file.name, versionDir, isLwjgl2) }
+            ?.sortedBy { file -> lwjglJarOrder(file.name, isLwjgl2) }
             ?.filter { file -> isLwjgl2 || file.name != "lwjgl-lwjglx.jar" }
             ?.joinToString(":") { it.absolutePath }
             ?: ""
     }
 
-    private fun lwjglJarOrder(name: String, versionDir: String, isLwjgl2: Boolean): Int = when (name) {
+    private fun lwjglJarOrder(name: String, isLwjgl2: Boolean): Int = when (name) {
         "lwjgl.jar" -> 0
         "lwjgl-glfw-classes.jar" -> 1
         "lwjgl-lwjglx.jar" -> 3 // 桥接层放最后，仅 LWJGL2 使用
