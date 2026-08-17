@@ -115,6 +115,11 @@ jint JNI_OnLoad_pojavexec(JavaVM* vm, void* reserved)
  * avoids that recursion and follows the approach of AAMC/Amethyst-Android.
  */
 JNIEXPORT void JNICALL Java_org_lwjgl_glfw_GLFW_nativeInitializeGLFWNativeBridge(__attribute__((unused)) JNIEnv* env, __attribute__((unused)) jclass clazz) {
+
+    if ((*env)->ExceptionCheck(env)) {
+        return JNI_FALSE;
+    }
+
     JNIEnv *vmEnv = pojav_environ->runtimeJNIEnvPtr_JRE;
     if (vmEnv == NULL || pojav_environ->runtimeJavaVMPtr == NULL) {
         LOG_TO_E("<%s> %s", "Native", "nativeInitializeGLFWNativeBridge: no game JVM environ saved yet!");
