@@ -47,7 +47,9 @@ tasks.jar {
         "lwjgl-nanovg.jar",
         "lwjgl-mimalloc.jar",
         "lwjgl-freetype.jar",
-        "lwjgl-egl.jar"
+        "lwjgl-egl.jar",
+        "lwjgl-lwjglx.jar",
+        "lwjgl-sdl.jar"
     )
 
     from({
