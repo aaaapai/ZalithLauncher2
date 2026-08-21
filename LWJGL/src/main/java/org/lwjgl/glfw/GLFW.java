@@ -571,7 +571,7 @@ public class GLFW
     private static final String PROP_WINDOW_HEIGHT= "glfwstub.windowHeight";
     public static long mainContext = 0;
 
-    //private static native void nativeInitializeGLFWNativeBridge();
+    private static native void nativeInitializeGLFWNativeBridge();
     static {
         try {
         
@@ -594,7 +594,7 @@ public class GLFW
             // Mods like LWJGL3ify have more of a chance of overriding the other classes so
             // lets just load it here again just to be safe.
             System.loadLibrary("pojavexec");
-            // will come back //nativeInitializeGLFWNativeBridge();
+            nativeInitializeGLFWNativeBridge();
         } catch (UnsatisfiedLinkError e) {
             e.printStackTrace();
         }
