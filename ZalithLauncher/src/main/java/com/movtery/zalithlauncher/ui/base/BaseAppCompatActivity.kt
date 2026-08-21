@@ -18,8 +18,10 @@
 
 package com.movtery.zalithlauncher.ui.base
 
+import android.app.ActivityManager
 import android.os.Bundle
 import androidx.annotation.CallSuper
+import com.movtery.zalithlauncher.BuildKeys
 import com.movtery.zalithlauncher.context.refreshContext
 import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.path.GamePathManager
@@ -42,6 +44,18 @@ open class BaseAppCompatActivity : FullScreenAppCompatActivity() {
         super.onResume()
         loadAllSettings(this, true)
         checkStoragePermissions()
+        refreshTaskDescription()
+    }
+
+    /**
+     * @return 该 Activity 在最近任务中显示的标题
+     */
+    protected open fun getTaskDescriptionTitle(): String? = null
+
+    @Suppress("DEPRECATION")
+    private fun refreshTaskDescription() {
+        val title = getTaskDescriptionTitle() ?: BuildKeys.LAUNCHER_NAME
+        setTaskDescription(ActivityManager.TaskDescription(title))
     }
 
     protected fun refreshData() {

@@ -130,14 +130,16 @@ void* loadTurnipVulkan(const char* driver_path, const char* native_dir, const ch
 
     // 加载 patched libvulkan
     const char* patch_name = "libhhlvlk.so";
-    void* libvulkan = linker_ns_dlopen_unique(cache_dir, "libvulkan.so", patch_name, RTLD_LOCAL | RTLD_NOW);
-    if (!libvulkan) {
+    void* libvulkan_patch = linker_ns_dlopen_unique(cache_dir, "libvulkan.so", patch_name, RTLD_LOCAL | RTLD_NOW);
+    if (!libvulkan_patch) {
         printf("Failed to load patched libvulkan.so\n");
         dlclose(dl_android);
         dlclose(linkerhook);
         dlclose(turnip_driver_handle);
         return NULL;
     }
+    
+    void* libvulkan = linker_ns_dlopen(patch_name, RTLD_LOCAL | RTLD_NOW);
 
     printf("Turnip Vulkan loaded successfully\n");
     return libvulkan;

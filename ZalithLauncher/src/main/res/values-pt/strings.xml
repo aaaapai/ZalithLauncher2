@@ -809,6 +809,7 @@
     <string name="generic_enabled">Ativado</string>
     <string name="generic_disabled">Desativado</string>
     <string name="generic_saved">Gravado</string>
+    <string name="generic_saving">A gravar…</string>
     <string name="generic_copied">Copiado</string>
     <string name="generic_no_matching_items">Nenhum elemento correspondente</string>
     <string name="generic_follow_system">Siga o Sistema</string>

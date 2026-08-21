@@ -31,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.movtery.layer_controller.layout.ControlLayout
 import com.movtery.layer_controller.layout.loadLayoutFromFile
+import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.base.BaseAppCompatActivity
 import com.movtery.zalithlauncher.ui.screens.content.elements.Background
@@ -48,6 +49,8 @@ private const val BUNDLE_CONTROL = "BUNDLE_CONTROL"
 @AndroidEntryPoint
 class ControlEditorActivity : BaseAppCompatActivity() {
     override fun isIgnoreNotch(): Boolean = AllSettings.gameFullScreen.getValue()
+
+    override fun getTaskDescriptionTitle(): String = getString(R.string.control_manage_info_edit)
 
     /** 编辑器 */
     private val editorViewModel: EditorViewModel by viewModels()

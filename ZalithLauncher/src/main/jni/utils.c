@@ -129,7 +129,11 @@ JNIEnv* get_attached_env(JavaVM* jvm) {
             return env;
         }
     }
-    return NULL;
+    if (status != JNI_OK) {
+        printf("get_attached_env failed: %i\n", status);
+        return NULL;
+    }
+    return jvm_env;
 }
 
 bool notifyLauncher(JNIEnv *dvm_env, int type, int actions[], int len) {

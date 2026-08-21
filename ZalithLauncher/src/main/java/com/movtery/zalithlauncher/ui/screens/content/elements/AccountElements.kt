@@ -146,6 +146,7 @@ import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.SimpleListDialog
 import com.movtery.zalithlauncher.ui.components.SingleLineTextCheck
 import com.movtery.zalithlauncher.ui.components.fadeEdge
+import com.movtery.zalithlauncher.ui.components.rememberDialogMaxHeight
 import com.movtery.zalithlauncher.ui.components.verticalScrollWithBar
 import com.movtery.zalithlauncher.ui.screens.main.control_editor.InfoLayoutTextItem
 import com.movtery.zalithlauncher.ui.theme.cardColor
@@ -452,6 +453,7 @@ fun LoginMenuDialog(
         BoxWithConstraints(
             modifier = Modifier
                 .padding(all = 16.dp)
+                .heightIn(max = rememberDialogMaxHeight())
                 .fillMaxHeight()
                 .fillMaxWidth(0.6f),
             contentAlignment = Alignment.Center
@@ -460,7 +462,7 @@ fun LoginMenuDialog(
                 modifier = Modifier
                     .padding(all = 6.dp)
                     .fillMaxWidth()
-                    .heightIn(max = maxHeight - 12.dp),
+                    .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight())),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = cardColor(false),
                 contentColor = onCardColor(),
@@ -740,13 +742,15 @@ fun LocalLoginDialog(
 
     Dialog(onDismissRequest = onDismissRequest) {
         BoxWithConstraints(
-            modifier = Modifier.fillMaxHeight(),
+            modifier = Modifier
+                .heightIn(max = rememberDialogMaxHeight())
+                .fillMaxHeight(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
                 modifier = Modifier
                     .padding(all = 6.dp)
-                    .heightIn(max = maxHeight - 12.dp)
+                    .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
                     .wrapContentHeight(),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = cardColor(false),
@@ -965,13 +969,15 @@ fun OtherServerLoginDialog(
 
     Dialog(onDismissRequest = onDismissRequest) {
         BoxWithConstraints(
-            modifier = Modifier.fillMaxHeight(),
+            modifier = Modifier
+                .heightIn(max = rememberDialogMaxHeight())
+                .fillMaxHeight(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
                 modifier = Modifier
                     .padding(all = 6.dp)
-                    .heightIn(max = maxHeight - 12.dp)
+                    .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
                     .wrapContentHeight(),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = cardColor(false),
@@ -1239,6 +1245,7 @@ fun ChangeSkinDialog(
         BoxWithConstraints(
             modifier = Modifier
                 .padding(all = 16.dp)
+                .heightIn(max = rememberDialogMaxHeight())
                 .fillMaxHeight()
                 .fillMaxWidth(0.6f),
             contentAlignment = Alignment.Center
@@ -1246,8 +1253,8 @@ fun ChangeSkinDialog(
             Surface(
                 modifier = Modifier
                     .padding(all = 6.dp)
-                    .fillMaxHeight(0.85f)
-                    .heightIn(max = maxHeight - 12.dp),
+                    .heightIn(min = (maxHeight * 0.85f).coerceAtMost(rememberDialogMaxHeight()))
+                    .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight())),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = cardColor(false),
                 contentColor = onCardColor(),

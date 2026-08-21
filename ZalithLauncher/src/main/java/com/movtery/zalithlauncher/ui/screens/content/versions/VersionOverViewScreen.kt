@@ -52,6 +52,7 @@ import com.movtery.zalithlauncher.context.copyLocalFile
 import com.movtery.zalithlauncher.contract.MediaPickerContract
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
+import com.movtery.zalithlauncher.game.path.GamePathManager
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionFolders
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
@@ -72,7 +73,6 @@ import com.movtery.zalithlauncher.ui.screens.content.elements.RenameVersionDialo
 import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionChunkBackground
 import com.movtery.zalithlauncher.ui.screens.content.versions.layouts.VersionOverviewItem
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
-import com.movtery.zalithlauncher.utils.file.shareFile
 import com.movtery.zalithlauncher.utils.image.isImageFile
 import com.movtery.zalithlauncher.utils.logging.Logger
 import com.movtery.zalithlauncher.utils.string.getMessageOrToString
@@ -191,14 +191,12 @@ fun VersionOverViewScreen(
                             )
                             return@VersionQuickActions
                         }
-                        shareFile(context, folder) {
-                            submitError(
-                                ErrorViewModel.ThrowableMessage(
-                                    title = androidText(R.string.generic_error),
-                                    message = androidText(R.string.versions_overview_cant_share_folder_message)
-                                )
+                        eventViewModel.sendEvent(
+                            EventViewModel.Event.OpenFileManager(
+                                rootPath = GamePathManager.currentPath.value,
+                                currentPath = folder.absolutePath,
                             )
-                        }
+                        )
                     }
                 )
             }

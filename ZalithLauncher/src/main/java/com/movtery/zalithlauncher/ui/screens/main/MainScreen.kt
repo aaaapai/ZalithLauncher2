@@ -77,6 +77,7 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.coroutine.Task
 import com.movtery.zalithlauncher.coroutine.TaskSystem
 import com.movtery.zalithlauncher.game.version.installed.Version
+import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.AndroidStringText
 import com.movtery.zalithlauncher.ui.androidText
@@ -198,6 +199,13 @@ fun MainScreen(
                         screenKey = NormalNavKey.Multiplayer
                     )
                 },
+                openFileManager = {
+                    eventViewModel.sendEvent(
+                        EventViewModel.Event.OpenFileManager(
+                            rootPath = PathManager.DIR_FILES_EXTERNAL.absolutePath
+                        )
+                    )
+                },
                 changeExpandedState = {
                     changeTasksExpandedState()
                 },
@@ -246,6 +254,7 @@ private fun <E: TitledNavKey> TopBar(
     toSettingsScreen: () -> Unit,
     toDownloadScreen: () -> Unit,
     toMultiplayerScreen: () -> Unit,
+    openFileManager: () -> Unit,
     changeExpandedState: () -> Unit,
 ) {
     val festivals = LocalFestivals.current
@@ -392,6 +401,15 @@ private fun <E: TitledNavKey> TopBar(
                             contentDescription = stringResource(R.string.main_task_menu)
                         )
                     }
+                }
+
+                IconButton(
+                    onClick = openFileManager
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_folder_filled),
+                        contentDescription = null
+                    )
                 }
 
                 TopBarRailItem(

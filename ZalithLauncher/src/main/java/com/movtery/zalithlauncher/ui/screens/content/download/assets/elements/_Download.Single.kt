@@ -72,6 +72,7 @@ import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.ui.components.MarqueeText
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 import com.movtery.zalithlauncher.ui.components.fadeEdge
+import com.movtery.zalithlauncher.ui.components.rememberDialogMaxHeight
 import com.movtery.zalithlauncher.ui.screens.content.elements.CommonVersionInfoLayout
 import com.movtery.zalithlauncher.ui.theme.cardColor
 import com.movtery.zalithlauncher.ui.theme.itemColor
@@ -211,13 +212,14 @@ private fun DownloadDialog(
                     .fillMaxWidth(
                         fraction = if (hasDeps) 0.8f else 0.5f
                     )
+                    .heightIn(max = rememberDialogMaxHeight())
                     .fillMaxHeight(),
                 contentAlignment = Alignment.Center
             ) {
                 Surface(
                     modifier = Modifier
                         .padding(all = 6.dp)
-                        .heightIn(max = maxHeight - 12.dp)
+                        .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
                         .wrapContentHeight(),
                     shape = MaterialTheme.shapes.extraLarge,
                     color = cardColor(false),
@@ -318,6 +320,7 @@ private fun DownloadDialog(
                             }
                             Button(
                                 modifier = Modifier.weight(0.5f),
+                                enabled = selectedVersions.isNotEmpty(),
                                 onClick = {
                                     if (selectedVersions.isNotEmpty()) {
                                         onInstall(selectedVersions)

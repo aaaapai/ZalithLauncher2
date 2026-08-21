@@ -24,14 +24,26 @@ enum class Components(
     val component: String,
     val displayName: String,
     val summary: Int,
-    val companionComponent: String? = null
+    val assetsDir: String
 ) {
-    AUTH_LIBS("auth_libs", "authlib-injector", R.string.unpack_screen_authlib_injector),
-    CACIOCAVALLO("caciocavallo", "caciocavallo", R.string.unpack_screen_cacio),
-    CACIOCAVALLO17("caciocavallo17", "caciocavallo 17", R.string.unpack_screen_cacio),
-    LWJGL3(
-        "lwjgl3", "LWJGL 3.4.3", R.string.unpack_screen_lwjgl,
-        companionComponent = "lwjgl-natives"
+    AUTH_LIBS(
+        "auth_libs", "authlib-injector", R.string.unpack_screen_authlib_injector,
+        assetsDir = "components/auth_libs"
     ),
-    LAUNCHER("launcher", "Launcher Components", R.string.unpack_screen_launcher)
+    CACIOCAVALLO(
+        "caciocavallo", "caciocavallo", R.string.unpack_screen_cacio,
+        assetsDir = "components/caciocavallo"
+    ),
+    CACIOCAVALLO17(
+        "caciocavallo17", "caciocavallo 17", R.string.unpack_screen_cacio,
+        assetsDir = "components/caciocavallo17"
+    ),
+    LWJGL341(
+        "lwjgl3", "LWJGL 3.4.3", R.string.unpack_screen_lwjgl,
+        assetsDir = "components/lwjgl3"
+    ),
+    LAUNCHER(
+        "launcher", "Launcher Components", R.string.unpack_screen_launcher,
+        assetsDir = "components/launcher"
+    )
 }

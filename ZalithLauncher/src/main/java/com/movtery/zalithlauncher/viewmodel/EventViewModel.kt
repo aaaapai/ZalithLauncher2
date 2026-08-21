@@ -128,6 +128,12 @@ class EventViewModel : ViewModel() {
             val text: AndroidStringText,
             val duration: Int = Toast.LENGTH_SHORT
         ) : Event
+
+        /** 打开文件管理器 */
+        data class OpenFileManager(
+            val rootPath: String,
+            val currentPath: String? = null,
+        ) : Event
     }
 }
 

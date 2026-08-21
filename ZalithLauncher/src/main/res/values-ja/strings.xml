@@ -994,6 +994,7 @@
     <string name="control_editor_edit_text_size">テキストサイズ</string>
     <string name="control_editor_edit_text_size_custom">カスタムテキストサイズ</string>
     <string name="generic_saved">保存済み</string>
+    <string name="generic_saving">保存中…</string>
     <string name="account_change_cape_cache_all">すべてのマントをキャッシュ</string>
     <string name="cape_name_zombie_horse">Zombie Horseマント</string>
     <string name="control_editor_special_joystick_style_delete_title">ジョイスティックのスタイルを削除</string>

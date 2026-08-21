@@ -46,6 +46,7 @@
         tools:ignore="DiscouragedApi">
         <activity
             android:name=".ui.activities.SplashActivity"
+            android:launchMode="singleTask"
             android:theme="@style/AppTheme.SplashScreen"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
@@ -108,6 +109,7 @@
 
         <activity
             android:name=".ui.activities.MainActivity"
+            android:launchMode="singleTop"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
             android:screenOrientation="sensorLandscape" />
         <activity
@@ -126,6 +128,25 @@
         <activity android:name=".ui.activities.FatalErrorActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|keyboard|navigation"
             android:theme="@style/Theme.Material3.DayNight.Dialog.Alert" />
+
+        <activity
+            android:name=".filemanager.ui.FileManagerActivity"
+            android:process=":filemanager"
+            android:taskAffinity=":filemanager"
+            android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation|uiMode|locale|layoutDirection"
+            android:windowSoftInputMode="adjustResize"
+            android:screenOrientation="sensorLandscape"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false" />
+
+        <service
+            android:name=".filemanager.events.FileManagerEventService"
+            android:process=":filemanager"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.movtery.zalithlauncher.filemanager.EVENT_SERVICE" />
+            </intent-filter>
+        </service>
 
         <service
             android:name=".game.download.jvm_server.JvmService"

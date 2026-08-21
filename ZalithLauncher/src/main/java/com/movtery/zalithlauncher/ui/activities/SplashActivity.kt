@@ -68,6 +68,8 @@ class SplashActivity : BaseAppCompatActivity() {
     private val unpackItems: MutableList<InstallableItem> = ArrayList()
     private val finishedTaskCount = AtomicInteger(0)
 
+    private var pendingImportIntent: Intent? = null
+
     private val backStackViewModel: SplashBackStackViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,9 +104,12 @@ class SplashActivity : BaseAppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
 
-        //若依赖未完成，忽略所有外部导入
+        //若依赖未完成，暂存外部导入，待依赖完成后处理
         if (!areAllTasksFinished()) {
-            Logger.info(TAG, "Import intent received but dependencies are not ready, ignoring.")
+            if (isImportIntent(intent) && !isLauncherIntent(intent)) {
+                pendingImportIntent = intent
+                Logger.info(TAG, "Import intent received but dependencies are not ready, deferring.")
+            }
             return
         }
 
@@ -217,6 +222,18 @@ class SplashActivity : BaseAppCompatActivity() {
                 //检查并设置默认的Java环境
                 if (getValue().isEmpty()) save(Jre.JRE_8.jreName)
             }
+            finishSplash()
+        }
+    }
+
+    private fun finishSplash() {
+        val import = pendingImportIntent
+            ?.takeIf { isImportIntent(it) && !isLauncherIntent(it) }
+            ?: intent.takeIf { isImportIntent(it) && !isLauncherIntent(it) }
+
+        if (import != null && handleImportIntent(import)) {
+            finish()
+        } else {
             swapToMain()
         }
     }
@@ -239,7 +256,10 @@ class SplashActivity : BaseAppCompatActivity() {
     }
 
     private fun swapToMain() {
-        startActivity(Intent(this, MainActivity::class.java))
+        val forward = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        startActivity(forward)
         finish()
     }
 

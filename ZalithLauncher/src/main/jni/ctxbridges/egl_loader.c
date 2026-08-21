@@ -9,8 +9,6 @@
 #include "../driver_helper/nsbypass.h"
 #include <android/dlext.h>
 
-extern void linker_ns_set_android_dlopen_ext(void* (*func)(const char*, int, const android_dlextinfo*));
-
 // EGL function pointers (will be resolved from Mesa driver)
 EGLBoolean (*eglMakeCurrent_p) (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx);
 EGLBoolean (*eglDestroyContext_p) (EGLDisplay dpy, EGLContext ctx);
@@ -59,10 +57,7 @@ void dlsym_EGL() {
 
     int use_namespace = 0;
     if (eglName && strcmp(eglName, "libEGL_mesa.so") == 0) {
-       const char *mesa_override = getenv("MESA_LOADER_DRIVER_OVERRIDE");
-       if (mesa_override && strcmp(mesa_override, "kgsl") == 0) {
           use_namespace = 1;
-       }
     }
     
     if (use_namespace != 1) goto fallback_dlopen;
@@ -149,27 +144,7 @@ void dlsym_EGL() {
         g_mesa_handle = mesa_handle;
         fprintf(stderr, "[EGL Loader] Mesa driver loaded at %p\n", mesa_handle);
 
-        set_handles(mesa_handle, sys_android_dlopen_ext, android_get_exported_namespace);
-        fprintf(stderr, "[EGL Loader] set_handles called with Mesa driver handle\n");
-
-        linker_ns_set_android_dlopen_ext(hook_android_dlopen_ext);
-        fprintf(stderr, "[EGL Loader] Hook installed, dlopen(\"libEGL.so\") will return Mesa handle\n");
-
-        const char* cache_dir = getenv("CACHE_DIR");
-        const char* patch_name = getenv("SYSTEM_EGL_PATCH_NAME") ? getenv("SYSTEM_EGL_PATCH_NAME") : "libHGL.so";
-        if (cache_dir && strlen(cache_dir) > 0) {
-            void* sys_egl = linker_ns_dlopen_unique(cache_dir, "libEGL.so", patch_name, RTLD_LOCAL | RTLD_NOW);
-            if (sys_egl) {
-                g_egl_handle = sys_egl;
-                fprintf(stderr, "[EGL Loader] Patched system libEGL loaded as %s (handle %p)\n", patch_name, sys_egl);
-            } else {
-                fprintf(stderr, "[EGL Loader] Failed to load patched system libEGL: %s\n", dlerror());
-                g_egl_handle = mesa_handle;
-            }
-        } else {
-            fprintf(stderr, "[EGL Loader] CACHE_DIR not set, using Mesa handle as placeholder\n");
-            g_egl_handle = mesa_handle;
-        }
+        g_egl_handle = mesa_handle;
 
         dl_handle = g_egl_handle;
         goto success;
@@ -189,6 +164,7 @@ fallback_dlopen:
     fprintf(stderr, "[EGL Loader] Loaded via normal dlopen\n");
     g_mesa_handle = dl_handle;
     g_egl_handle = dl_handle;
+    goto success;
 
 success:
     if (g_egl_handle) {

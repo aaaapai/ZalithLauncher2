@@ -994,6 +994,7 @@
     <string name="control_editor_edit_text_size">Cỡ chữ</string>
     <string name="control_editor_edit_text_size_custom">Tùy chỉnh</string>
     <string name="generic_saved">Đã lưu</string>
+    <string name="generic_saving">Đang lưu…</string>
     <string name="account_change_cape_cache_all">Đang cache cape</string>
     <string name="cape_name_zombie_horse">Ngựa zombie</string>
     <string name="control_editor_special_joystick_style_delete_title">Xóa kiểu cần</string>
