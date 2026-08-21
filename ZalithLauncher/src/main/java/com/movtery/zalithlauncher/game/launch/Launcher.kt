@@ -272,7 +272,7 @@ abstract class Launcher(
         // Some phones are not using the right number of cores, fix that
         args.add("-XX:ActiveProcessorCount=${java.lang.Runtime.getRuntime().availableProcessors()}")
 
-        args.add("-Dorg.lwjgl.system.memoryBackend=org.lwjgl.system.MemoryBackendFFM")
+        args.add("-Dorg.lwjgl.system.memoryBackend=org.lwjgl.system.MemoryBackendUnsafe")
 
         // Java9 doesn't support -XX:ActiveProcessorCount, which is needed to be ignored.
         args.add("-XX:+IgnoreUnrecognizedVMOptions")
